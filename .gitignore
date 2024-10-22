@@ -1,0 +1,10 @@
+# Ignore build and cache directories
+__pycache__/
+.ruff_cache/
+.venv/
+*.egg-info/
+wheelhouse/
+.pytest_cache/
+
+# Ignore local development files
+playground/
