@@ -8,3 +8,6 @@ wheelhouse/
 
 # Ignore local development files
 playground/
+
+# uv stuff
+uv.lock
