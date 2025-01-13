@@ -1,6 +1,7 @@
 from typing import Literal
 
 import numpy as np
+from numba import njit
 
 
 def integrate_hydrogen(
@@ -13,6 +14,7 @@ def integrate_hydrogen(
     xmax: float,
     direction: Literal["forward", "backward"] = "backward",
     epsilon_u: float = 1e-10,
+    use_njit: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""Integrate the radial Schrödinger equation for the hydrogen atom using the Numerov method.
 
@@ -52,7 +54,10 @@ def integrate_hydrogen(
 
     g_list = energy + 2 * Z / x_list - l * (l + 1) / x_list**2
 
-    u_list = run_numerov_integration(x_list, u_list, g_list, direction=direction)
+    if use_njit:
+        u_list = njit_run_numerov_integration(x_list, u_list, g_list, direction=direction)
+    else:
+        u_list = run_numerov_integration(x_list, u_list, g_list, direction=direction)
 
     # normalize the wavefunction, such that
     # \int_{0}^{\infty} x^2 |R(x)|^2 dx = \int_{0}^{\infty} |u(x)|^2 dx = 1
@@ -109,3 +114,6 @@ def run_numerov_integration(
         raise ValueError(f"Invalid direction: {direction}")
 
     return y_list
+
+
+njit_run_numerov_integration = njit(run_numerov_integration)

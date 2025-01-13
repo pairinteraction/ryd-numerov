@@ -16,6 +16,7 @@ authors = [
 
 requires-python = ">= 3.9"
 dependencies = [
+    "numba>=0.60.0",
     "numpy>=2.0.2",
 ]
 
@@ -34,6 +35,10 @@ classifiers = [
 tests = [
   "pytest",
   "sympy"
+]
+dev = [
+  "pip",
+  "ipykernel",
 ]
 
 [tool.ruff]
