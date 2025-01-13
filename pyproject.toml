@@ -31,8 +31,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = [
+tests = [
   "pytest",
+  "sympy"
 ]
 
 [tool.ruff]
