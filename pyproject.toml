@@ -32,9 +32,12 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-tests = [
+test = [
   "pytest",
   "sympy"
+]
+doc =[
+  "matplotlib",
 ]
 dev = [
   "pip",
