@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeVar, Union
+from typing import Optional, TypeVar, Union
 
 import numpy as np
 
@@ -30,15 +30,30 @@ class RydbergState:
         epsilon_u (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.
             For forward integration we set u[0] = 0 and u[1] = epsilon_u,
             for backward integration we set u[-1] = 0 and u[-2] = (-1)^{(n - l + 1) % 2} * epsilon_u.
+        xmin (default see `RydbergState._set_x_range`): The minimum value of the radial coordinate
+        in dimensionless units.
+        xmax (default see `RydbergState._set_x_range`): The maximum value of the radial coordinate
+        in dimensionless units.
+        dx (default see `RydbergState._set_x_range`): The step size of the integration in dimensionless units
+        (corresponds to h in the equation above).
+        parameter_dict (default: None): A dictionary containing the parameters for the effective potential.
+        If not provided, the parameters are loaded from the database.
     """
 
     species: str
     n: int
     l: int
     j: float
+
     run_backward: bool = True
     epsilon_u: float = 1e-10
     _use_njit: bool = True
+
+    xmin: Optional[float] = None
+    xmax: Optional[float] = None
+    dx: Optional[float] = None
+
+    parameter_dict: Optional[dict[str, float]] = None
 
     def __post_init__(self) -> None:
         self.s: Union[int, float]
@@ -52,11 +67,24 @@ class RydbergState:
         assert self.l <= self.n - 1, "l must be smaller than n - 1"
         assert self.j >= abs(self.l - self.s) and self.j <= self.l + self.s, "j must be between l - s and l + s"
 
-        if self.species in ["H", "He+"]:
+        if self.parameter_dict is not None:
+            self._load_parameters_from_dict()
+        elif self.species in ["H", "He+"]:
             self._load_hydrogen_like_parameters()
         else:
             self._load_parameters_from_database()
-        self._auto_set_range()
+        self._set_x_range()
+
+    def _load_parameters_from_dict(self) -> None:
+        assert self.parameter_dict is not None
+        self.Z = self.parameter_dict["Z"]
+        self.energy = self.parameter_dict["energy"]
+        self.a1 = self.parameter_dict["a1"]
+        self.a2 = self.parameter_dict["a2"]
+        self.a3 = self.parameter_dict["a3"]
+        self.a4 = self.parameter_dict["a4"]
+        self.alphac = self.parameter_dict["alphac"]
+        self.xc = self.parameter_dict["xc"]
 
     def _load_parameters_from_database(self) -> None:
         self.Z = np.inf
@@ -72,11 +100,9 @@ class RydbergState:
         self.alphac = 0
         self.xc = np.inf
 
-    def _auto_set_range(self) -> None:
-        """dx: The step size of the integration in dimensionless units (corresponds to h in the equation above).
-        xmin: The minimum value of the radial coordinate in dimensionless units.
-        xmax: The maximum value of the radial coordinate in dimensionless units."""
-        self.dx = 1e-3
+    def _set_x_range(self) -> None:
+        """Automatically determine sensful default values for xmin, xmax and dx."""
+        self.dx = 5e-5
         self.xmin = self.dx
         self.xmax = 80
 
