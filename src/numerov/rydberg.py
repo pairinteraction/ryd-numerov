@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Optional, TypeVar, Union
@@ -7,6 +8,8 @@ import numpy as np
 from numerov.integration import _python_run_numerov_integration, run_numerov_integration
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -118,16 +121,23 @@ class RydbergState:
 
         """
         if self.xmin is None:
-            self.xmin = 5e-5
+            if not self.run_backward or self.l == 0:
+                self.xmin = 1e-5
+            else:  # self.run_backward
+                xmin = self.n * self.n - self.n * np.sqrt(self.n * self.n - (self.l - 1) * (self.l - 1))
+                self.xmin = max(0.1, xmin)
         if self.xmax is None:
-            self.xmax = 80
+            if self.run_backward:
+                self.xmax = 2 * self.n * (self.n + 25)
+            else:
+                self.xmax = 2 * self.n * (self.n + 6)
         zmin, zmax = np.sqrt(self.xmin), np.sqrt(self.xmax)
 
         if self.dx is not None and self.steps is not None:
             raise ValueError("Use either dx or steps, not both.")
         elif self.dx is None:
             if self.steps is None:
-                self.steps = 1000
+                self.steps = 10_000
             self.z_list = np.linspace(zmin, zmax, self.steps, endpoint=True)
         elif self.dx is not None:
             dz = np.sqrt(self.dx)
@@ -135,6 +145,8 @@ class RydbergState:
 
         self.dz = self.z_list[1] - self.z_list[0]
         self.steps = len(self.z_list)
+
+        self.x_list = np.power(self.z_list, 2)
 
     @cached_property
     def V_tot(self) -> np.ndarray:
@@ -162,7 +174,7 @@ class RydbergState:
     def g_list(self) -> np.ndarray:
         return 4 * self.z_list**2 * (self.energy - self.V_tot)
 
-    def integrate(self) -> tuple[np.ndarray, np.ndarray]:
+    def integrate(self) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation for the desired state,
 
         Returns:
@@ -193,4 +205,12 @@ class RydbergState:
         norm = np.sqrt(2 * np.sum(self.w_list**2 * self.z_list**2) * self.dz)
         self.w_list /= norm
 
-        return self.z_list, self.w_list
+        # Check that xmax was chosen large enough
+        id = int(0.95 * self.steps)
+        sum_large_z = np.sqrt(2 * np.sum(self.w_list[id:] ** 2 * self.z_list[id:] ** 2) * self.dz)
+        if sum_large_z > 1e-3:
+            logger.warning(f"xmax={self.xmax} was chosen too small ({sum_large_z=}), increase xmax.")
+            # raise ValueError(f"xmax={self.xmax} was chosen too small ({sum_large_z=}), increase xmax.")
+
+        self.u_list = np.sqrt(self.z_list) * self.w_list
+        self.R_list = self.u_list / self.x_list
