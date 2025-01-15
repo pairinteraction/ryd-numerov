@@ -10,8 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from numerov.units import ureg
+
 logger = logging.getLogger(__name__)
-Ry_inf = 109737.31568525
 
 
 @dataclass
@@ -19,15 +20,15 @@ class ModelPotentialParameters:
     """Model potential parameters for an atomic species and angular momentum.
 
     Attributes:
-        element: Atomic element symbol
-        L: Angular momentum quantum number
-        ac: Polarizability parameter
-        Z: Nuclear charge
-        a1: Model potential parameter a1
-        a2: Model potential parameter a2
-        a3: Model potential parameter a3
-        a4: Model potential parameter a4
-        rc: Core radius parameter
+        element: Atomic element symbol.
+        L: Angular momentum quantum number.
+        ac: Polarizability parameter in atomic units.
+        Z: Nuclear charge.
+        a1: Model potential parameter a1 in atomic units.
+        a2: Model potential parameter a2 in atomic units.
+        a3: Model potential parameter a3 in atomic units.
+        a4: Model potential parameter a4 in atomic units.
+        rc: Core radius parameter in atomic units.
 
     """
 
@@ -47,15 +48,15 @@ class RydbergRitzParameters:
     """Rydberg-Ritz parameters for an atomic species and quantum numbers.
 
     Attributes:
-        element: Atomic element symbol
-        L: Angular momentum quantum number
-        J: Total angular momentum quantum number
-        d0: Zeroth-order quantum defect
-        d2: Second-order quantum defect
-        d4: Fourth-order quantum defect
-        d6: Sixth-order quantum defect
-        d8: Eighth-order quantum defect
-        Ry: Rydberg constant
+        element: Atomic element symbol.
+        L: Angular momentum quantum number.
+        J: Total angular momentum quantum number.
+        d0: Zeroth-order quantum defect.
+        d2: Second-order quantum defect.
+        d4: Fourth-order quantum defect.
+        d6: Sixth-order quantum defect.
+        d8: Eighth-order quantum defect.
+        Ry: Rydberg constant in cm^{-1}
 
     """
 
@@ -70,7 +71,7 @@ class RydbergRitzParameters:
     Ry: float
 
     def get_energy(self, n: int) -> float:
-        r"""Return the energy of a Rydberg state with principal quantum number n.
+        r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
 
         The effective principal quantum number in quantum defect theory is defined as series expansion
 
@@ -85,7 +86,9 @@ class RydbergRitzParameters:
         is the quantum defect. The energy of the Rydberg state is then given by
 
         .. math::
-            E_{nlj} = -\frac{1}{2} \frac{Ry}{Ry_\\infty} \frac{1}{n^*}
+            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\\infty} \frac{1}{n^*}
+
+        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
 
         Args:
             n: Principal quantum number of the state to calculate the energy for.
@@ -94,9 +97,10 @@ class RydbergRitzParameters:
             Energy of the Rydberg state in atomic units.
 
         """
+        Ry_inf = ureg.Quantity(1, "rydberg_constant").to("1/cm").magnitude
         delta_nlj = self.d0 + self.d2 / (n - self.d0) ** 2 + self.d4 / (n - self.d0) ** 4 + self.d6 / (n - self.d0) ** 6
         nstar = n - delta_nlj
-        E_nlj = -(self.Ry / Ry_inf) / nstar**2  # TODO *0.5???
+        E_nlj = -0.5 * (self.Ry / Ry_inf) / nstar**2
         return E_nlj
 
 

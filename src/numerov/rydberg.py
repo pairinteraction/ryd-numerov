@@ -7,6 +7,7 @@ import numpy as np
 
 from numerov.database import QuantumDefectsDatabase
 from numerov.integration import _python_run_numerov_integration, run_numerov_integration
+from numerov.units import ureg
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 
@@ -42,11 +43,10 @@ class RydbergState:
             For forward integration we set u[0] = 0 and u[1] = epsilon_u,
             for backward integration we set u[-1] = 0 and u[-2] = (-1)^{(n - l - 1) % 2} * epsilon_u.
         xmin (default see `RydbergState.set_range`): The minimum value of the radial coordinate
-        in dimensionless units.
+        in dimensionless units (x = r/a_0).
         xmax (default see `RydbergState.set_range`): The maximum value of the radial coordinate
-        in dimensionless units.
-        dx (default see `RydbergState.set_range`): The step size of the integration in dimensionless units
-        (corresponds to h in the equation above).
+        in dimensionless units (x = r/a_0).
+        dx (default see `RydbergState.set_range`): The step size of the integration in dimensionless units (x = r/a_0).
         steps (default see `RydbergState.set_range`): The number of steps of the integration (use either steps or dx).
         parameter_dict (default: None): A dictionary containing the parameters for the effective potential.
         If not provided, the parameters are loaded from the database.
@@ -71,9 +71,9 @@ class RydbergState:
 
     def __post_init__(self) -> None:
         self.s: Union[int, float]
-        if self.species.endswith("singlet"):
+        if self.species.endswith("singlet") or self.species.endswith("1"):
             self.s = 0
-        elif self.species.endswith("triplet"):
+        elif self.species.endswith("triplet") or self.species.endswith("3"):
             self.s = 1
         else:
             self.s = 0.5
@@ -117,7 +117,7 @@ class RydbergState:
         self.a1 = self.a2 = self.a3 = self.a4 = 0
         self.ac = 0
         self.xc = np.inf
-        self.energy = -(self.Z**2) / (self.n**2)
+        self.energy = -0.5 * (self.Z**2) / (self.n**2)
 
     def set_range(self) -> None:
         """Automatically determine sensful default values for xmin, xmax and dx.
@@ -162,29 +162,25 @@ class RydbergState:
         return self.calc_V_tot(self.z_list)
 
     def calc_V_tot(self, z_list: np.ndarray) -> np.ndarray:
-        z = z_list
-        z2 = z**2
-        z4 = z**4
-        z6 = z**6
-        z8 = z**8
+        x = z_list**2
+        x2 = z_list**4
+        x3 = z_list**6
+        x4 = z_list**8
 
-        Z_nl = 1 + (self.Z - 1) * np.exp(-self.a1 * z2) - z2 * (self.a3 + self.a4 * z2) * np.exp(-self.a2 * z2)
-        V_c = -Z_nl / z2 * 2  # TODO check 2 in diemnsionless units
-        V_p = -self.ac / (2 * z8) * (1 - np.exp(-((z2 / self.xc) ** 6)))
-        if self.species in ["H", "He+"]:  # TODO or self.l > 4 ???
-            V_so = 0
-        else:
-            alpha = 1 / 137.035999084
-            V_so = (
-                alpha / (4 * z6) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
-            )  # TODO check wheter 1 or 1/4?
-        V_l = self.l * (self.l + 1) / z4
-        V_sqrt = (3 / 16) / z4
+        Z_nl = 1 + (self.Z - 1) * np.exp(-self.a1 * x) - x * (self.a3 + self.a4 * x) * np.exp(-self.a2 * x)
+        V_c = -Z_nl / x
+        V_p = -self.ac / (2 * x4) * (1 - np.exp(-((x / self.xc) ** 6)))
+        V_so = 0
+        if self.species not in ["H", "He+"]:  # TODO or self.l > 4 ???
+            alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
+            V_so = alpha / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
+        V_l = self.l * (self.l + 1) / (2 * x2)
+        V_sqrt = (3 / 32) / x2
         return V_c + V_p + V_so + V_l + V_sqrt
 
     @cached_property
     def g_list(self) -> np.ndarray:
-        return 4 * self.z_list**2 * (self.energy - self.V_tot)
+        return 8 * self.z_list**2 * (self.energy - self.V_tot)
 
     def integrate(self) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation for the desired state.
