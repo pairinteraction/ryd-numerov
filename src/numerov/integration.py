@@ -14,7 +14,7 @@ def run_numerov_integration(
     g_list: Union[Sequence[float], np.ndarray],
     run_backward: bool = True,
 ) -> np.ndarray:
-    """Run the Numerov integration algorithm.
+    r"""Run the Numerov integration algorithm.
 
     This means, run the Numerov method, which is defined for
 
@@ -36,6 +36,7 @@ def run_numerov_integration(
 
     Returns:
         y_list: A numpy array of the values of the function y(x) at each x-value
+
     """
     y_list = np.zeros(steps, dtype=float)
     if run_backward:
@@ -65,7 +66,7 @@ def _python_run_numerov_integration(
     g_list: np.ndarray,
     run_backward: bool = True,
 ) -> np.ndarray:
-    """This is just a copy of the njit version above and only used for benchmarks."""
+    """Just a copy of the njit version above and only used for benchmarks."""
     y_list = np.zeros(steps, dtype=float)
     if run_backward:
         y_list[-1] = y0

@@ -2,6 +2,7 @@
 requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "Numerov"
 version = "0.0.1"
@@ -16,8 +17,8 @@ authors = [
 
 requires-python = ">= 3.9"
 dependencies = [
-    "numba>=0.60.0",
     "numpy>=2.0.2",
+    "numba>=0.60.0",
 ]
 
 classifiers = [
@@ -33,22 +34,34 @@ classifiers = [
 
 [project.optional-dependencies]
 test = [
-  "pytest",
-  "sympy"
+  "pytest>=8.0",
+  "sympy>=1.12.1",
+  "nbmake>=1.3",
 ]
-doc =[
-  "matplotlib",
+doc = [
+  "sympy>=1.12.1",
+  "matplotlib>=3.7.4",
 ]
 dev = [
   "pip",
   "ipykernel",
 ]
 
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+  "docs/examples",
+]
+addopts = [
+    "--import-mode=importlib",
+    "--nbmake",
+]
+
+
 [tool.ruff]
 line-length = 120
 target-version = "py39"
-select = ["F", "E", "B", "C", "W", "I", "UP", "TID25"]
-extend-ignore = ["E741", "C901", "B905"]
-
-[tool.ruff.flake8-tidy-imports]
-ban-relative-imports = "all"
+lint.select = ["F", "E", "B", "C", "W", "I", "UP", "TID25", "RUF", "ANN", "D"]
+lint.extend-ignore = ["E741", "C901", "B905", "RUF012", "ANN003", "ANN401", "D1", "D203", "D213"]
+lint.flake8-tidy-imports.ban-relative-imports = "all"

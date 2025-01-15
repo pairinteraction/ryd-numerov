@@ -24,7 +24,7 @@ from numerov.rydberg import RydbergState
         ("He+", 2, 0, True),
     ],
 )
-def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool):
+def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool) -> None:
     """Test that numerov integration matches sympy's analytical hydrogen wavefunctions."""
     # Setup atom
     atom = RydbergState(species, n, l, j=l + 0.5, run_backward=run_backward)

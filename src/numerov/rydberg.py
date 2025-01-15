@@ -50,6 +50,7 @@ class RydbergState:
         steps (default see `RydbergState.set_range`): The number of steps of the integration (use either steps or dx).
         parameter_dict (default: None): A dictionary containing the parameters for the effective potential.
         If not provided, the parameters are loaded from the database.
+
     """
 
     species: str
@@ -186,7 +187,7 @@ class RydbergState:
         return 4 * self.z_list**2 * (self.energy - self.V_tot)
 
     def integrate(self) -> None:
-        r"""Run the Numerov integration of the radial Schrödinger equation for the desired state,
+        r"""Run the Numerov integration of the radial Schrödinger equation for the desired state.
 
         Returns:
             z_list: A numpy array of the z-values at which the wavefunction was evaluated (z = sqrt(r/a_0))
@@ -198,8 +199,8 @@ class RydbergState:
                     \int_{0}^{\infty} r^2 |R(x)|^2 dr
                     = \int_{0}^{\infty} |\tilde{u}(x)|^2 dx = 1
                     = \int_{0}^{\infty} 2 z^2 |w(z)|^2 dz = 1
-        """
 
+        """
         if self.run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}

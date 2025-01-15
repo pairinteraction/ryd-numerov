@@ -28,6 +28,7 @@ class ModelPotentialParameters:
         a3: Model potential parameter a3
         a4: Model potential parameter a4
         rc: Core radius parameter
+
     """
 
     element: str
@@ -55,6 +56,7 @@ class RydbergRitzParameters:
         d6: Sixth-order quantum defect
         d8: Eighth-order quantum defect
         Ry: Rydberg constant
+
     """
 
     element: str
@@ -68,7 +70,7 @@ class RydbergRitzParameters:
     Ry: float
 
     def get_energy(self, n: int) -> float:
-        """Return the energy of a Rydberg state with principal quantum number n.
+        r"""Return the energy of a Rydberg state with principal quantum number n.
 
         The effective principal quantum number in quantum defect theory is defined as series expansion
 
@@ -90,6 +92,7 @@ class RydbergRitzParameters:
 
         Returns:
             Energy of the Rydberg state in atomic units.
+
         """
         delta_nlj = self.d0 + self.d2 / (n - self.d0) ** 2 + self.d4 / (n - self.d0) ** 4 + self.d6 / (n - self.d0) ** 6
         nstar = n - delta_nlj
@@ -100,12 +103,13 @@ class RydbergRitzParameters:
 class QuantumDefectsDatabase:
     """Interface to quantum defects SQL database."""
 
-    def __init__(self, database_path: Optional[str] = None):
+    def __init__(self, database_path: Optional[str] = None) -> None:
         """Initialize database connection.
 
         Args:
             database_path: Optional path to SQLite database file. If None, uses default
                 quantum_defects.sql in the same directory as this file.
+
         """
         if database_path is None:
             database_path = str(Path(__file__).parent / "quantum_defects.sql")
@@ -127,6 +131,7 @@ class QuantumDefectsDatabase:
 
         Raises:
             ValueError: If no parameters found for element
+
         """
         # Try exact match first
         cursor = self.conn.execute("SELECT * FROM model_potential WHERE element=? AND L=?", (element, L))
@@ -163,6 +168,7 @@ class QuantumDefectsDatabase:
 
         Raises:
             ValueError: If no parameters found for element
+
         """
         # Try exact match first
         cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE element=? AND L=? AND J=?", (element, L, J))
@@ -187,6 +193,6 @@ class QuantumDefectsDatabase:
             element=row[0], L=row[1], J=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
         )
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Close database connection on object deletion."""
         self.conn.close()
