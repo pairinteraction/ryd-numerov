@@ -6,7 +6,7 @@ from typing import Optional, TypeVar, Union
 import numpy as np
 
 from numerov.database import QuantumDefectsDatabase
-from numerov.integration import _python_run_numerov_integration, run_numerov_integration
+from numerov.numerov import _python_run_numerov_integration, run_numerov_integration
 from numerov.units import ureg
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
