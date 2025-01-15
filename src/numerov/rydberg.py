@@ -5,11 +5,18 @@ from typing import Optional, TypeVar, Union
 
 import numpy as np
 
+from numerov.database import QuantumDefectsDatabase
 from numerov.integration import _python_run_numerov_integration, run_numerov_integration
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 
 logger = logging.getLogger(__name__)
+
+
+Z_dict = {
+    "H": 1,
+    "He+": 2,
+}
 
 
 @dataclass
@@ -89,26 +96,27 @@ class RydbergState:
         self.a2 = self.parameter_dict["a2"]
         self.a3 = self.parameter_dict["a3"]
         self.a4 = self.parameter_dict["a4"]
-        self.alphac = self.parameter_dict["alphac"]
+        self.ac = self.parameter_dict["ac"]
         self.xc = self.parameter_dict["xc"]
 
     def _load_parameters_from_database(self) -> None:
-        self.Z = np.inf
-        self.energy = np.inf
-        self.a1 = self.a2 = self.a3 = self.a4 = np.inf
-        self.alphac = np.inf
-        self.xc = np.inf
+        db = QuantumDefectsDatabase()
+
+        model = db.get_model_potential(self.species, self.l)
+        self.Z = model.Z
+        self.a1, self.a2, self.a3, self.a4 = model.a1, model.a2, model.a3, model.a4
+        self.ac = model.ac
+        self.xc = model.rc
+
+        ritz = db.get_rydberg_ritz(self.species, self.l, self.j)
+        self.energy = ritz.get_energy(self.n)
 
     def _load_hydrogen_like_parameters(self) -> None:
-        self.Z = {"H": 1, "He+": 2}[self.species]
-        self.energy = -(self.Z**2) / (self.n**2)
+        self.Z = Z_dict[self.species]
         self.a1 = self.a2 = self.a3 = self.a4 = 0
         self.ac = 0
         self.xc = np.inf
-
-        self.alpha1, self.alpha2, self.alpha3, self.alpha4 = self.a1, self.a2, self.a3, self.a4
-        self.zc = self.xc
-        self.alphac = self.ac
+        self.energy = -(self.Z**2) / (self.n**2)
 
     def set_range(self) -> None:
         """Automatically determine sensful default values for xmin, xmax and dx.
@@ -150,7 +158,10 @@ class RydbergState:
 
     @cached_property
     def V_tot(self) -> np.ndarray:
-        z = self.z_list
+        return self.calc_V_tot(self.z_list)
+
+    def calc_V_tot(self, z_list: np.ndarray) -> np.ndarray:
+        z = z_list
         z2 = z**2
         z4 = z**4
         z6 = z**6
@@ -158,7 +169,7 @@ class RydbergState:
 
         Z_nl = 1 + (self.Z - 1) * np.exp(-self.a1 * z2) - z2 * (self.a3 + self.a4 * z2) * np.exp(-self.a2 * z2)
         V_c = -Z_nl / z2 * 2  # TODO check 2 in diemnsionless units
-        V_p = -self.alphac / (2 * z8) * (1 - np.exp(-((z / self.zc) ** 12)))
+        V_p = -self.ac / (2 * z8) * (1 - np.exp(-((z2 / self.xc) ** 6)))
         if self.species in ["H", "He+"]:  # TODO or self.l > 4 ???
             V_so = 0
         else:
