@@ -20,6 +20,7 @@ dependencies = [
     "numpy>=2.0.2",
     "numba>=0.60.0",
     "pint>=0.24.4",
+    "scipy>=1.13.1",
 ]
 
 classifiers = [

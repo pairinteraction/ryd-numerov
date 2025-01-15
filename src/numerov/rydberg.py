@@ -46,7 +46,7 @@ class RydbergState:
         in dimensionless units (x = r/a_0).
         xmax (default see `RydbergState.set_range`): The maximum value of the radial coordinate
         in dimensionless units (x = r/a_0).
-        dx (default see `RydbergState.set_range`): The step size of the integration in dimensionless units (x = r/a_0).
+        dz (default see `RydbergState.set_range`): The step size of the integration (z = r/a_0).
         steps (default see `RydbergState.set_range`): The number of steps of the integration (use either steps or dx).
         parameter_dict (default: None): A dictionary containing the parameters for the effective potential.
         If not provided, the parameters are loaded from the database.
@@ -64,7 +64,7 @@ class RydbergState:
 
     xmin: Optional[float] = None
     xmax: Optional[float] = None
-    dx: Optional[float] = None
+    dz: Optional[float] = None
     steps: Optional[int] = None
 
     parameter_dict: Optional[dict[str, float]] = None
@@ -120,7 +120,7 @@ class RydbergState:
         self.energy = -0.5 * (self.Z**2) / (self.n**2)
 
     def set_range(self) -> None:
-        """Automatically determine sensful default values for xmin, xmax and dx.
+        """Automatically determine sensful default values for xmin, xmax and dz.
 
         The x-values represent the raidal coordinate in units of the Bohr radius a_0 (x = r / a_0).
         Furthermore, we define z-values as z = sqrt(x) = sqrt(r / a_0), which is used for the integration.
@@ -141,19 +141,18 @@ class RydbergState:
             else:
                 self.xmax = 2 * self.n * (self.n + 6)
         zmin, zmax = np.sqrt(self.xmin), np.sqrt(self.xmax)
+        zmin = np.round(zmin, 2)  # TODO this is a hack for allowing integration of the matrix elements
 
-        if self.dx is not None and self.steps is not None:
-            raise ValueError("Use either dx or steps, not both.")
-        elif self.dx is None:
+        if self.dz is not None and self.steps is not None:
+            raise ValueError("Use either dz or steps, not both.")
+        elif self.dz is None:
             if self.steps is None:
                 self.steps = 10_000
             self.z_list = np.linspace(zmin, zmax, self.steps, endpoint=True)
-        elif self.dx is not None:
-            dz = np.sqrt(self.dx)
-            self.z_list = np.arange(zmin, zmax + dz, dz)
-
-        self.dz = self.z_list[1] - self.z_list[0]
-        self.steps = len(self.z_list)
+            self.dz = self.z_list[1] - self.z_list[0]
+        elif self.dz is not None:
+            self.z_list = np.arange(zmin, zmax + self.dz, self.dz)
+            self.steps = len(self.z_list)
 
         self.x_list = np.power(self.z_list, 2)
 
@@ -174,6 +173,8 @@ class RydbergState:
         if self.species not in ["H", "He+"]:  # TODO or self.l > 4 ???
             alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
             V_so = alpha / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
+            # if x[0] < self.xc:  # TODO check if this is necessary
+            #     V_so *= (x >= self.xc)
         V_l = self.l * (self.l + 1) / (2 * x2)
         V_sqrt = (3 / 32) / x2
         return V_c + V_p + V_so + V_l + V_sqrt
