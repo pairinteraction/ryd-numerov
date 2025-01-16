@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
+
 from numerov.units import ureg
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,10 @@ class ModelPotentialParameters:
     a3: float
     a4: float
     rc: float
+
+    def __post_init__(self) -> None:
+        if isinstance(self.rc, str) and self.rc.lower() == "inf":
+            self.rc = np.inf
 
 
 @dataclass

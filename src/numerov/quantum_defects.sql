@@ -21,6 +21,9 @@ BEGIN TRANSACTION;
 DROP TABLE IF EXISTS `model_potential`;
 CREATE TABLE `model_potential` ( `element` text,`L` int,`ac` real,`Z` int,`a1` real,`a2` real,`a3` real,`a4` real,`rc` real);
 
+-- Hydrogen atom
+INSERT INTO `model_potential` VALUES('H',0,'0',1,'0','0','0','0','inf');
+
 -- Phys. Rev. A 49, 982 (1994)
 INSERT INTO `model_potential` VALUES('Li',0,'0.1923',3,'2.47718079','1.84150932','-0.02169712','-0.11988362','0.61340824');
 INSERT INTO `model_potential` VALUES('Li',1,'0.1923',3,'3.45414648','2.55151080','-0.21646561','-0.06990078','0.61566441');
@@ -65,6 +68,13 @@ INSERT INTO `model_potential` VALUES('Sr3',3,'0',1,'1','1','0','0','1');
 
 DROP TABLE IF EXISTS `rydberg_ritz`;
 CREATE TABLE `rydberg_ritz` ( `element` text,`L` int,`J` real,`d0` real,`d2` real,`d4` real,`d6` real,`d8` real,`Ry` real);
+
+-- Hydrogen atom (ignoring the proton mass)
+INSERT INTO `rydberg_ritz` VALUES('H',0,'0.5','0','0','0','0','0','109737.3156816'); -- Use Ry_inf
+
+-- Hydrogen atom (including the proton mass)
+-- INSERT INTO `rydberg_ritz` VALUES('H_exact',0,'0.5','0','0','0','0','0','109677.5834028035');  -- Ry_H = m_p / (m_e + m_p) * Ry_inf
+
 
 -- [1] Phys. Rev. A 34, 2889 (1986) (Li 7)
 -- [2] T. F. Gallagher, ``Rydberg Atoms'', Cambridge University Press (2005), ISBN: 978-0-52-102166-1

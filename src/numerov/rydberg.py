@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Optional, TypeVar, Union
+from typing import TypeVar, Union
 
 import numpy as np
 
@@ -12,12 +12,6 @@ from numerov.units import ureg
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 
 logger = logging.getLogger(__name__)
-
-
-Z_dict = {
-    "H": 1,
-    "He+": 2,
-}
 
 
 @dataclass
@@ -48,8 +42,6 @@ class RydbergState:
         in dimensionless units (x = r/a_0).
         dz (default see `RydbergState.set_range`): The step size of the integration (z = r/a_0).
         steps (default see `RydbergState.set_range`): The number of steps of the integration (use either steps or dx).
-        parameter_dict (default: None): A dictionary containing the parameters for the effective potential.
-        If not provided, the parameters are loaded from the database.
 
     Attributes:
         z_list: A equidistant numpy array of the z-values at which the wavefunction is evaluated (z = sqrt(r/a_0)).
@@ -66,6 +58,8 @@ class RydbergState:
     l: int
     j: float
 
+    add_spin_orbit: bool = True
+
     run_backward: bool = True
     epsilon_u: float = 1e-10
     _use_njit: bool = True
@@ -74,8 +68,6 @@ class RydbergState:
     xmax: float = np.nan
     dz: float = np.nan
     steps: int = np.nan
-
-    parameter_dict: Optional[dict[str, float]] = None
 
     def __post_init__(self) -> None:
         self.s: Union[int, float]
@@ -86,46 +78,25 @@ class RydbergState:
         else:
             self.s = 0.5
 
-        assert self.l <= self.n - 1, "l must be smaller than n - 1"
+        assert self.n >= 1, "n must be larger than 0"
+        assert 0 <= self.l <= self.n - 1, "l must be between 0 and n - 1"
         assert self.j >= abs(self.l - self.s) and self.j <= self.l + self.s, "j must be between l - s and l + s"
+        assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
 
-        if self.parameter_dict is not None:
-            self._load_parameters_from_dict()
-        elif self.species in ["H", "He+"]:
-            self._load_hydrogen_like_parameters()
-        else:
-            self._load_parameters_from_database()
+        self.load_parameters_from_database()
         self.set_range()
 
-    def _load_parameters_from_dict(self) -> None:
-        assert self.parameter_dict is not None
-        self.Z = self.parameter_dict["Z"]
-        self.energy = self.parameter_dict["energy"]
-        self.a1 = self.parameter_dict["a1"]
-        self.a2 = self.parameter_dict["a2"]
-        self.a3 = self.parameter_dict["a3"]
-        self.a4 = self.parameter_dict["a4"]
-        self.ac = self.parameter_dict["ac"]
-        self.xc = self.parameter_dict["xc"]
+    def load_parameters_from_database(self) -> None:
+        qdd = QuantumDefectsDatabase()
 
-    def _load_parameters_from_database(self) -> None:
-        db = QuantumDefectsDatabase()
-
-        model = db.get_model_potential(self.species, self.l)
+        model = qdd.get_model_potential(self.species, self.l)
         self.Z = model.Z
         self.a1, self.a2, self.a3, self.a4 = model.a1, model.a2, model.a3, model.a4
         self.ac = model.ac
         self.xc = model.rc
 
-        ritz = db.get_rydberg_ritz(self.species, self.l, self.j)
+        ritz = qdd.get_rydberg_ritz(self.species, self.l, self.j)
         self.energy = ritz.get_energy(self.n)
-
-    def _load_hydrogen_like_parameters(self) -> None:
-        self.Z = Z_dict[self.species]
-        self.a1 = self.a2 = self.a3 = self.a4 = 0
-        self.ac = 0
-        self.xc = np.inf
-        self.energy = -0.5 * (self.Z**2) / (self.n**2)
 
     def set_range(self) -> None:
         """Automatically determine sensful default values for xmin, xmax and dz.
@@ -182,7 +153,7 @@ class RydbergState:
         V_c = -Z_nl / x
         V_p = -self.ac / (2 * x4) * (1 - np.exp(-((x / self.xc) ** 6)))
         V_so = 0
-        if self.species not in ["H", "He+"]:  # TODO or self.l > 4 ???
+        if self.add_spin_orbit:  # TODO or self.l > 4 ???
             alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
             V_so = alpha / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
             # if x[0] < self.xc:  # TODO check if this is necessary
