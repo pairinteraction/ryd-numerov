@@ -11,17 +11,25 @@ logger = logging.getLogger(__name__)
 def radial_matrix_element(
     state1: RydbergState,
     state2: RydbergState,
-    r_power: int = 1,
+    r_power: int = 0,
 ) -> float:
-    """Calculate the radial matrix element between two Rydberg states.
+    r"""Calculate the radial matrix element between two Rydberg states.
 
-    Computes the integral of R1(r) * r^power * R2(r) * r^2 dr
-    where R1 and R2 are the radial wavefunctions of the two states.
+    Computes the integral
+
+    .. math::
+        \int_{0}^{\infty} dr r^2 r^\kappa R_1(r) R_2(r)
+        = a_0^\kappa \int_{0}^{\infty} dx x^\kappa \tilde{u}_1(x) \tilde{u}_2(x)
+        = a_0^\kappa \int_{0}^{\infty} dz 2 z^{2 + 2\kappa} w_1(z) w_2(z)
+
+    where R_1 and R_2 are the radial wavefunctions of the two states
+    and w(z) = z^{-1/2} \tilde{u}(z^2) = (r/_a_0)^{1/4} \sqrt{a_0} r R(r).
 
     Args:
         state1: First Rydberg state
         state2: Second Rydberg state
-        r_power: Power of r in the matrix element (default=1)
+        r_power: Power of r in the matrix element
+        (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
 
     Returns:
         float: The radial matrix element
@@ -64,9 +72,8 @@ def radial_matrix_element(
     if not np.isclose(dz1, dz2):
         raise ValueError("Both states must be integrated with the same step size")
 
-    # For w(z) = z^(-1/2) * u(z^2), the matrix element becomes:
-    # \int (w1/z^(1/2)) * (z^2)^(power+2) * (w2/z^(1/2)) * 2z dz
-    integrand = 2 * wf1 * np.power(z1**2, r_power + 2) * wf2 * z1
+    # integrand in terms of z and w(z), see docstring
+    integrand = 2 * np.power(z1, 2 * r_power + 2) * wf1 * wf2
 
     # Integrate using Simpson's rule
     return float(scipy.integrate.simpson(integrand, z1))
