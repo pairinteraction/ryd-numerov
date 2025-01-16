@@ -17,10 +17,10 @@ authors = [
 
 requires-python = ">= 3.9"
 dependencies = [
-    "numpy>=2.0.2",
+    "numpy>=1.22",
     "numba>=0.60.0",
-    "pint>=0.24.4",
-    "scipy>=1.13.1",
+    "pint>=0.19",
+    "scipy>=1.8",
 ]
 
 classifiers = [
@@ -43,6 +43,9 @@ test = [
 doc = [
   "sympy>=1.12.1",
   "matplotlib>=3.7.4",
+]
+benchmark = [
+  "pairinteraction<1.0",
 ]
 dev = [
   "pip",
