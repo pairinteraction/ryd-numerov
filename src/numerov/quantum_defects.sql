@@ -22,7 +22,7 @@ DROP TABLE IF EXISTS `model_potential`;
 CREATE TABLE `model_potential` ( `element` text,`L` int,`ac` real,`Z` int,`a1` real,`a2` real,`a3` real,`a4` real,`rc` real);
 
 -- Hydrogen atom
-INSERT INTO `model_potential` VALUES('H',0,'0',1,'0','0','0','0','inf');
+INSERT INTO `model_potential` VALUES('H',0,'0',1,'0','0','0','0','0');
 
 -- Phys. Rev. A 49, 982 (1994)
 INSERT INTO `model_potential` VALUES('Li',0,'0.1923',3,'2.47718079','1.84150932','-0.02169712','-0.11988362','0.61340824');
