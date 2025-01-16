@@ -46,6 +46,7 @@ doc = [
 ]
 benchmark = [
   "pairinteraction<1.0",
+  "arc-alkali-rydberg-calculator>=3.7.0",
 ]
 dev = [
   "pip",
