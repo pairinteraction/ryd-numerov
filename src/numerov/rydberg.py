@@ -255,3 +255,18 @@ class RydbergState:
 
         self.u_list = np.sqrt(self.z_list) * self.w_list
         self.R_list = self.u_list / self.x_list
+
+    def calc_classical_zmin(self) -> float:
+        """Calculate the classical turning point z_min.
+
+        Calculate the classical turning point z_min, where the total energy equals the effective potential.
+
+        Returns:
+            classical_zmin: The classical turning point z_min in dimensionless units (z = sqrt(r/a_0)).
+
+        """
+        z = np.linspace(self.dz, self.z_list[-1], 10_000)
+        V_tot = self.calc_V_tot(z)
+        arg = np.argwhere(V_tot < self.energy)[0][0]
+        self.classical_zmin = z[arg]
+        return self.classical_zmin
