@@ -51,6 +51,14 @@ class RydbergState:
         parameter_dict (default: None): A dictionary containing the parameters for the effective potential.
         If not provided, the parameters are loaded from the database.
 
+    Attributes:
+        z_list: A equidistant numpy array of the z-values at which the wavefunction is evaluated (z = sqrt(r/a_0)).
+        x_list: A numpy array of the corresponding x-values at which the wavefunction is evaluated (x = r/a_0).
+        w_list: The dimensionless and scaled wavefunction
+            w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \sqrt(a_0) r R(r) evaluated at the z_list values.
+        u_list: The corresponding dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r).
+        R_list: The corresponding dimensionless radial wavefunction \tilde{R}(r) = a_0^{-3/2} R(r).
+
     """
 
     species: str
@@ -62,10 +70,10 @@ class RydbergState:
     epsilon_u: float = 1e-10
     _use_njit: bool = True
 
-    xmin: Optional[float] = None
-    xmax: Optional[float] = None
-    dz: Optional[float] = None
-    steps: Optional[int] = None
+    xmin: float = np.nan
+    xmax: float = np.nan
+    dz: float = np.nan
+    steps: int = np.nan
 
     parameter_dict: Optional[dict[str, float]] = None
 
@@ -129,28 +137,32 @@ class RydbergState:
 
 
         """
-        if self.xmin is None:
+        if not np.isnan(self.dz) and not np.isnan(self.steps):
+            raise ValueError("Use either dz or steps, not both.")
+        elif np.isnan(self.dz) and np.isnan(self.steps):
+            self.dz = 0.01
+
+        if np.isnan(self.xmin):
             if not self.run_backward or self.l == 0:
                 self.xmin = 1e-5
             else:  # self.run_backward
                 xmin = self.n * self.n - self.n * np.sqrt(self.n * self.n - (self.l - 1) * (self.l - 1))
+                xmin = xmin * 0.8  # TODO how to choose xmin?
                 self.xmin = max(0.1, xmin)
-        if self.xmax is None:
+        if np.isnan(self.xmax):
             if self.run_backward:
                 self.xmax = 2 * self.n * (self.n + 25)
             else:
                 self.xmax = 2 * self.n * (self.n + 6)
         zmin, zmax = np.sqrt(self.xmin), np.sqrt(self.xmax)
-        zmin = np.round(zmin, 2)  # TODO this is a hack for allowing integration of the matrix elements
+        if not np.isnan(self.dz):
+            zmin = (zmin // self.dz) * self.dz  # TODO this is a hack for allowing integration of the matrix elements
+            zmin = max(self.dz, zmin)  # dont allow zmin = 0
 
-        if self.dz is not None and self.steps is not None:
-            raise ValueError("Use either dz or steps, not both.")
-        elif self.dz is None:
-            if self.steps is None:
-                self.steps = 10_000
+        if not np.isnan(self.steps):
             self.z_list = np.linspace(zmin, zmax, self.steps, endpoint=True)
             self.dz = self.z_list[1] - self.z_list[0]
-        elif self.dz is not None:
+        else:  # self.dz is not nan
             self.z_list = np.arange(zmin, zmax + self.dz, self.dz)
             self.steps = len(self.z_list)
 
@@ -219,7 +231,25 @@ class RydbergState:
         sum_large_z = np.sqrt(2 * np.sum(self.w_list[id:] ** 2 * self.z_list[id:] ** 2) * self.dz)
         if sum_large_z > 1e-3:
             logger.warning(f"xmax={self.xmax} was chosen too small ({sum_large_z=}), increase xmax.")
-            # raise ValueError(f"xmax={self.xmax} was chosen too small ({sum_large_z=}), increase xmax.")
+
+        # Check that xmin was chosen good enough
+        id = int(0.01 * self.steps)
+        sum_small_z = np.sqrt(2 * np.sum(self.w_list[:id] ** 2 * self.z_list[:id] ** 2) * self.dz)
+        if sum_small_z > 1e-3:
+            logger.warning(f"xmin={self.xmin} was not chosen good ({sum_small_z=}), change xmin.")
+            if self.w_list[0] < 0:
+                logger.warning(
+                    "The wavefunction is negative at the inner boundary, setting all initial negative values to 0."
+                )
+                logger.warning(f"{self.w_list=}")
+                argmin = np.argwhere(self.w_list > 0)[0][0]
+                logger.warning(f"{argmin=}")
+                self.w_list[:argmin] = 0
+                logger.warning(f"{self.w_list=}")
+
+                # normalize the wavefunction again
+                norm = np.sqrt(2 * np.sum(self.w_list**2 * self.z_list**2) * self.dz)
+                self.w_list /= norm
 
         self.u_list = np.sqrt(self.z_list) * self.w_list
         self.R_list = self.u_list / self.x_list
