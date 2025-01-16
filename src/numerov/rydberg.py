@@ -147,7 +147,7 @@ class RydbergState:
                 self.xmin = 1e-5
             else:  # self.run_backward
                 xmin = self.n * self.n - self.n * np.sqrt(self.n * self.n - (self.l - 1) * (self.l - 1))
-                xmin = xmin * 0.8  # TODO how to choose xmin?
+                xmin = xmin * 0.7  # TODO how to choose xmin?
                 self.xmin = max(0.1, xmin)
         if np.isnan(self.xmax):
             if self.run_backward:
@@ -236,20 +236,22 @@ class RydbergState:
         id = int(0.01 * self.steps)
         sum_small_z = np.sqrt(2 * np.sum(self.w_list[:id] ** 2 * self.z_list[:id] ** 2) * self.dz)
         if sum_small_z > 1e-3:
-            logger.warning(f"xmin={self.xmin} was not chosen good ({sum_small_z=}), change xmin.")
+            logger.info(f"xmin={self.xmin} was not chosen good ({sum_small_z=}), change xmin.")
             if self.w_list[0] < 0:
-                logger.warning(
+                logger.info(
                     "The wavefunction is negative at the inner boundary, setting all initial negative values to 0."
                 )
-                logger.warning(f"{self.w_list=}")
                 argmin = np.argwhere(self.w_list > 0)[0][0]
-                logger.warning(f"{argmin=}")
                 self.w_list[:argmin] = 0
-                logger.warning(f"{self.w_list=}")
 
                 # normalize the wavefunction again
                 norm = np.sqrt(2 * np.sum(self.w_list**2 * self.z_list**2) * self.dz)
                 self.w_list /= norm
+            else:
+                logger.warning(
+                    f"xmin={self.xmin} was not chosen good ({sum_small_z=}), "
+                    "and the wavefunction is positive at the inner boundary, so we could not fix it."
+                )
 
         self.u_list = np.sqrt(self.z_list) * self.w_list
         self.R_list = self.u_list / self.x_list
