@@ -341,6 +341,7 @@ class RydbergState:
             logger.warning(f"xmax={self.xmax} was chosen too small ({sum_large_z=}), increase xmax.")
 
         # Check that xmin was chosen good enough
+        self.z_cutoff = 0
         id = int(0.01 * self.steps)
         sum_small_z = np.sqrt(2 * np.sum(self.w_list[:id] ** 2 * self.z_list[:id] ** 2) * self.dz)
         if sum_small_z > 1e-3:
@@ -350,6 +351,7 @@ class RydbergState:
                     "The wavefunction is negative at the inner boundary, setting all initial negative values to 0."
                 )
                 argmin = np.argwhere(self.w_list > 0)[0][0]
+                self.z_cutoff = self.z_list[argmin]
                 self.w_list[:argmin] = 0
 
                 # normalize the wavefunction again
@@ -364,17 +366,60 @@ class RydbergState:
         self.u_list = np.sqrt(self.z_list) * self.w_list
         self.R_list = self.u_list / self.x_list
 
-    def calc_classical_zmin(self) -> float:
-        """Calculate the classical turning point z_min.
+    @property
+    def zmin(self) -> float:
+        """The minimum value of the radial coordinate in dimensionless units (z = sqrt(r/a_0))."""
+        return self.z_list[0]
 
-        Calculate the classical turning point z_min, where the total energy equals the effective potential.
+    def calc_hydrogen_z_turning_point(self) -> float:
+        r"""Calculate the hydrogen turning point z_i for the Rydberg state.
+
+        The hydrogen turning point z_i = sqrt(r_i / a_0) is defined via the classical hydrogen turning point
+
+        .. math::
+            r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
+
+        This is the inner radius, for which in hydrogen V_c(r_i) + V_l(r_i) = E.
 
         Returns:
-            classical_zmin: The classical turning point z_min in dimensionless units (z = sqrt(r/a_0)).
+            z_i: The hydrogen turning point z_i in dimensionless units (z = sqrt(r/a_0)).
 
         """
-        z = np.linspace(self.dz, self.z_list[-1], 10_000)
-        V_tot = self.calc_V_phys(z)
-        arg = np.argwhere(V_tot < self.energy)[0][0]
-        self.classical_zmin = z[arg]
-        return self.classical_zmin
+        x_i = self.n**2 - self.n * np.sqrt(self.n**2 - self.l * (self.l + 1))
+        return np.sqrt(x_i)
+
+    def calc_z_turning_point(self) -> float:
+        """Calculate the classical turning point z_min.
+
+        Calculate the classical turning point z_min = sqrt(r_min / a_0),
+        where the total energy equals the effective physical potential:
+
+        .. math::
+            E = V_c(r_i) + V_l(r_i) + V_{l}(r_i) + V_{so}(r_i)
+
+        Returns:
+            z_min: The classical turning point z_min in dimensionless units (z = sqrt(r/a_0)).
+
+        """
+        z_list = np.arange(self.dz, self.z_list[-1], self.dz)
+        V_phys = self.calc_V_phys(z_list)
+        arg = np.argwhere(V_phys < self.energy)[0][0]
+        return z_list[arg]
+
+    def calc_z_V_eq_0(self) -> float:
+        """Calculate the value of z where the effective physical potential equals zero.
+
+        Calculate the value of z = sqrt(r / a_0) where the effective physical potential equals zero:
+
+        .. math::
+            0 = V_c(r_i) + V_l(r_i) + V_{l}(r_i) + V_{so}(r_i)
+
+        Returns:
+            z: The value of z where the effective physical potential equals zero
+            in dimensionless units (z = sqrt(r/a_0)).
+
+        """
+        z_list = np.arange(self.dz, self.z_list[-1], self.dz)
+        V_phys = self.calc_V_phys(z_list)
+        arg = np.argwhere(V_phys < 0)[0][0]
+        return z_list[arg]
