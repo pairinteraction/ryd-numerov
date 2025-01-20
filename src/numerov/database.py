@@ -12,8 +12,6 @@ from typing import Optional
 
 import numpy as np
 
-from numerov.units import ureg
-
 logger = logging.getLogger(__name__)
 
 
@@ -48,6 +46,11 @@ class ModelPotentialParameters:
         if isinstance(self.rc, str) and self.rc.lower() == "inf":
             self.rc = np.inf
 
+    @property
+    def xc(self) -> float:
+        """Core radius parameter in dimensionless units."""
+        return self.rc
+
 
 @dataclass
 class RydbergRitzParameters:
@@ -76,56 +79,23 @@ class RydbergRitzParameters:
     d8: float
     Ry: float
 
-    def get_energy(self, n: int) -> float:
-        r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
-
-        The effective principal quantum number in quantum defect theory is defined as series expansion
-
-        .. math::
-            n^* = n - \\delta_{nlj}
-
-        where
-
-        .. math::
-            \\delta_{nlj} = d_0 + \frac{d_2}{(n - d_0)^2} + \frac{d_4}{(n - d_0)^4} + \frac{d_6}{(n - d_0)^6}
-
-        is the quantum defect. The energy of the Rydberg state is then given by
-
-        .. math::
-            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\\infty} \frac{1}{n^*}
-
-        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
-
-        Args:
-            n: Principal quantum number of the state to calculate the energy for.
-
-        Returns:
-            Energy of the Rydberg state in atomic units.
-
-        """
-        Ry_inf = ureg.Quantity(1, "rydberg_constant").to("1/cm").magnitude
-        delta_nlj = self.d0 + self.d2 / (n - self.d0) ** 2 + self.d4 / (n - self.d0) ** 4 + self.d6 / (n - self.d0) ** 6
-        nstar = n - delta_nlj
-        E_nlj = -0.5 * (self.Ry / Ry_inf) / nstar**2
-        return E_nlj
-
 
 class QuantumDefectsDatabase:
     """Interface to quantum defects SQL database."""
 
-    def __init__(self, database_path: Optional[str] = None) -> None:
+    def __init__(self, qdd_path: Optional[str] = None) -> None:
         """Initialize database connection.
 
         Args:
-            database_path: Optional path to SQLite database file. If None, uses default
+            qdd_path: Optional path to SQLite database file. If None, use the default
                 quantum_defects.sql in the same directory as this file.
 
         """
-        if database_path is None:
-            database_path = str(Path(__file__).parent / "quantum_defects.sql")
+        if qdd_path is None:
+            qdd_path = str(Path(__file__).parent / "quantum_defects.sql")
 
         self.conn = sqlite3.connect(":memory:")
-        with open(database_path) as f:
+        with open(qdd_path) as f:
             self.conn.executescript(f.read())
 
     def get_model_potential(self, element: str, L: int) -> ModelPotentialParameters:

@@ -1,12 +1,11 @@
 import logging
 from dataclasses import dataclass
-from typing import TypeVar, Union
+from typing import Optional, TypeVar, Union
 
 import numpy as np
 
-from numerov.database import QuantumDefectsDatabase
+from numerov.model_potential import ModelPotential
 from numerov.numerov import _python_run_numerov_integration, run_numerov_integration
-from numerov.units import ureg
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 
@@ -57,8 +56,6 @@ class RydbergState:
     l: int
     j: float
 
-    add_spin_orbit: bool = True
-
     xmin: float = np.nan
     xmax: float = np.nan
     dz: float = np.nan
@@ -82,24 +79,30 @@ class RydbergState:
         assert self.j >= abs(self.l - self.s) and self.j <= self.l + self.s, "j must be between l - s and l + s"
         assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
 
-        self.load_parameters_from_database()
         self.set_range()
 
-    def load_parameters_from_database(self) -> None:
-        """Load the model potential and Rydberg-Ritz parameters from the QuantumDefectsDatabase.
+    @property
+    def energy(self) -> float:
+        """The energy of the Rydberg state in atomic units."""
+        return self.model.energy
 
-        For more details see `database.QuantumDefectsDatabase`.
+    @property
+    def model(self) -> ModelPotential:
+        if not hasattr(self, "_model"):
+            self.create_model()
+        return self._model
+
+    def create_model(self, qdd_path: Optional[str] = None, add_spin_orbit: bool = True) -> None:
+        """Create the model potential for the Rydberg state.
+
+        Args:
+            qdd_path: Optional path to a SQLite database file containing the quantum defects.
+            Default None, i.e. use the default quantum_defects.sql.
+            add_spin_orbit: Whether to include the spin-orbit interaction in the model potential.
+            Defaults to True.
+
         """
-        qdd = QuantumDefectsDatabase()
-
-        model = qdd.get_model_potential(self.species, self.l)
-        self.Z = model.Z
-        self.a1, self.a2, self.a3, self.a4 = model.a1, model.a2, model.a3, model.a4
-        self.ac = model.ac
-        self.xc = model.rc
-
-        ritz = qdd.get_rydberg_ritz(self.species, self.l, self.j)
-        self.energy = ritz.get_energy(self.n)
+        self._model = ModelPotential(self, qdd_path, add_spin_orbit)
 
     def set_range(self) -> None:
         """Automatically determine sensful default values for xmin, xmax and dz.
@@ -125,7 +128,7 @@ class RydbergState:
                 self.xmin = max(0.1, xmin)
         if np.isnan(self.xmax):
             if self.run_backward:
-                self.xmax = 2 * self.n * (self.n + 25)
+                self.xmax = 2 * self.n * (self.n + 25)  # TODO 15 like arc and pi?
             else:
                 self.xmax = 2 * self.n * (self.n + 6)
         zmin, zmax = np.sqrt(self.xmin), np.sqrt(self.xmax)
@@ -141,166 +144,6 @@ class RydbergState:
             self.steps = len(self.z_list)
 
         self.x_list = np.power(self.z_list, 2)
-
-    def calc_V_c(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the core potential V_c(z) in atomic units.
-
-        The core potential is given as
-
-        .. math::
-            V_c(z) = -Z_{nl} / x
-
-        where z = \sqrt{x} = \sqrt{r / a_0} and Z_{nl} is the effective nuclear charge
-
-        .. math::
-            Z_{nl} = 1 + (Z - 1) \exp(-a_1 x) - x (a_3 + a_4 x) \exp(-a_2 x)
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_c: The core potential V_c(z) in atomic units.
-
-        """
-        x = z**2
-        Z_nl = 1 + (self.Z - 1) * np.exp(-self.a1 * x) - x * (self.a3 + self.a4 * x) * np.exp(-self.a2 * x)
-        V_c = -Z_nl / x
-        return V_c
-
-    def calc_V_p(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the core polarization potential V_p(z) in atomic units.
-
-        The core polarization potential is given as
-
-        .. math::
-            V_p(z) = -\frac{a_c}{2x^4} (1 - e^{-x^6/x_c**6})
-
-        where z = \sqrt{x} = \sqrt{r / a_0}, a_c is the core polarizability and x_c is a cutoff radius.
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_p: The polarization potential V_p(z) in atomic units.
-
-        """
-        if self.ac == 0:
-            return np.zeros_like(z)
-        x4 = z**8
-        x_xc_6 = (z / np.sqrt(self.xc)) ** 12
-        V_p = -self.ac / (2 * x4) * (1 - np.exp(-x_xc_6))
-        return V_p
-
-    def calc_V_so(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the spin-orbit coupling potential V_so(z) in atomic units.
-
-        The spin-orbit coupling potential is given as
-
-        .. math::
-            V_{so}(z) = \frac{\alpha}{4x^3} [j(j+1) - l(l+1) - s(s+1)]
-
-        where z = \sqrt{x} = \sqrt{r / a_0}, \alpha is the fine structure constant,
-        j is the total angular momentum quantum number, l is the orbital angular momentum
-        quantum number, and s is the spin quantum number.
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_so: The spin-orbit coupling potential V_so(z) in atomic units.
-
-        """
-        # TODO pairinteraction old:
-        # # if self.l > 4 then return 0?
-        # # alpha * alpha isntead of one alpha
-        # TODO ARC
-        # # if x[0] < self.xc return 0 (for those x)
-        x3 = z**6
-        alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
-        V_so = alpha / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
-        return V_so
-
-    def calc_V_l(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the centrifugal potential V_l(z) in atomic units.
-
-        The centrifugal potential is given as
-
-        .. math::
-            V_l(z) = \frac{l(l+1)}{2x^2}
-
-        where z = \sqrt{x} = \sqrt{r / a_0} and l is the orbital angular momentum quantum number.
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_l: The centrifugal potential V_l(z) in atomic units.
-
-        """
-        x2 = z**4
-        V_l = self.l * (self.l + 1) / (2 * x2)
-        return V_l
-
-    def calc_V_sqrt(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the effective potential V_sqrt(z) from the sqrt transformation (u(x) -> w(z)) in atomic units.
-
-        The sqrt transformation potential arises from the transformation from the wavefunction u(x) to w(z),
-        where z = \sqrt{x} = \sqrt{r / a_0} and w(z) = z^{-1/2} u(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r).
-        Due to the transformation, an additional term is added to the radial Schrödinger equation,
-        which can be written as effective potential V_{sqrt}(z) and is given by
-
-        .. math::
-            V_{sqrt}(z) = \frac{3}{32x^2}
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_sqrt: The sqrt transformation potential V_sqrt(z) in atomic units.
-
-        """
-        x2 = z**4
-        V_sqrt = (3 / 32) / x2
-        return V_sqrt
-
-    def calc_V_phys(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the total physical potential V_phys(z) in atomic units.
-
-        The total physical potential is the sum of the core potential, polarization potential,
-        centrifugal potential, and optionally the spin-orbit coupling:
-
-        .. math::
-            V_{phys}(z) = V_c(z) + V_p(z) + V_l(z) + V_{so}(z)
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_phys: The total physical potential V_phys(z) in atomic units.
-
-        """
-        V_tot = self.calc_V_c(z) + self.calc_V_p(z) + self.calc_V_l(z)
-        if self.add_spin_orbit:
-            V_tot += self.calc_V_so(z)
-        return V_tot
-
-    def calc_V_tot(self, z: np.ndarray) -> np.ndarray:
-        r"""Calculate the total potential V_tot(z) in atomic units.
-
-        The total effective potential includes all physical and non-physical potentials:
-
-        .. math::
-            V_{tot}(z) = V_c(z) + V_p(z) + V_l(z) + V_{so}(z) + V_{sqrt}(z)
-
-        Args:
-            z: The scaled dimensionless radial coordinate z = \sqrt{r / a_0}, for which to calculate potential.
-
-        Returns:
-            V_tot: The total potential V_tot(z) in atomic units.
-
-        """
-        V_tot = self.calc_V_phys(z) + self.calc_V_sqrt(z)
-        return V_tot
 
     def integrate(self) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation for the desired state.
@@ -324,7 +167,7 @@ class RydbergState:
         else:  # forward
             y0, y1 = 0, self.epsilon_u
 
-        g_list = 8 * self.z_list**2 * (self.energy - self.calc_V_tot(self.z_list))
+        g_list = 8 * self.z_list**2 * (self.model.energy - self.model.calc_V_tot(self.x_list))
         if self._use_njit:
             self.w_list = run_numerov_integration(self.dz, self.steps, y0, y1, g_list, self.run_backward)
         else:
@@ -402,8 +245,8 @@ class RydbergState:
 
         """
         z_list = np.arange(self.dz, self.z_list[-1], self.dz)
-        V_phys = self.calc_V_phys(z_list)
-        arg = np.argwhere(V_phys < self.energy)[0][0]
+        V_phys = self.model.calc_V_phys(z_list**2)
+        arg = np.argwhere(V_phys < self.model.energy)[0][0]
         return z_list[arg]
 
     def calc_z_V_eq_0(self) -> float:
@@ -420,6 +263,6 @@ class RydbergState:
 
         """
         z_list = np.arange(self.dz, self.z_list[-1], self.dz)
-        V_phys = self.calc_V_phys(z_list)
+        V_phys = self.model.calc_V_phys(z_list**2)
         arg = np.argwhere(V_phys < 0)[0][0]
         return z_list[arg]
