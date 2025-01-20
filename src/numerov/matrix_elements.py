@@ -39,7 +39,7 @@ def radial_matrix_element(
 
     """
     return radial_matrix_element_from_w_z(
-        state1.z_list, state1.w_list, state2.z_list, state2.w_list, r_power, integration_method
+        state1.grid.zlist, state1.wlist, state2.grid.zlist, state2.wlist, r_power, integration_method
     )
 
 
