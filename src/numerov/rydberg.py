@@ -130,6 +130,7 @@ class RydbergState:
                 xmin = 0.7 * xmin
 
         zmin = np.sqrt(xmin)
+        zmin = max(zmin, 3 * (dz if dz is not None else 1e-2))
         if dz is not None:
             zmin = (zmin // dz) * dz  # TODO this is a hack for allowing integration of the matrix elements
 

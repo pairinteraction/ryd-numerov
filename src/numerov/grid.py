@@ -37,7 +37,7 @@ class Grid:
         self.zmin = zmin
         self.zmax = zmax
         self.dz = dz
-        self.zlist = np.arange(zmin, zmax + dz, dz)
+        self.zlist = np.arange(zmin, zmax + dz * 1e-3, dz)
         self.steps = len(self.zlist)
 
         if steps is not None and self.steps != steps:
