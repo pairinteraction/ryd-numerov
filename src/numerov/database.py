@@ -12,6 +12,8 @@ from typing import Optional
 
 import numpy as np
 
+from numerov.units import ureg
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,6 +68,7 @@ class RydbergRitzParameters:
         d6: Sixth-order quantum defect.
         d8: Eighth-order quantum defect.
         Ry: Rydberg constant in cm^{-1}
+        Ry_inf: Rydberg constant in cm^{-1} for infinite nuclear mass.
 
     """
 
@@ -78,6 +81,20 @@ class RydbergRitzParameters:
     d6: float
     d8: float
     Ry: float
+
+    Ry_inf: float = ureg.Quantity(1, "rydberg_constant").to("1/cm").magnitude
+
+    @property
+    def mu(self) -> float:
+        r"""Return the reduced mass in atomic units, i.e. return m_{Core} / (m_{Core} + m_e).
+
+        To get the reduced mass in atomic units, we use the species dependent Rydberg constant
+
+        .. math::
+            R_{m_{Core}} / R_{\infty} = \frac{m_{Core}}{m_{Core} + m_e}
+
+        """
+        return self.Ry / self.Ry_inf
 
 
 class QuantumDefectsDatabase:

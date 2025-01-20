@@ -56,8 +56,6 @@ class ModelPotential:
             V_c: The core potential V_c(x) in atomic units.
 
         """
-        # if self.state.l >= 4:  # TODO check if we want this
-        #     return -1 / x
         params = self.model_params
         Z_nl = 1 + (params.Z - 1) * np.exp(-params.a1 * x) - x * (params.a3 + params.a4 * x) * np.exp(-params.a2 * x)
         V_c = -Z_nl / x
@@ -81,7 +79,7 @@ class ModelPotential:
 
         """
         params = self.model_params
-        if params.ac == 0:  # TODO or l >= 4 like arc?
+        if params.ac == 0:
             return np.zeros_like(x)
         V_p = -params.ac / (2 * x**4) * (1 - np.exp(-((x / params.xc) ** 6)))
         return V_p
@@ -92,7 +90,7 @@ class ModelPotential:
         The spin-orbit coupling potential is given as
 
         .. math::
-            V_{so}(x) = \frac{\alpha}{4x^3} [j(j+1) - l(l+1) - s(s+1)]
+            V_{so}(x > x_c) = \frac{\alpha^2}{4x^3} [j(j+1) - l(l+1) - s(s+1)]
 
         where x = r / a_0, \alpha is the fine structure constant,
         j is the total angular momentum quantum number, l is the orbital angular momentum
@@ -105,11 +103,6 @@ class ModelPotential:
             V_so: The spin-orbit coupling potential V_so(x) in atomic units.
 
         """
-        # TODO pairinteraction old:
-        # # if self.l > 4 then return 0?
-        # # alpha * alpha isntead of one alpha
-        # TODO ARC
-        # # if x[0] < self.xc return 0 (for those x)
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
         V_so = (
             alpha**2
@@ -119,7 +112,9 @@ class ModelPotential:
                 - self.state.l * (self.state.l + 1)
                 - self.state.s * (self.state.s + 1)
             )
-        )  # TODO alpha**2 from arc
+        )
+        if x[0] < self.model_params.xc:
+            V_so *= x > self.model_params.xc
         return V_so
 
     def calc_V_l(self, x: np.ndarray) -> np.ndarray:
@@ -139,7 +134,7 @@ class ModelPotential:
             V_l: The centrifugal potential V_l(x) in atomic units.
 
         """
-        V_l = self.state.l * (self.state.l + 1) / (2 * x**2)
+        V_l = self.ritz_params.mu ** (-1) * self.state.l * (self.state.l + 1) / (2 * x**2)
         return V_l
 
     def calc_V_sqrt(self, x: np.ndarray) -> np.ndarray:
@@ -160,7 +155,7 @@ class ModelPotential:
             V_sqrt: The sqrt transformation potential V_sqrt(x) in atomic units.
 
         """
-        V_sqrt = (3 / 32) / x**2
+        V_sqrt = self.ritz_params.mu ** (-1) * (3 / 32) / x**2
         return V_sqrt
 
     def calc_V_phys(self, x: np.ndarray) -> np.ndarray:
@@ -232,7 +227,6 @@ class ModelPotential:
         """
         params = self.ritz_params
         state = self.state
-        Ry_inf = ureg.Quantity(1, "rydberg_constant").to("1/cm").magnitude
         delta_nlj = (
             params.d0
             + params.d2 / (state.n - params.d0) ** 2
@@ -240,5 +234,5 @@ class ModelPotential:
             + params.d6 / (state.n - params.d0) ** 6
         )
         nstar = state.n - delta_nlj
-        E_nlj = -0.5 * (params.Ry / Ry_inf) / nstar**2
+        E_nlj = -0.5 * params.mu / nstar**2
         return E_nlj

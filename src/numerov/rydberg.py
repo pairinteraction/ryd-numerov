@@ -167,7 +167,7 @@ class RydbergState:
             y0, y1 = 0, self.epsilon_u
 
         grid = self.grid
-        glist = 8 * grid.zlist**2 * (self.model.energy - self.model.calc_V_tot(grid.xlist))
+        glist = 8 * self.model.ritz_params.mu * grid.zlist**2 * (self.model.energy - self.model.calc_V_tot(grid.xlist))
         if self._use_njit:
             self.wlist = run_numerov_integration(grid.dz, grid.steps, y0, y1, glist, self.run_backward)
         else:
