@@ -41,7 +41,13 @@ def test_circular_matrix_elements(n: int, dn: int, dl: int, dj: int) -> None:
 @pytest.mark.parametrize(
     "species, n, l, j",
     [
-        ("H", 60, 30, 29.5),  # for hydrogen the expectation value of r is exact for all states
+        # for hydrogen the expectation value of r is exact for all states
+        ("H", 1, 0, 0.5),
+        ("H", 2, 0, 0.5),
+        ("H", 2, 1, 0.5),
+        ("H", 2, 1, 1.5),
+        ("H", 60, 30, 29.5),
+        # for other species it is only approximate for circular states
         ("Rb", 100, 99, 99.5),
         ("Rb", 88, 87, 86.5),
     ],
