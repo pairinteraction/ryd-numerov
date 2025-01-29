@@ -1,6 +1,7 @@
+import logging
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import numpy as np
 
@@ -9,6 +10,8 @@ from numerov.units import ureg
 
 if TYPE_CHECKING:
     from numerov.rydberg import RydbergState
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -23,18 +26,55 @@ class ModelPotential:
     add_spin_orbit: bool = True
 
     def __post_init__(self) -> None:
-        self.load_parameters_from_database()
-
-    def load_parameters_from_database(self) -> None:
         """Load the model potential and Rydberg-Ritz parameters from the QuantumDefectsDatabase.
 
         For more details see `database.QuantumDefectsDatabase`.
         """
-        state = self.state
         self.qdd = QuantumDefectsDatabase(self.qdd_path)
 
+        state = self.state
         self.model_params = self.qdd.get_model_potential(state.species, state.l)
         self.ritz_params = self.qdd.get_rydberg_ritz(state.species, state.l, state.j)
+
+    @cached_property
+    def energy(self) -> float:
+        r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
+
+        The effective principal quantum number in quantum defect theory is defined as series expansion
+
+        .. math::
+            n^* = n - \\delta_{nlj}
+
+        where
+
+        .. math::
+            \\delta_{nlj} = d_0 + \frac{d_2}{(n - d_0)^2} + \frac{d_4}{(n - d_0)^4} + \frac{d_6}{(n - d_0)^6}
+
+        is the quantum defect. The energy of the Rydberg state is then given by
+
+        .. math::
+            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\\infty} \frac{1}{n^*}
+
+        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
+
+        Args:
+            n: Principal quantum number of the state to calculate the energy for.
+
+        Returns:
+            Energy of the Rydberg state in atomic units.
+
+        """
+        params = self.ritz_params
+        state = self.state
+        delta_nlj = (
+            params.d0
+            + params.d2 / (state.n - params.d0) ** 2
+            + params.d4 / (state.n - params.d0) ** 4
+            + params.d6 / (state.n - params.d0) ** 6
+        )
+        nstar = state.n - delta_nlj
+        E_nlj = -0.5 * params.mu / nstar**2
+        return E_nlj
 
     def calc_V_c(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the core potential V_c(x) in atomic units.
@@ -197,42 +237,53 @@ class ModelPotential:
         V_tot = self.calc_V_phys(x) + self.calc_V_sqrt(x)
         return V_tot
 
-    @cached_property
-    def energy(self) -> float:
-        r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
+    def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-2) -> float:
+        r"""Calculate the inner turning point z_i for the model potential.
 
-        The effective principal quantum number in quantum defect theory is defined as series expansion
-
-        .. math::
-            n^* = n - \\delta_{nlj}
-
-        where
+        There are three different turning points we consider:
+        - The hydrogen turning point, where for the idealized hydrogen atom the potential equals the energy,
+        i.e. V_c(r_i) + V_l(r_i) = E.
+        This is exactly the case at
 
         .. math::
-            \\delta_{nlj} = d_0 + \frac{d_2}{(n - d_0)^2} + \frac{d_4}{(n - d_0)^4} + \frac{d_6}{(n - d_0)^6}
+            r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
 
-        is the quantum defect. The energy of the Rydberg state is then given by
+        - The classical turning point, where the physical potential of the Rydberg model potential equals the energy,
+        i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = E.
 
-        .. math::
-            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\\infty} \frac{1}{n^*}
-
-        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
+        - The zero-crossing turning point, where the physical potential of the Rydberg model potential equals zero,
+        i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = 0.
 
         Args:
-            n: Principal quantum number of the state to calculate the energy for.
+            which: Which turning point to calculate, one of "hydrogen", "classical", "zerocrossing".
+            dz: The precision of the turning point calculation.
 
         Returns:
-            Energy of the Rydberg state in atomic units.
+            z_i: The inner turning point z_i in the scaled dimensionless coordinate z_i = sqrt{r_i / a_0}.
 
         """
-        params = self.ritz_params
+        assert which in ["hydrogen", "classical", "zerocrossing"], f"Invalid turning point method {which}."
         state = self.state
-        delta_nlj = (
-            params.d0
-            + params.d2 / (state.n - params.d0) ** 2
-            + params.d4 / (state.n - params.d0) ** 4
-            + params.d6 / (state.n - params.d0) ** 6
-        )
-        nstar = state.n - delta_nlj
-        E_nlj = -0.5 * params.mu / nstar**2
-        return E_nlj
+        hydrogen_r_i = state.n * state.n - state.n * np.sqrt(state.n * state.n - state.l * (state.l - 1))
+        hydrogen_z_i = np.sqrt(hydrogen_r_i)
+
+        if which == "hydrogen":
+            return hydrogen_z_i
+
+        zlist = np.arange(dz, max(2 * hydrogen_z_i, 10), dz)
+        xlist = zlist**2
+        V_phys = self.calc_V_phys(xlist)
+
+        if which == "classical":
+            arg = np.argwhere(V_phys < self.energy)[0][0]
+        else:  # "zerocrossing"
+            arg = np.argwhere(V_phys < 0)[0][0]
+
+        if arg == 0:
+            if state.l == 0 and state.species == "H":
+                return 0
+            logger.warning("Turning point is at arg=0, this shouldnt happen.")
+        elif arg == len(zlist) - 1:
+            logger.warning("Turning point is at maixmal arg, this shouldnt happen.")
+
+        return zlist[arg]

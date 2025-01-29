@@ -6,7 +6,7 @@ import numpy as np
 
 from numerov.grid import Grid
 from numerov.model_potential import ModelPotential
-from numerov.numerov import _python_run_numerov_integration, run_numerov_integration
+from numerov.numerov import _run_numerov_integration_python, run_numerov_integration
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 
@@ -32,9 +32,9 @@ class RydbergState:
         l: The angular momentum quantum number of the desired electronic state.
         j: The total angular momentum quantum number of the desired electronic state.
         run_backward (default: True): Wheter to integrate the radial Schrödinger equation "backward" of "forward".
-        epsilon_u (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.
-            For forward integration we set u[0] = 0 and u[1] = epsilon_u,
-            for backward integration we set u[-1] = 0 and u[-2] = (-1)^{(n - l - 1) % 2} * epsilon_u.
+        w0 (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.
+            For forward integration we set w[0] = 0 and w[1] = w0,
+            for backward integration we set w[-1] = 0 and w[-2] = (-1)^{(n - l - 1) % 2} * w0.
 
     Attributes:
         zlist: A equidistant numpy array of the z-values at which the wavefunction is evaluated (z = sqrt(r/a_0)).
@@ -52,7 +52,7 @@ class RydbergState:
     j: float
 
     run_backward: bool = True
-    epsilon_u: float = 1e-10
+    w0: float = 1e-10
     _use_njit: bool = True
 
     def __post_init__(self) -> None:
@@ -102,8 +102,7 @@ class RydbergState:
         self,
         xmin: Optional[float] = None,
         xmax: Optional[float] = None,
-        dz: Optional[float] = None,
-        steps: Optional[int] = None,
+        dz: float = 1e-2,
     ) -> None:
         """Create the grid object for the integration of the radial Schrödinger equation.
 
@@ -112,67 +111,103 @@ class RydbergState:
             in dimensionless units (x = r/a_0).
             xmax (default TODO): The maximum value of the radial coordinate
             in dimensionless units (x = r/a_0).
-            dz (default 1e-2): The step size of the integration (z = r/a_0) (use either steps or dz).
-            steps (default dz=1e-2): The number of steps of the integration (use either steps or dz).
+            dz (default 1e-2): The step size of the integration (z = r/a_0).
 
         """
-        if dz is None and steps is None:
-            dz = 1e-2  # TODO 1e-2 like arc and pi fine or smaller?
+        assert not hasattr(self, "_grid"), "The grid object was already created."
 
-        # set xmin and zmin
-        if xmin is None:
-            xmin = dz if dz is not None else 1e-2
+        if self.run_backward:
+            if xmin is None:
+                # we set xmin explicitly to small,
+                # since the integration will automatically stop after the turning point,
+                # and as soon as the wavefunction is close to zero
+                if self.l <= 10:
+                    xmin = 0
+                else:
+                    z_i = self.model.calc_z_turning_point("hydrogen")
+                    xmin = max(0, 0.5 * z_i**2 - 25)
+            if xmax is None:
+                xmax = 2 * self.n * (self.n + 25)
 
-            if self.l != 0 and self.run_backward:
-                xmin = self.n * self.n - self.n * np.sqrt(
-                    self.n * self.n - self.l * (self.l - 1)
-                )  # TODO pi (l-1)*(l-1)
-                xmin = 0.7 * xmin
+        else:  # forward integration
+            if xmin is None:
+                xmin = 0
+            if xmax is None:
+                xmax = 2 * self.n * (self.n + 25)
 
-        zmin = np.sqrt(xmin)
-        zmin = max(zmin, 3 * (dz if dz is not None else 1e-2))
-        if dz is not None:
-            zmin = (zmin // dz) * dz  # TODO this is a hack for allowing integration of the matrix elements
+        # Since the potential diverges at z=0 we set the minimum zmin to 2 * dz
+        zmin = max(np.sqrt(xmin), 2 * dz)
+        zmax = np.sqrt(xmax)
 
-        # set xmax and zmax
-        if xmax is None:
-            if self.run_backward:
-                self.xmax = 2 * self.n * (self.n + 25)  # TODO 15 like arc and pi?
-            else:
-                self.xmax = 2 * self.n * (self.n + 6)
-        zmax = np.sqrt(self.xmax)
+        # put all grid points on a standard grid, i.e. 0, dz, 2dz, ...
+        # this is necessary to allow integration of two different wavefunctions
+        zmin = (zmin // dz) * dz
 
-        # set the grid
-        self._grid = Grid(zmin, zmax, dz, steps)
+        # set the grid object
+        self._grid = Grid(zmin, zmax, dz)
 
     def integrate(self) -> None:
-        r"""Run the Numerov integration of the radial Schrödinger equation for the desired state.
+        r"""Run the Numerov integration of the radial Schrödinger equation.
 
-        Returns:
-            zlist: A numpy array of the z-values at which the wavefunction was evaluated (z = sqrt(r/a_0))
-            wlist: A numpy array of the function w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r)
-            (where we used \tilde{u}(x) = sqrt(a_0) r R(r)
-                The radial wavefunction is normalized such that
+        The resulting raidal wavefunctions are then stored as attributes, where
+        - wlist is the dimensionless and scaled wavefunction w(z)
+        - ulist is the dimensionless wavefunction \tilde{u}(x)
+        - Rlist is the radial wavefunction R(r) in atomic units
 
-                .. math::
-                    \int_{0}^{\infty} r^2 |R(x)|^2 dr
-                    = \int_{0}^{\infty} |\tilde{u}(x)|^2 dx = 1
-                    = \int_{0}^{\infty} 2 z^2 |w(z)|^2 dz = 1
+        The radial wavefunction are related as follows:
 
+        .. math::
+            \tilde{u}(x) = \sqrt(a_0) r R(r)
+
+        .. math::
+            w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \sqrt(a_0) r R(r)
+
+
+        where z = sqrt(r/a_0) is the dimensionless scaled coordinate.
+
+        The resulting radial wavefunction is normalized such that
+
+        .. math::
+            \int_{0}^{\infty} r^2 |R(x)|^2 dr
+            = \int_{0}^{\infty} |\tilde{u}(x)|^2 dx
+            = \int_{0}^{\infty} 2 z^2 |w(z)|^2 dz
+            = 1
         """
+        # Note: Inside this method we use y and x like it is used in the numerov function
+        # and not like in the rest of this class, i.e. y = w(z) and x = z
+        grid = self.grid
+
+        glist = 8 * self.model.ritz_params.mu * grid.zlist**2 * (self.model.energy - self.model.calc_V_tot(grid.xlist))
+
         if self.run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
-            y0, y1 = 0, (-1) ** ((self.n - self.l - 1) % 2) * self.epsilon_u
-        else:  # forward
-            y0, y1 = 0, self.epsilon_u
+            y0, y1 = 0, (-1) ** ((self.n - self.l - 1) % 2) * self.w0
+            x_start, x_stop, dx = grid.zmax, grid.zmin, -grid.dz
+            g_list_directed = glist[::-1]
+            # We set x_min to the classical turning point
+            # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
+            # or it reaches a local minimum (thus goiing away from the x-axis)
+            x_min = self.model.calc_z_turning_point("classical")
 
-        grid = self.grid
-        glist = 8 * self.model.ritz_params.mu * grid.zlist**2 * (self.model.energy - self.model.calc_V_tot(grid.xlist))
+        else:  # forward
+            y0, y1 = 0, self.w0
+            x_start, x_stop, dx = grid.zmin, grid.zmax, grid.dz
+            g_list_directed = glist
+            x_min = np.sqrt(self.n * (self.n + 15))
+
         if self._use_njit:
-            self.wlist = run_numerov_integration(grid.dz, grid.steps, y0, y1, glist, self.run_backward)
+            wlist = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
         else:
-            self.wlist = _python_run_numerov_integration(grid.dz, grid.steps, y0, y1, glist, self.run_backward)
+            logger.warning("Using python implementation of Numerov integration, this is much slower!")
+            wlist = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
+
+        if self.run_backward:
+            self.wlist = np.array(wlist)[::-1]
+            grid.set_grid_range(step_start=grid.steps - len(self.wlist))
+        else:
+            self.wlist = np.array(wlist)
+            grid.set_grid_range(step_stop=len(self.wlist))
 
         # normalize the wavefunction, see docstring
         norm = np.sqrt(2 * np.sum(self.wlist**2 * grid.zlist**2) * grid.dz)
@@ -184,87 +219,43 @@ class RydbergState:
         self.sanity_check_wavefunction()
 
     def sanity_check_wavefunction(self) -> None:
-        # Check that xmax was chosen large enough
-        grid = self.grid
-        id = int(0.95 * grid.steps)
-        sum_large_z = np.sqrt(2 * np.sum(self.wlist[id:] ** 2 * grid.zlist[id:] ** 2) * grid.dz)
-        if sum_large_z > 1e-3:
-            logger.warning(f"xmax={self.xmax} was chosen too small ({sum_large_z=}), increase xmax.")
+        """Do some sanity checks on the wavefunction.
 
-        # Check that xmin was chosen good enough
-        self.z_cutoff = 0
-        id = int(0.01 * grid.steps)
-        sum_small_z = np.sqrt(2 * np.sum(self.wlist[:id] ** 2 * grid.zlist[:id] ** 2) * grid.dz)
-        if sum_small_z > 1e-3:
-            logger.info(f"xmin={grid.xmin} was not chosen good ({sum_small_z=}), change xmin.")
-            if self.wlist[0] < 0:
-                logger.info(
-                    "The wavefunction is negative at the inner boundary, setting all initial negative values to 0."
-                )
-                argmin = np.argwhere(self.wlist > 0)[0][0]
-                self.z_cutoff = grid.zlist[argmin]
-                self.wlist[:argmin] = 0
-
-                # normalize the wavefunction again
-                norm = np.sqrt(2 * np.sum(self.wlist**2 * grid.zlist**2) * grid.dz)
-                self.wlist /= norm
-            else:
-                logger.warning(
-                    f"xmin={grid.xmin} was not chosen good ({sum_small_z=}), "
-                    "and the wavefunction is positive at the inner boundary, so we could not fix it."
-                )
-
-    def calc_hydrogen_z_turning_point(self) -> float:
-        r"""Calculate the hydrogen turning point z_i for the Rydberg state.
-
-        The hydrogen turning point z_i = sqrt(r_i / a_0) is defined via the classical hydrogen turning point
-
-        .. math::
-            r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
-
-        This is the inner radius, for which in hydrogen V_c(r_i) + V_l(r_i) = E.
-
-        Returns:
-            z_i: The hydrogen turning point z_i in dimensionless units (z = sqrt(r/a_0)).
-
-        """
-        x_i = self.n**2 - self.n * np.sqrt(self.n**2 - self.l * (self.l + 1))
-        return np.sqrt(x_i)
-
-    def calc_z_turning_point(self) -> float:
-        """Calculate the classical turning point z_min.
-
-        Calculate the classical turning point z_min = sqrt(r_min / a_0),
-        where the total energy equals the effective physical potential:
-
-        .. math::
-            E = V_c(r_i) + V_l(r_i) + V_{l}(r_i) + V_{so}(r_i)
-
-        Returns:
-            z_min: The classical turning point z_min in dimensionless units (z = sqrt(r/a_0)).
-
+        Check if the wavefuntion fulfills the following conditions:
+        - The wavefunction is positive (or zero) at the inner boundary.
+        - The wavefunction is close to zero at the inner boundary.
+        - The wavefunction is close to zero at the outer boundary.
+        - The wavefunction has exactly (n - l - 1) nodes.
         """
         grid = self.grid
-        zlist = np.arange(grid.dz, grid.zlist[-1], grid.dz)
-        V_phys = self.model.calc_V_phys(zlist**2)
-        arg = np.argwhere(V_phys < self.model.energy)[0][0]
-        return zlist[arg]
 
-    def calc_z_V_eq_0(self) -> float:
-        """Calculate the value of z where the effective physical potential equals zero.
+        outer_wf = self.wlist[int(0.95 * grid.steps) :]
+        inner_wf = self.wlist[:10]
 
-        Calculate the value of z = sqrt(r / a_0) where the effective physical potential equals zero:
+        if inner_wf[0] < 0 or np.mean(inner_wf) < 0:
+            logger.warning("The wavefunction is (mostly) negative at the inner boundary, %s", inner_wf)
 
-        .. math::
-            0 = V_c(r_i) + V_l(r_i) + V_{l}(r_i) + V_{so}(r_i)
+        if np.mean(inner_wf) > 1e-4:
+            logger.warning(
+                "The wavefunction is not close to zero at the inner boundary, mean=%.2e, inner_wf=%s",
+                np.mean(inner_wf),
+                inner_wf,
+            )
 
-        Returns:
-            z: The value of z where the effective physical potential equals zero
-            in dimensionless units (z = sqrt(r/a_0)).
+        if np.mean(outer_wf) > 1e-7:
+            logger.warning(
+                "The wavefunction is not close to zero at the outer boundary, mean=%.2e, outer_wf=%s",
+                np.mean(outer_wf),
+                outer_wf,
+            )
 
-        """
-        grid = self.grid
-        zlist = np.arange(grid.dz, grid.zlist[-1], grid.dz)
-        V_phys = self.model.calc_V_phys(zlist**2)
-        arg = np.argwhere(V_phys < 0)[0][0]
-        return zlist[arg]
+        # Check the number of nodes
+        nodes = np.sum(np.abs(np.diff(np.sign(self.wlist)))) // 2
+        if nodes != self.n - self.l - 1:
+            logger.warning(f"The wavefunction has {nodes} nodes, but should have {self.n - self.l - 1} nodes.")
+
+        # TODO instead of just checking the mean of the wf also check the percantage of the integral
+        # i.e. something like \int_{r_outer_bound}^{\inf} r^2 |R(r)|^2 dr < tol
+        # and \int_{0}^{r_inner_bound} r^2 |R(r)|^2 dr < tol
+
+        # TODO check that numerov stopped and did not run until x_stop

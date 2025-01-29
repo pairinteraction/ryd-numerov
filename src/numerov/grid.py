@@ -1,4 +1,3 @@
-from functools import cached_property
 from typing import Optional
 
 import numpy as np
@@ -16,8 +15,7 @@ class Grid:
         self,
         zmin: float,
         zmax: float,
-        dz: Optional[float],
-        steps: Optional[int],
+        dz: float,
     ) -> None:
         """Initialize the grid object.
 
@@ -29,19 +27,8 @@ class Grid:
             steps: The number of steps in the grid (exactly one of dz or steps must be provided).
 
         """
-        if dz is None and steps is None:
-            raise ValueError("Either dz or steps must be provided.")
-
-        if dz is None:
-            dz = (zmax - zmin) / (steps - 1)
-        self.zmin = zmin
-        self.zmax = zmax
-        self.dz = dz
-        self.zlist = np.arange(zmin, zmax + dz * 1e-3, dz)
-        self.steps = len(self.zlist)
-
-        if steps is not None and self.steps != steps:
-            raise ValueError("Only one of dz or steps should be provided (or they should match).")
+        self._dz = dz
+        self._zlist = np.arange(zmin, zmax + dz * 1e-3, dz)
 
     def __len__(self) -> int:
         return self.steps
@@ -49,17 +36,50 @@ class Grid:
     def __repr__(self) -> str:
         return f"Grid({self.zmin}, {self.zmax}, dz={self.dz}, steps={self.steps})"
 
-    @cached_property
+    @property
+    def steps(self) -> int:
+        """The number of steps in the grid."""
+        return len(self.zlist)
+
+    @property
+    def dz(self) -> float:
+        """The step size of the grid in the scaled dimensionless coordinate z = sqrt{x}."""
+        return self._dz
+
+    @property
+    def zmin(self) -> float:
+        """The minimum value of the scaled dimensionless coordinate z = sqrt{x}."""
+        return self.zlist[0]
+
+    @property
+    def zmax(self) -> float:
+        """The maximum value of the scaled dimensionless coordinate z = sqrt{x}."""
+        return self.zlist[-1]
+
+    @property
+    def zlist(self) -> np.ndarray:
+        """The grid in the scaled dimensionless coordinate z = sqrt{x}."""
+        return self._zlist
+
+    @property
     def xmin(self) -> float:
         """The minimum value of the dimensionless coordinate x = r/a_0."""
         return self.zmin**2
 
-    @cached_property
+    @property
     def xmax(self) -> float:
         """The maximum value of the dimensionless coordinate x = r/a_0."""
         return self.zmax**2
 
-    @cached_property
+    @property
     def xlist(self) -> np.ndarray:
         """The grid in the dimensionless coordinate x = r/a_0."""
         return self.zlist**2
+
+    def set_grid_range(self, step_start: Optional[int] = None, step_stop: Optional[int] = None) -> None:
+        """Restrict the grid to the range [step_start, step_stop]."""
+        if step_start is None:
+            step_start = 0
+        if step_stop is None:
+            step_stop = self.steps
+        self._zlist = self._zlist[step_start:step_stop]
