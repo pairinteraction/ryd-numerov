@@ -31,11 +31,11 @@ from numerov.rydberg import RydbergState
 def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool) -> None:
     """Test that numerov integration matches sympy's analytical hydrogen wavefunctions."""
     # Setup atom
-    atom = RydbergState(species, n, l, j=l + 0.5, run_backward=run_backward)
+    atom = RydbergState(species, n, l, j=l + 0.5)
     atom.create_model(add_spin_orbit=False)
 
     # Run the numerov integration
-    atom.integrate()
+    atom.integrate(run_backward=run_backward)
 
     # Get analytical solution from sympy
     if n <= 35:

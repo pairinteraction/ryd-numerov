@@ -31,10 +31,6 @@ class RydbergState:
         n: The principal quantum number of the desired electronic state.
         l: The angular momentum quantum number of the desired electronic state.
         j: The total angular momentum quantum number of the desired electronic state.
-        run_backward (default: True): Wheter to integrate the radial Schrödinger equation "backward" of "forward".
-        w0 (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.
-            For forward integration we set w[0] = 0 and w[1] = w0,
-            for backward integration we set w[-1] = 0 and w[-2] = (-1)^{(n - l - 1) % 2} * w0.
 
     Attributes:
         zlist: A equidistant numpy array of the z-values at which the wavefunction is evaluated (z = sqrt(r/a_0)).
@@ -49,30 +45,24 @@ class RydbergState:
     species: str
     n: int
     l: int
-    j: float
-
-    run_backward: bool = True
-    w0: float = 1e-10
-    _use_njit: bool = True
+    j: Union[int, float]
+    m: Union[int, float] = None
+    s: Union[int, float] = None
 
     def __post_init__(self) -> None:
-        self.s: Union[int, float]
-        if self.species.endswith("singlet") or self.species.endswith("1"):
-            self.s = 0
-        elif self.species.endswith("triplet") or self.species.endswith("3"):
-            self.s = 1
-        else:
-            self.s = 0.5
+        if self.s is None:
+            if self.species.endswith("singlet") or self.species.endswith("1"):
+                self.s = 0
+            elif self.species.endswith("triplet") or self.species.endswith("3"):
+                self.s = 1
+            else:
+                self.s = 0.5
 
+        assert isinstance(self.s, (float, int)), "s must be a float or int"
         assert self.n >= 1, "n must be larger than 0"
         assert 0 <= self.l <= self.n - 1, "l must be between 0 and n - 1"
         assert self.j >= abs(self.l - self.s) and self.j <= self.l + self.s, "j must be between l - s and l + s"
         assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
-
-    @property
-    def energy(self) -> float:
-        """The energy of the Rydberg state in atomic units."""
-        return self.model.energy
 
     @property
     def model(self) -> ModelPotential:
@@ -91,6 +81,11 @@ class RydbergState:
 
         """
         self._model = ModelPotential(self, qdd_path, add_spin_orbit)
+
+    @property
+    def energy(self) -> float:
+        """The energy of the Rydberg state in atomic units."""
+        return self.model.energy
 
     @property
     def grid(self) -> Grid:
@@ -116,24 +111,17 @@ class RydbergState:
         """
         assert not hasattr(self, "_grid"), "The grid object was already created."
 
-        if self.run_backward:
-            if xmin is None:
-                # we set xmin explicitly to small,
-                # since the integration will automatically stop after the turning point,
-                # and as soon as the wavefunction is close to zero
-                if self.l <= 10:
-                    xmin = 0
-                else:
-                    z_i = self.model.calc_z_turning_point("hydrogen")
-                    xmin = max(0, 0.5 * z_i**2 - 25)
-            if xmax is None:
-                xmax = 2 * self.n * (self.n + 25)
-
-        else:  # forward integration
-            if xmin is None:
+        if xmin is None:
+            # we set xmin explicitly to small,
+            # since the integration will automatically stop after the turning point,
+            # and as soon as the wavefunction is close to zero
+            if self.l <= 10:
                 xmin = 0
-            if xmax is None:
-                xmax = 2 * self.n * (self.n + 25)
+            else:
+                z_i = self.model.calc_z_turning_point("hydrogen")
+                xmin = max(0, 0.5 * z_i**2 - 25)
+        if xmax is None:
+            xmax = 2 * self.n * (self.n + 25)
 
         # Since the potential diverges at z=0 we set the minimum zmin to 2 * dz
         zmin = max(np.sqrt(xmin), 2 * dz)
@@ -146,7 +134,7 @@ class RydbergState:
         # set the grid object
         self._grid = Grid(zmin, zmax, dz)
 
-    def integrate(self) -> None:
+    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation.
 
         The resulting raidal wavefunctions are then stored as attributes, where
@@ -172,6 +160,14 @@ class RydbergState:
             = \int_{0}^{\infty} |\tilde{u}(x)|^2 dx
             = \int_{0}^{\infty} 2 z^2 |w(z)|^2 dz
             = 1
+
+        Args:
+            run_backward (default: True): Wheter to integrate the radial Schrödinger equation "backward" of "forward".
+            w0 (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.
+                For forward integration we set w[0] = 0 and w[1] = w0,
+                for backward integration we set w[-1] = 0 and w[-2] = (-1)^{(n - l - 1) % 2} * w0.
+            _use_njit (default: True): Whether to use the fast njit version of the Numerov integration.
+
         """
         # Note: Inside this method we use y and x like it is used in the numerov function
         # and not like in the rest of this class, i.e. y = w(z) and x = z
@@ -179,10 +175,10 @@ class RydbergState:
 
         glist = 8 * self.model.ritz_params.mu * grid.zlist**2 * (self.model.energy - self.model.calc_V_tot(grid.xlist))
 
-        if self.run_backward:
+        if run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
-            y0, y1 = 0, (-1) ** ((self.n - self.l - 1) % 2) * self.w0
+            y0, y1 = 0, (-1) ** ((self.n - self.l - 1) % 2) * w0
             x_start, x_stop, dx = grid.zmax, grid.zmin, -grid.dz
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
@@ -191,18 +187,18 @@ class RydbergState:
             x_min = self.model.calc_z_turning_point("classical")
 
         else:  # forward
-            y0, y1 = 0, self.w0
+            y0, y1 = 0, w0
             x_start, x_stop, dx = grid.zmin, grid.zmax, grid.dz
             g_list_directed = glist
             x_min = np.sqrt(self.n * (self.n + 15))
 
-        if self._use_njit:
+        if _use_njit:
             wlist = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
         else:
             logger.warning("Using python implementation of Numerov integration, this is much slower!")
             wlist = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
 
-        if self.run_backward:
+        if run_backward:
             self.wlist = np.array(wlist)[::-1]
             grid.set_grid_range(step_start=grid.steps - len(self.wlist))
         else:
