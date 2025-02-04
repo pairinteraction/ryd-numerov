@@ -4,9 +4,9 @@ from typing import Optional, TypeVar, Union
 
 import numpy as np
 
-from numerov.grid import Grid
 from numerov.model_potential import ModelPotential
-from numerov.numerov import _run_numerov_integration_python, run_numerov_integration
+from numerov.radial.grid import Grid
+from numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 

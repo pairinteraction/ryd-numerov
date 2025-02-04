@@ -1,17 +1,18 @@
 import logging
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import scipy.integrate
 
-from numerov.rydberg import RydbergState
+if TYPE_CHECKING:
+    from numerov.rydberg import RydbergState
 
 logger = logging.getLogger(__name__)
 
 
-def radial_matrix_element(
-    state1: RydbergState,
-    state2: RydbergState,
+def calc_radial_matrix_element(
+    state1: "RydbergState",
+    state2: "RydbergState",
     r_power: int = 0,
     integration_method: Literal["simpson", "trapezoid"] = "simpson",
 ) -> float:
@@ -35,15 +36,15 @@ def radial_matrix_element(
         integration_method: Integration method to use, one of "simpson" or "trapezoid" (default="simpson")
 
     Returns:
-        float: The radial matrix element in atomic units
+        float: The radial matrix element in atomic units.
 
     """
-    return radial_matrix_element_from_w_z(
+    return calc_radial_matrix_element_from_w_z(
         state1.grid.zlist, state1.wlist, state2.grid.zlist, state2.wlist, r_power, integration_method
     )
 
 
-def radial_matrix_element_from_w_z(
+def calc_radial_matrix_element_from_w_z(
     z1: np.ndarray,
     w1: np.ndarray,
     z2: np.ndarray,

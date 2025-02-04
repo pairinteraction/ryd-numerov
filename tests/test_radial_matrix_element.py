@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from numerov.matrix_elements import radial_matrix_element
+from numerov.radial import calc_radial_matrix_element
 from numerov.rydberg import RydbergState
 
 
@@ -33,7 +33,7 @@ def test_circular_matrix_elements(n: int, dn: int, dl: int, dj: int) -> None:
         state_f.create_model(add_spin_orbit=species != "H")
         state_f.integrate()
 
-        matrix_element[species] = radial_matrix_element(state_i, state_f, 1)
+        matrix_element[species] = calc_radial_matrix_element(state_i, state_f, 1)
 
     assert np.isclose(matrix_element["Rb"], matrix_element["H"], rtol=1e-4)
 
@@ -65,7 +65,7 @@ def test_circular_expectation_value(species: str, n: int, l: int, j: float) -> N
     state.create_model(add_spin_orbit=species != "H")
     state.integrate()
 
-    exp_value_numerov = {i: radial_matrix_element(state, state, i) for i in range(3)}
+    exp_value_numerov = {i: calc_radial_matrix_element(state, state, i) for i in range(3)}
     exp_value_analytic = {
         0: 1,
         1: 0.5 * (3 * n**2 - l * (l + 1)),
