@@ -4,7 +4,7 @@ from typing import Optional, TypeVar, Union
 
 import numpy as np
 
-from numerov.model_potential import ModelPotential
+from numerov.model.model_potential import ModelPotential
 from numerov.radial.grid import Grid
 from numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 

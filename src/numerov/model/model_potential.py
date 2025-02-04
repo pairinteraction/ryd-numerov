@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 import numpy as np
 
-from numerov.database import QuantumDefectsDatabase
+from numerov.model.database import QuantumDefectsDatabase
 from numerov.units import ureg
 
 if TYPE_CHECKING:
