@@ -15,7 +15,7 @@ from numerov.rydberg import RydbergState
         (111, 5, 2, 1),
     ],
 )
-def test_circular_matrix_elements(n: int, dn: int, dl: int, dj: int) -> None:
+def test_circular_matrix_element(n: int, dn: int, dl: int, dj: int) -> None:
     """Test radial matrix elements of ((almost) circular states, i.e. with large l (l = n-1 for circular states).
 
      Circular matrix elements should be very close to the perfect hydrogen case, so we can check if the matrix elements

@@ -4,7 +4,7 @@ import numpy as np
 from pint import UnitRegistry
 
 if TYPE_CHECKING:
-    from pint.facets.plain import PlainUnit
+    from pint.facets.plain import PlainQuantity, PlainUnit
 
     Array = np.ndarray[Any, Any]
 
@@ -18,6 +18,7 @@ Dimension = Literal[
     "ENERGY",
     "RADIAL_MATRIX_ELEMENT",
     "ANGULAR_MATRIX_ELEMENT",
+    "CHARGE",
     "ELECTRIC_DIPOLE",
     "ELECTRIC_QUADRUPOLE",
     "ELECTRIC_QUADRUPOLE_ZERO",
@@ -39,6 +40,8 @@ BaseUnits: dict[Dimension, "PlainUnit"] = {
     "RADIAL_MATRIX_ELEMENT": ureg.Unit("bohr"),
     #
     "ANGULAR_MATRIX_ELEMENT": ureg.Unit(""),
+    #
+    "CHARGE": ureg.Quantity(1, "e").to_base_units().units,
     # ELECTRIC_DIPOLE: 1 e * a0 = 1 atomic_unit_of_current * atomic_unit_of_time * bohr
     "ELECTRIC_DIPOLE": ureg.Quantity(1, "e * a0").to_base_units().units,
     # ELECTRIC_QUADRUPOLE: 1 e * a0^2 = 1 atomic_unit_of_current * atomic_unit_of_time * bohr ** 2
@@ -52,3 +55,5 @@ BaseUnits: dict[Dimension, "PlainUnit"] = {
     "ARBITRARY": ureg.Unit(""),
     "ZERO": ureg.Unit(""),
 }
+
+BaseQuantities: dict[Dimension, "PlainQuantity"] = {k: ureg.Quantity(1, v) for k, v in BaseUnits.items()}

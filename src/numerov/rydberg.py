@@ -1,12 +1,20 @@
 import logging
 from dataclasses import dataclass
-from typing import Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Optional, TypeVar, Union, overload
 
 import numpy as np
 
+from numerov.angular.angular_matrix_element import OperatorType, calc_angular_matrix_element
 from numerov.model.model_potential import ModelPotential
 from numerov.radial.grid import Grid
 from numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
+from numerov.radial.radial_matrix_element import calc_radial_matrix_element
+from numerov.units import BaseQuantities
+
+if TYPE_CHECKING:
+    from pint.facets.plain import PlainQuantity
+    from typing_extensions import Self
+
 
 ValueType = TypeVar("ValueType", bound=Union[float, np.ndarray])
 
@@ -255,3 +263,88 @@ class RydbergState:
         # and \int_{0}^{r_inner_bound} r^2 |R(r)|^2 dr < tol
 
         # TODO check that numerov stopped and did not run until x_stop
+
+    @overload
+    def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PlainQuantity[float]": ...
+
+    @overload
+    def calc_radial_matrix_element(self, other: "Self", k_radial: int, unit: None) -> float: ...
+
+    def calc_radial_matrix_element(self, other: "Self", k_radial: int, unit: Optional[str] = None):
+        radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
+        if unit == "a.u.":
+            return radial_matrix_element_au
+        radial_matrix_element = radial_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
+        if unit is None:
+            return radial_matrix_element
+        return radial_matrix_element.to(unit).magnitude
+
+    @overload
+    def calc_angular_matrix_element(
+        self, other: "Self", operator: OperatorType, k_angular: int, q: int
+    ) -> "PlainQuantity[float]": ...
+
+    @overload
+    def calc_angular_matrix_element(
+        self, other: "Self", operator: OperatorType, k_angular: int, q: int, unit: None
+    ) -> float: ...
+
+    def calc_angular_matrix_element(
+        self, other: "Self", operator: OperatorType, k_angular: int, q: int, unit: Optional[str] = None
+    ):
+        angular_matrix_element_au = calc_angular_matrix_element(self, other, operator, k_angular, q)
+        if unit == "a.u.":
+            return angular_matrix_element_au
+        angular_matrix_element = angular_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
+        if unit is None:
+            return angular_matrix_element
+        return angular_matrix_element.to(unit).magnitude
+
+    @overload
+    def calc_multipole_matrix_element(
+        self, other: "Self", k_radial: int, k_angular: int, q: int
+    ) -> "PlainQuantity[float]": ...
+
+    @overload
+    def calc_multipole_matrix_element(
+        self, other: "Self", k_radial: int, k_angular: int, q: int, unit: None
+    ) -> float: ...
+
+    def calc_multipole_matrix_element(
+        self, other: "Self", k_radial: int, k_angular: int, q: int, unit: Optional[str] = None
+    ):
+        r"""Calculate the multipole matrix element.
+
+        Calculate the multipole matrix element between two Rydberg states
+        \ket{self}=\ket{n',l',j',m'} and \ket{other}= \ket{n,l,j,m}.
+
+        .. math::
+            \langle n,l,j,m,s | r^k_radial p_{k_angular,q} | n',l',j',m',s' \rangle
+
+        where p_{k_angular,q} is the spherical multipole operators of rank k_angular and component q.
+
+        Args:
+            other: The other Rydberg state \ket{n,l,j,m,s} to which to calculate the matrix element.
+            k_radial: The radial matrix element power k.
+            k_angular: The rank of the angular operator.
+            q: The component of the angular operator.
+            unit: The unit to which to convert the radial matrix element.
+                Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
+                Default None will return a pint quantity.
+
+        Returns:
+            The multipole matrix element.
+
+        """
+        operator = "p"
+        radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
+        angular_matrix_element_au = calc_angular_matrix_element(self, other, operator, k_angular, q)
+        multipole_matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
+        if unit == "a.u.":
+            return multipole_matrix_element_au
+        multipole_matrix_element = (
+            multipole_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"] ** k_radial * BaseQuantities["CHARGE"]
+        )
+        if unit is None:
+            return multipole_matrix_element
+        return multipole_matrix_element.to(unit).magnitude
