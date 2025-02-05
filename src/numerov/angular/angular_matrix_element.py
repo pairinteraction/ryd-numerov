@@ -24,8 +24,9 @@ def calc_angular_matrix_element(
 
     .. math::
         \bra{state_f} \hat{O}_{kq} \ket{state_i}
-        = \langle j', m', k, q | j, m \rangle \langle j || \hat{O}_{k0} || j' \rangle
-        = (-1)^{j' - \kappa + m} \sqrt{2j + 1} wigner_3j(j', kappa, j, m', q, -m)
+        = \bra{l,s,j,m} \hat{O}_{kq} \ket{l',s',j',m'}
+        = \langle j', m', k, q | j, m \rangle \langle j || \hat{O}_{k0} || j' \rangle / \sqrt{2j + 1}
+        = (-1)^{j' - \kappa + m} wigner_3j(j', kappa, j, m', q, -m)
         \langle j || \hat{O}_{k0} || j' \rangle
 
     where we first used the Wigner-Eckhart theorem
@@ -34,7 +35,12 @@ def calc_angular_matrix_element(
     Args:
         state_i: The initial state $\ket{state_i} = \ket{l',s',j',m'}$.
         state_f: The final state $\bra{state_f} = \bra{l,s,j,m}$.
-        operator: The angular momentum operator $\hat{O}_{kq}$.
+        operator: The angular momentum operator type $\hat{O}_{kq}$.
+            Can be one of the following:
+                - "L" for the orbital angular momentum operator,
+                - "S" for the spin angular momentum operator,
+                - "Y" for the spherical harmonics operator,
+                - "p" for the spherical multipole operator.
         kappa: The quantum number $\kappa$ of the angular momentum operator.
         q: The quantum number $q$ of the angular momentum operator.
 
@@ -42,8 +48,7 @@ def calc_angular_matrix_element(
         The angular matrix element $\bra{state_f} \hat{O}_{kq} \ket{state_i}$.
 
     """
-    prefactor = minus_one_pow(state_i.j - kappa + state_i.m)
-    prefactor *= np.sqrt(2 * state_f.j + 1)
+    prefactor = minus_one_pow(state_i.j - kappa + state_f.m)
     reduced_matrix_element = calc_reduced_j_matrix_element(state_i, state_f, operator, kappa)
     wigner_3j = calc_wigner_3j(state_i.j, kappa, state_f.j, state_i.m, q, -state_f.m)
     return prefactor * reduced_matrix_element * wigner_3j
@@ -65,13 +70,13 @@ def calc_reduced_j_matrix_element(
     For $s = s'$ (i.e. when \hat{O}_{k0} only acts on l), the reduced matrix element is given by
     .. math::
         \langle \gamma, s, l, j || \hat{O}_{k0} || \gamma', s, l', j' \rangle
-        = (-1)**(s + l' + j + kappa) sqrt{2j + 1} sqrt{2j' + 1} wigner_6j(l, j, s, j', l', kappa)
+        = (-1)**(s + l + j' + kappa) sqrt{2j + 1} sqrt{2j' + 1} wigner_6j(l, j, s, j', l', kappa)
         \langle \gamma, l || \hat{O}_{k0} || \gamma', l' \rangle
 
     And for $l = l'$ (i.e. when \hat{O}_{k0} only acts on s), the reduced matrix element is given by
     .. math::
         \langle \gamma, s, l, j || \hat{O}_{k0} || \gamma', s', l, j' \rangle
-        = (-1)**(l + s' + j + kappa) sqrt{2j + 1} sqrt{2j' + 1} wigner_6j(s, j, l, j', s', kappa)
+        = (-1)**(s + l + j' + kappa) sqrt{2j + 1} sqrt{2j' + 1} wigner_6j(s, j, l, j', s', kappa)
         \langle \gamma, s || \hat{O}_{k0} || \gamma', s' \rangle
 
 
@@ -87,8 +92,8 @@ def calc_reduced_j_matrix_element(
     """
     assert operator in ["L", "S", "Y", "p"]
 
-    prefactor = minus_one_pow(state_i.s + state_i.l + state_f.j + kappa)
-    prefactor *= np.sqrt(2 * state_i.j + 1)
+    prefactor = minus_one_pow(state_f.s + state_f.l + state_i.j + kappa)
+    prefactor *= np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
 
     if operator == "S":
         reduced_matrix_element = calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
@@ -130,7 +135,7 @@ def calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int,
 def calc_reduced_multipole_matrix_element(l_i: int, l_f: int, operator: OperatorType, kappa: int) -> float:
     r"""Calculate the reduced matrix element $(l||\hat{p}_{k0}||l')$ for the multipole operator.
 
-    The matrix elements of the multipole operators are given by
+    The matrix elements of the multipole operators are given by (see also: Gaunt coefficient)
 
     .. math::
         (l||\hat{p}_{k0}||l') = (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}
