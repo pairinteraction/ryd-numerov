@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Numerov"
-version = "0.0.1"
+dynamic = ["version"]
 
 description = "A Python package for calculating Rydberg wavefuntions."
 readme = "README.md"
@@ -61,6 +61,9 @@ dev = [
 
 [dependency-groups]
 dev = ["numerov[doc,test,benchmark,dev]"]
+
+[tool.setuptools.dynamic]
+version = {attr = "numerov.__version__"}
 
 [tool.uv]
 override-dependencies = [
