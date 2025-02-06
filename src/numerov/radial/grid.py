@@ -58,7 +58,11 @@ class Grid:
 
     @property
     def zlist(self) -> np.ndarray:
-        """The grid in the scaled dimensionless coordinate z = sqrt{x}."""
+        """The grid in the scaled dimensionless coordinate z = sqrt{x}.
+
+        In this coordinate the grid points are chosen equidistant,
+        because the nodes of the wavefunction are equally spaced in this coordinate.
+        """
         return self._zlist
 
     @property

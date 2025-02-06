@@ -1,15 +1,12 @@
 import logging
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import Literal, Optional, Union
 
 import numpy as np
 
 from numerov.model.database import QuantumDefectsDatabase
 from numerov.units import ureg
-
-if TYPE_CHECKING:
-    from numerov.rydberg import RydbergState
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +18,11 @@ class ModelPotential:
     All parameters and potentials are in atomic units.
     """
 
-    state: "RydbergState"
+    species: str
+    n: int
+    l: int
+    s: Union[int, float]
+    j: Union[int, float]
     qdd_path: Optional[str] = None
     add_spin_orbit: bool = True
 
@@ -32,9 +33,8 @@ class ModelPotential:
         """
         self.qdd = QuantumDefectsDatabase(self.qdd_path)
 
-        state = self.state
-        self.model_params = self.qdd.get_model_potential(state.species, state.l)
-        self.ritz_params = self.qdd.get_rydberg_ritz(state.species, state.l, state.j)
+        self.model_params = self.qdd.get_model_potential(self.species, self.l)
+        self.ritz_params = self.qdd.get_rydberg_ritz(self.species, self.l, self.j)
 
     @cached_property
     def energy(self) -> float:
@@ -65,14 +65,13 @@ class ModelPotential:
 
         """
         params = self.ritz_params
-        state = self.state
         delta_nlj = (
             params.d0
-            + params.d2 / (state.n - params.d0) ** 2
-            + params.d4 / (state.n - params.d0) ** 4
-            + params.d6 / (state.n - params.d0) ** 6
+            + params.d2 / (self.n - params.d0) ** 2
+            + params.d4 / (self.n - params.d0) ** 4
+            + params.d6 / (self.n - params.d0) ** 6
         )
-        nstar = state.n - delta_nlj
+        nstar = self.n - delta_nlj
         E_nlj = -0.5 * params.mu / nstar**2
         return E_nlj
 
@@ -144,15 +143,7 @@ class ModelPotential:
 
         """
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
-        V_so = (
-            alpha**2
-            / (4 * x**3)
-            * (
-                self.state.j * (self.state.j + 1)
-                - self.state.l * (self.state.l + 1)
-                - self.state.s * (self.state.s + 1)
-            )
-        )
+        V_so = alpha**2 / (4 * x**3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
         if x[0] < self.model_params.xc:
             V_so *= x > self.model_params.xc
         return V_so
@@ -174,7 +165,7 @@ class ModelPotential:
             V_l: The centrifugal potential V_l(x) in atomic units.
 
         """
-        V_l = self.ritz_params.mu ** (-1) * self.state.l * (self.state.l + 1) / (2 * x**2)
+        V_l = self.ritz_params.mu ** (-1) * self.l * (self.l + 1) / (2 * x**2)
         return V_l
 
     def calc_V_sqrt(self, x: np.ndarray) -> np.ndarray:
@@ -263,8 +254,7 @@ class ModelPotential:
 
         """
         assert which in ["hydrogen", "classical", "zerocrossing"], f"Invalid turning point method {which}."
-        state = self.state
-        hydrogen_r_i = state.n * state.n - state.n * np.sqrt(state.n * state.n - state.l * (state.l - 1))
+        hydrogen_r_i = self.n * self.n - self.n * np.sqrt(self.n * self.n - self.l * (self.l - 1))
         hydrogen_z_i = np.sqrt(hydrogen_r_i)
 
         if which == "hydrogen":
@@ -280,7 +270,7 @@ class ModelPotential:
             arg = np.argwhere(V_phys < 0)[0][0]
 
         if arg == 0:
-            if state.l == 0 and state.species == "H":
+            if self.l == 0 and self.species == "H":
                 return 0
             logger.warning("Turning point is at arg=0, this shouldnt happen.")
         elif arg == len(zlist) - 1:

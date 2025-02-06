@@ -35,7 +35,7 @@ def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool
     atom.create_model(add_spin_orbit=False)
 
     # Run the numerov integration
-    atom.integrate(run_backward=run_backward)
+    atom.integrate_wavefunction(run_backward=run_backward)
 
     # Get analytical solution from sympy
     if n <= 35:
@@ -47,4 +47,4 @@ def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool
             R_nl[i] = sympy_hydrogen.R_nl(n, l, x, Z=1)
 
     # Compare numerical and analytical solutions
-    np.testing.assert_allclose(atom.Rlist, R_nl, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(atom.wavefunction.Rlist, R_nl, rtol=1e-2, atol=1e-2)

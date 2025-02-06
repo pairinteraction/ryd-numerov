@@ -39,8 +39,11 @@ def calc_radial_matrix_element(
         float: The radial matrix element in atomic units.
 
     """
+    # Make sure the wavefunctions are integrated before accessing the grid
+    wf1 = state1.wavefunction
+    wf2 = state2.wavefunction
     return calc_radial_matrix_element_from_w_z(
-        state1.grid.zlist, state1.wlist, state2.grid.zlist, state2.wlist, r_power, integration_method
+        wf1.grid.zlist, wf1.wlist, wf2.grid.zlist, wf2.wlist, r_power, integration_method
     )
 
 
