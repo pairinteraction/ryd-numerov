@@ -42,6 +42,17 @@ class ModelPotential:
             raise ValueError(f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}.")
 
     @cached_property
+    def n_star(self) -> float:
+        params = self.ritz_params
+        delta_nlj = (
+            params.d0
+            + params.d2 / (self.n - params.d0) ** 2
+            + params.d4 / (self.n - params.d0) ** 4
+            + params.d6 / (self.n - params.d0) ** 6
+        )
+        return self.n - delta_nlj
+
+    @cached_property
     def energy(self) -> float:
         r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
 
@@ -70,14 +81,7 @@ class ModelPotential:
 
         """
         params = self.ritz_params
-        delta_nlj = (
-            params.d0
-            + params.d2 / (self.n - params.d0) ** 2
-            + params.d4 / (self.n - params.d0) ** 4
-            + params.d6 / (self.n - params.d0) ** 6
-        )
-        nstar = self.n - delta_nlj
-        E_nlj = -0.5 * params.mu / nstar**2
+        E_nlj = -0.5 * params.mu / self.n_star**2
         return E_nlj
 
     def calc_V_c(self, x: np.ndarray) -> np.ndarray:
