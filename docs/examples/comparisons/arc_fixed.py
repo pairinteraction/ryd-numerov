@@ -1,10 +1,9 @@
+import arc
 import numpy as np
 import scipy.integrate
 
-import arc
 
-
-def arc_radialWavefunction(
+def radialWavefunction(
     atom: arc.AlkaliAtom, n: int, l: int, j: float, step: float = 1e-2, use_fixed_arc: bool = False
 ) -> tuple[np.ndarray, np.ndarray]:
     n, l, j = int(n), int(l), float(j)
@@ -28,7 +27,7 @@ def arc_radialWavefunction(
     return r, psi_r
 
 
-def arc_getRadialMatrixElement(
+def getRadialMatrixElement(
     atom: arc.AlkaliAtom,
     n1: int,
     l1: int,
@@ -39,8 +38,8 @@ def arc_getRadialMatrixElement(
     step: float = 1e-2,
     use_fixed_arc: bool = False,
 ) -> float:
-    r1, psi1_r1 = arc_radialWavefunction(atom, n1, l1, j1, step, use_fixed_arc)
-    r2, psi2_r2 = arc_radialWavefunction(atom, n2, l2, j2, step, use_fixed_arc)
+    r1, psi1_r1 = radialWavefunction(atom, n1, l1, j1, step, use_fixed_arc)
+    r2, psi2_r2 = radialWavefunction(atom, n2, l2, j2, step, use_fixed_arc)
 
     upTo = min(len(r1), len(r2))
     dipoleElement = scipy.integrate.trapezoid(
