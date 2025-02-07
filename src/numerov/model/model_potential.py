@@ -25,6 +25,7 @@ class ModelPotential:
     j: Union[int, float]
     qdd_path: Optional[str] = None
     add_spin_orbit: bool = True
+    add_model_potentials: bool = True
 
     def __post_init__(self) -> None:
         """Load the model potential and Rydberg-Ritz parameters from the QuantumDefectsDatabase.
@@ -95,6 +96,8 @@ class ModelPotential:
             V_c: The core potential V_c(x) in atomic units.
 
         """
+        if not self.add_model_potentials:
+            return -1 / x
         params = self.model_params
         Z_nl = 1 + (params.Z - 1) * np.exp(-params.a1 * x) - x * (params.a3 + params.a4 * x) * np.exp(-params.a2 * x)
         V_c = -Z_nl / x
@@ -118,7 +121,7 @@ class ModelPotential:
 
         """
         params = self.model_params
-        if params.ac == 0:
+        if params.ac == 0 or not self.add_model_potentials:
             return np.zeros_like(x)
         V_p = -params.ac / (2 * x**4) * (1 - np.exp(-((x / params.xc) ** 6)))
         return V_p
