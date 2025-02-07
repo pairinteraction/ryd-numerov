@@ -28,7 +28,7 @@ class Grid:
 
         """
         self._dz = dz
-        self._zlist = np.arange(zmin, zmax + dz * 1e-3, dz)
+        self._zlist = np.arange(zmin, zmax + dz / 2, dz)
 
     def __len__(self) -> int:
         return self.steps

@@ -13,6 +13,7 @@ def _run_numerov_integration_python(
     y1: float,
     g_list: Union[Sequence[float], np.ndarray],
     x_min: float,
+    verbose: bool = False,
 ) -> list[float]:
     r"""Run the Numerov integration algorithm.
 
@@ -35,6 +36,7 @@ def _run_numerov_integration_python(
         g_list: A list of the values of the function g(x) at each x-value.
         x_min: The minimum value of the x-coordinate, until which the integration should be run.
             Once the x-value reaches x_min, we check if the function y(x) is zero and stop the integration.
+        verbose: If True, print additional information.
 
     Returns:
         y_list: A list of the values of the function y(x) at each x-value
@@ -44,24 +46,35 @@ def _run_numerov_integration_python(
 
     i = 2
     x = x_start + 2 * dx
-    sign = dx / abs(dx)
 
-    while sign * x < sign * x_stop:
-        new_y = (
+    run_forward = dx > 0
+    run_backward = not run_forward
+
+    x_min = x_min + dx / 2  # to avoid numerical issues
+    x_stop = x_stop + dx / 2  # to avoid numerical issues
+
+    while (run_forward and x < x_stop) or (run_backward and x > x_stop):
+        y = (
             2 * (1 - 5 * dx**2 / 12 * g_list[i - 1]) * y_list[i - 1] - (1 + dx**2 / 12 * g_list[i - 2]) * y_list[i - 2]
         ) / (1 + dx**2 / 12 * g_list[i])
 
-        # TODO this only works for positve y,
-        # i.e. for backward integration always, but for forward integration only if there is an even number of nodes
-        if (sign * x > sign * x_min) and y_list[-2] > y_list[-1] and y_list[-1] > 0:
-            if new_y < 0:
-                break
-            if y_list[-1] < new_y:
-                break
+        if (run_forward and x > x_min) or (run_backward and x < x_min):
+            if y_list[-2] > y_list[-1] > 0:
+                if y < 0 or y > y_list[-1]:
+                    if verbose:
+                        print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
+                    break
+            if run_forward and y_list[-2] < y_list[-1] < 0:
+                if y > 0 or y < y_list[-1]:
+                    if verbose:
+                        print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
+                    break
 
-        y_list.append(new_y)
-        x += dx
+        y_list.append(y)
+
+        # Set the next x-value
         i += 1
+        x += dx
 
     return y_list
 

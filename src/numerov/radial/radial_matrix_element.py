@@ -88,7 +88,7 @@ def calc_radial_matrix_element_from_w_z(
         return 0
 
     # Select overlapping points
-    tol = 1e-3 * (z1[1] - z1[0])
+    tol = (z1[1] - z1[0]) / 2
     mask1 = (z1 >= zmin - tol) & (z1 <= zmax + tol)
     mask2 = (z2 >= zmin - tol) & (z2 <= zmax + tol)
     z1 = z1[mask1]

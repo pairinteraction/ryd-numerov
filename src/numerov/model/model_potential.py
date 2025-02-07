@@ -228,7 +228,7 @@ class ModelPotential:
         V_tot = self.calc_V_phys(x) + self.calc_V_sqrt(x)
         return V_tot
 
-    def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-2) -> float:
+    def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-3) -> float:
         r"""Calculate the inner turning point z_i for the model potential.
 
         There are three different turning points we consider:
@@ -270,7 +270,7 @@ class ModelPotential:
             arg = np.argwhere(V_phys < 0)[0][0]
 
         if arg == 0:
-            if self.l == 0 and self.species == "H":
+            if self.l == 0:
                 return 0
             logger.warning("Turning point is at arg=0, this shouldnt happen.")
         elif arg == len(zlist) - 1:
