@@ -37,6 +37,10 @@ class ModelPotential:
         self.model_params = self.qdd.get_model_potential(self.species, self.l)
         self.ritz_params = self.qdd.get_rydberg_ritz(self.species, self.l, self.j)
 
+        self.ground_state = self.qdd.get_ground_state(self.species)
+        if not self.ground_state.is_allowed_shell(self.n, self.l):
+            raise ValueError(f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}.")
+
     @cached_property
     def energy(self) -> float:
         r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.

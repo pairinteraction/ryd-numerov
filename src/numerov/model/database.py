@@ -17,6 +17,31 @@ from numerov.units import ureg
 logger = logging.getLogger(__name__)
 
 
+# List of energetically sorted shells
+SORTED_SHELLS = [  # (n, l)
+    (1, 0),
+    (2, 0),
+    (2, 1),
+    (3, 0),
+    (3, 1),
+    (4, 0),
+    (3, 2),
+    (4, 1),
+    (5, 0),
+    (4, 2),
+    (5, 1),
+    (6, 0),
+    (4, 3),
+    (5, 2),
+    (6, 1),
+    (7, 0),
+    (5, 3),
+    (6, 2),
+    (7, 1),
+    (8, 0),
+]
+
+
 @dataclass
 class ModelPotentialParameters:
     """Model potential parameters for an atomic species and angular momentum.
@@ -95,6 +120,52 @@ class RydbergRitzParameters:
 
         """
         return self.Ry / self.Ry_inf
+
+
+@dataclass
+class GroundState:
+    """Ground state parameters for an atomic species.
+
+    Attributes:
+        element: Atomic element symbol
+        configuration: Electron configuration in noble gas notation
+        n: Principal quantum number
+        l: Orbital angular momentum quantum number
+        s: Spin quantum number
+        j: Total angular momentum quantum number
+        m: Magnetic quantum number
+
+    """
+
+    element: str
+    configuration: str
+    n: int
+    l: int
+    s: float
+    j: float
+    m: float
+
+    def is_allowed_shell(self, n: int, l: int) -> bool:
+        """Check if the quantum numbers describe a allowed shell (i.e. are above the ground state).
+
+        Args:
+            n: Principal quantum number
+            l: Orbital angular momentum quantum number
+            s: Spin quantum number
+
+        Returns:
+            True if the quantum numbers specify a state above the ground state, False otherwise.
+
+        """
+        if n > 10:
+            return True
+        if (n, l) not in SORTED_SHELLS:
+            return True
+        if self.element == "Sr3" and (n, l) == (4, 2):  # Sr3 has a special case
+            return True
+        gs_id = SORTED_SHELLS.index((self.n, self.l))
+        id = SORTED_SHELLS.index((n, l))
+        return id >= gs_id
 
 
 class QuantumDefectsDatabase:
@@ -189,6 +260,27 @@ class QuantumDefectsDatabase:
         return RydbergRitzParameters(
             element=row[0], L=row[1], J=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
         )
+
+    def get_ground_state(self, element: str) -> GroundState:
+        """Get ground state parameters.
+
+        Args:
+            element: Atomic element symbol
+
+        Returns:
+            GroundState containing the ground state quantum numbers.
+
+        Raises:
+            ValueError: If no parameters found for element
+
+        """
+        cursor = self.conn.execute("SELECT * FROM ground_state WHERE element=?", (element,))
+        row = cursor.fetchone()
+
+        if row is None:
+            raise ValueError(f"No ground state parameters found for {element}")
+
+        return GroundState(element=row[0], configuration=row[1], n=row[2], l=row[3], s=row[4], j=row[5], m=row[6])
 
     def __del__(self) -> None:
         """Close database connection on object deletion."""

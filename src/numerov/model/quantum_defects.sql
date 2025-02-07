@@ -17,6 +17,9 @@
 
 BEGIN TRANSACTION;
 
+--------------------------------------------------------
+---------- Parameters for the model Potential ----------
+--------------------------------------------------------
 
 DROP TABLE IF EXISTS `model_potential`;
 CREATE TABLE `model_potential` ( `element` text,`L` int,`ac` real,`Z` int,`a1` real,`a2` real,`a3` real,`a4` real,`rc` real);
@@ -65,6 +68,11 @@ INSERT INTO `model_potential` VALUES('Sr3',0,'0',1,'1','1','0','0','1');
 INSERT INTO `model_potential` VALUES('Sr3',1,'0',1,'1','1','0','0','1');
 INSERT INTO `model_potential` VALUES('Sr3',2,'0',1,'1','1','0','0','1');
 INSERT INTO `model_potential` VALUES('Sr3',3,'0',1,'1','1','0','0','1');
+
+
+--------------------------------------------------------
+---------- Parameters for the quantum defects ----------
+--------------------------------------------------------
 
 DROP TABLE IF EXISTS `rydberg_ritz`;
 CREATE TABLE `rydberg_ritz` ( `element` text,`L` int,`J` real,`d0` real,`d2` real,`d4` real,`d6` real,`d8` real,`Ry` real);
@@ -163,5 +171,32 @@ INSERT INTO `rydberg_ritz` VALUES('Sr3',3,'4','0.120','-2.4','120','0.0','0.0','
 INSERT INTO `rydberg_ritz` VALUES('Sr3',3,'3','0.119','-2.0','100','0.0','0.0','109736.631');
 INSERT INTO `rydberg_ritz` VALUES('Sr3',3,'2','0.120','-2.2','100','0.0','0.0','109736.631');
 INSERT INTO `rydberg_ritz` VALUES('Sr3',4,'3','0.0','0.0','0.0','0.0','0.0','109736.631');
+
+
+-------------------------------------------------
+---------- Table for the ground states ----------
+-------------------------------------------------
+
+DROP TABLE IF EXISTS `ground_state`;
+CREATE TABLE `ground_state` (
+    `element` text,
+    `configuration` text,
+    `n` int,
+    `l` int,
+    `s` real,
+    `j` real,
+    `m` real
+);
+
+-- Ground state configurations with quantum numbers for outermost electron(s)
+-- see e.g. https://www.webelements.com/atoms.html
+INSERT INTO `ground_state` VALUES('H','1s',1,0,0.5,0.5,0.5);
+INSERT INTO `ground_state` VALUES('Li','[He]2s',2,0,0.5,0.5,0.5);
+INSERT INTO `ground_state` VALUES('Na','[Ne]3s',3,0,0.5,0.5,0.5);
+INSERT INTO `ground_state` VALUES('K','[Ar]4s',4,0,0.5,0.5,0.5);
+INSERT INTO `ground_state` VALUES('Rb','[Kr]5s',5,0,0.5,0.5,0.5);
+INSERT INTO `ground_state` VALUES('Cs','[Xe]6s',6,0,0.5,0.5,0.5);
+INSERT INTO `ground_state` VALUES('Sr1','[Kr]5s2',5,0,0.0,0.0,0.0);
+INSERT INTO `ground_state` VALUES('Sr3','[Kr]5s5p',5,1,1.0,0.0,0.0);
 
 COMMIT;
