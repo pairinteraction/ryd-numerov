@@ -88,21 +88,35 @@ def calc_radial_matrix_element_from_w_z(
         return 0
 
     # Select overlapping points
-    tol = (z1[1] - z1[0]) / 2
-    mask1 = (z1 >= zmin - tol) & (z1 <= zmax + tol)
-    mask2 = (z2 >= zmin - tol) & (z2 <= zmax + tol)
-    z1 = z1[mask1]
-    z2 = z2[mask2]
-    wf1 = w1[mask1]
-    wf2 = w2[mask2]
+    dz = z1[1] - z1[0]
+    if z1[0] < zmin - dz / 2:
+        ind = round((zmin - z1[0]) / dz)
+        z1 = z1[ind:]
+        w1 = w1[ind:]
+    elif z2[0] < zmin - dz / 2:
+        ind = round((zmin - z2[0]) / dz)
+        z2 = z2[ind:]
+        w2 = w2[ind:]
+
+    if z1[-1] > zmax + dz / 2:
+        ind = round((z1[-1] - zmax) / dz)
+        z1 = z1[:-ind]
+        w1 = w1[:-ind]
+    elif z2[-1] > zmax + dz / 2:
+        ind = round((z2[-1] - zmax) / dz)
+        z2 = z2[:-ind]
+        w2 = w2[:-ind]
 
     tol = 1e-10
     assert len(z1) == len(z2), f"Length mismatch: {len(z1)=} != {len(z2)=}"
     assert z1[0] - z2[0] < tol, f"First point mismatch: {z1[0]=} != {z2[0]=}"
-    assert z1[1] - z2[1] < tol, f"Step size mismatch: {z1[0]=} != {z2[0]=}"
-    assert z1[2] - z2[2] < tol, f"Step size mismatch: {z1[0]=} != {z2[0]=}"
+    assert z1[1] - z2[1] < tol, f"Second point mismatch: {z1[1]=} != {z2[1]=}"
+    assert z1[2] - z2[2] < tol, f"Third point mismatch: {z1[2]=} != {z2[2]=}"
+    assert z1[-1] - z2[-1] < tol, f"Last point mismatch: {z1[-1]=} != {z2[-1]=}"
 
-    integrand = 2 * np.power(z1, 2 * r_power + 2) * wf1 * wf2
+    integrand = 2 * w1 * w2
+    for _ in range(2 * r_power + 2):
+        integrand *= z1
     if integration_method == "trapezoid":
         return float(scipy.integrate.trapezoid(integrand, x=z1))
     elif integration_method == "simpson":
