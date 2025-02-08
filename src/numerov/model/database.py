@@ -144,6 +144,19 @@ class GroundState:
     s: float
     j: float
     m: float
+    ionization_energy: float
+
+    def get_ionization_energy(self, unit: str = "hartree") -> float:
+        """Return the ionization energy in the desired unit.
+
+        Args:
+            unit: Desired unit for the ionization energy. Default is atomic units "hartree".
+
+        Returns:
+            Ionization energy in the desired unit.
+
+        """
+        return ureg.Quantity(self.ionization_energy, "GHz").to(unit, "spectroscopy").magnitude
 
     def is_allowed_shell(self, n: int, l: int) -> bool:
         """Check if the quantum numbers describe a allowed shell (i.e. are above the ground state).
@@ -280,7 +293,16 @@ class QuantumDefectsDatabase:
         if row is None:
             raise ValueError(f"No ground state parameters found for {element}")
 
-        return GroundState(element=row[0], configuration=row[1], n=row[2], l=row[3], s=row[4], j=row[5], m=row[6])
+        return GroundState(
+            element=row[0],
+            configuration=row[1],
+            n=row[2],
+            l=row[3],
+            s=row[4],
+            j=row[5],
+            m=row[6],
+            ionization_energy=row[7],
+        )
 
     def __del__(self) -> None:
         """Close database connection on object deletion."""

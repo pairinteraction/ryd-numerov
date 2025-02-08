@@ -185,18 +185,22 @@ CREATE TABLE `ground_state` (
     `l` int,
     `s` real,
     `j` real,
-    `m` real
+    `m` real,
+    `ionization_energy` real
 );
 
 -- Ground state configurations with quantum numbers for outermost electron(s)
 -- see e.g. https://www.webelements.com/atoms.html
-INSERT INTO `ground_state` VALUES('H','1s',1,0,0.5,0.5,0.5);
-INSERT INTO `ground_state` VALUES('Li','[He]2s',2,0,0.5,0.5,0.5);
-INSERT INTO `ground_state` VALUES('Na','[Ne]3s',3,0,0.5,0.5,0.5);
-INSERT INTO `ground_state` VALUES('K','[Ar]4s',4,0,0.5,0.5,0.5);
-INSERT INTO `ground_state` VALUES('Rb','[Kr]5s',5,0,0.5,0.5,0.5);
-INSERT INTO `ground_state` VALUES('Cs','[Xe]6s',6,0,0.5,0.5,0.5);
-INSERT INTO `ground_state` VALUES('Sr1','[Kr]5s2',5,0,0.0,0.0,0.0);
-INSERT INTO `ground_state` VALUES('Sr3','[Kr]5s5p',5,1,1.0,0.0,0.0);
+-- ionization energies in GHz from:
+-- -- Rb for F=1 from https://journals.aps.org/pra/pdf/10.1103/PhysRevA.83.052515 (see also https://webbook.nist.gov/cgi/inchi?ID=C7440177&Mask=20)
+-- -- Sr3 from https://journals.aps.org/pra/pdf/10.1103/PhysRevA.99.022503 (see also https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440246&Mask=20#Ion-Energetics)
+INSERT INTO `ground_state` VALUES('H','1s',1,0,0.5,0.5,0.5,'0');
+INSERT INTO `ground_state` VALUES('Li','[He]2s',2,0,0.5,0.5,0.5,'0');
+INSERT INTO `ground_state` VALUES('Na','[Ne]3s',3,0,0.5,0.5,0.5,'0');
+INSERT INTO `ground_state` VALUES('K','[Ar]4s',4,0,0.5,0.5,0.5,'0');
+INSERT INTO `ground_state` VALUES('Rb','[Kr]5s',5,0,0.5,0.5,0.5,'1010029.1646');
+INSERT INTO `ground_state` VALUES('Cs','[Xe]6s',6,0,0.5,0.5,0.5,'0');
+INSERT INTO `ground_state` VALUES('Sr1','[Kr]5s2',5,0,0.0,0.0,0.0,'0');
+INSERT INTO `ground_state` VALUES('Sr3','[Kr]5s5p',5,1,1.0,0.0,0.0,'1377012.721');
 
 COMMIT;
