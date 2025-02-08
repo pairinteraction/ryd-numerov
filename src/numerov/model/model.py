@@ -22,21 +22,26 @@ class Model:
     l: int
     s: Union[int, float]
     j: Union[int, float]
-    db_path: Optional[str] = None
     add_spin_orbit: bool = True
     add_model_potentials: bool = True
+    db_path: Optional[str] = None
+    database: Optional[Database] = None
 
     def __post_init__(self) -> None:
         """Load the model potential and Rydberg-Ritz parameters from the Database.
 
         For more details see `database.Database`.
         """
-        self.db = Database(self.db_path)
+        if self.database is not None and self.db_path is not None:
+            raise ValueError("You cannot specify both a database and a database path.")
 
-        self.model_params = self.db.get_model_potential(self.species, self.l)
-        self.ritz_params = self.db.get_rydberg_ritz(self.species, self.l, self.j)
+        if self.database is None:
+            self.database = Database(self.db_path)
 
-        self.ground_state = self.db.get_ground_state(self.species)
+        self.model_params = self.database.get_model_potential(self.species, self.l)
+        self.ritz_params = self.database.get_rydberg_ritz(self.species, self.l, self.j)
+
+        self.ground_state = self.database.get_ground_state(self.species)
         if not self.ground_state.is_allowed_shell(self.n, self.l):
             raise ValueError(f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}.")
 

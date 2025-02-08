@@ -39,8 +39,6 @@ class Wavefunction:
         self._model = model
 
         self._wlist: np.ndarray = None
-        self._ulist: np.ndarray = None
-        self._Rlist: np.ndarray = None
 
     @property
     def grid(self) -> "Grid":
@@ -168,8 +166,12 @@ class Wavefunction:
         if run_backward and idmax < 0.05 * grid.steps:
             logger.error(
                 "The maximum of the wavefunction is close to the inner boundary (idmax=%s) "
-                + "probably due to inner divergence of the wavefunction. ",
+                + "probably due to inner divergence of the wavefunction. "
+                + "n=%s, l=%s, j=%s",
                 idmax,
+                self.model.n,
+                self.model.l,
+                self.model.j,
             )
             logger.warning("Trying to fix this, but the result migth still be incorrect or at least inprecise.")
             wmax = np.max(self.wlist[int(0.1 * grid.steps) :])

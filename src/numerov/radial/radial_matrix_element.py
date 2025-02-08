@@ -14,7 +14,7 @@ def calc_radial_matrix_element(
     state1: "RydbergState",
     state2: "RydbergState",
     r_power: int = 0,
-    integration_method: Literal["simpson", "trapezoid"] = "simpson",
+    integration_method: Literal["simpson", "trapezoid"] = "trapezoid",
 ) -> float:
     r"""Calculate the radial matrix element between two Rydberg states.
 
@@ -96,8 +96,11 @@ def calc_radial_matrix_element_from_w_z(
     wf1 = w1[mask1]
     wf2 = w2[mask2]
 
-    if len(z1) != len(z2) or not np.allclose(z1, z2):
-        raise ValueError(f"Overlapping grid points are not equal: {z1=} != {z2=}")
+    tol = 1e-10
+    assert len(z1) == len(z2), f"Length mismatch: {len(z1)=} != {len(z2)=}"
+    assert z1[0] - z2[0] < tol, f"First point mismatch: {z1[0]=} != {z2[0]=}"
+    assert z1[1] - z2[1] < tol, f"Step size mismatch: {z1[0]=} != {z2[0]=}"
+    assert z1[2] - z2[2] < tol, f"Step size mismatch: {z1[0]=} != {z2[0]=}"
 
     integrand = 2 * np.power(z1, 2 * r_power + 2) * wf1 * wf2
     if integration_method == "trapezoid":

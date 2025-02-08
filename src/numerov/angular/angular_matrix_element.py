@@ -92,20 +92,46 @@ def calc_reduced_angular_matrix_element(
     """
     assert operator in ["L", "S", "Y", "p"]
 
+    if operator in ["p", "Y"] and (
+        abs(state_f.l - state_i.l) > kappa
+        or (state_f.l - state_i.l) % 2 != kappa % 2
+        or abs(state_f.j - state_i.j) > kappa
+        or state_f.j + state_i.j < kappa
+    ):
+        return 0
+
+    if operator in ["L", "S"] and (state_f.l != state_i.l or abs(state_f.j - state_i.j) > 1):
+        return 0
+
+    if operator == "S" and state_f.s == 0:
+        return 0
+
+    if operator == "L" and state_f.l == 0:
+        return 0
+
     prefactor = minus_one_pow(state_f.s + state_f.l + state_i.j + kappa)
     prefactor *= np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
 
     if operator == "S":
+        if state_f.s == 0:
+            return 0
         reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
         wigner_6j = calc_wigner_6j(state_f.s, state_f.j, state_i.l, state_i.j, state_i.s, kappa)
     else:
-        wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_i.s, state_i.j, state_i.l, kappa)
         if operator == "L":
+            if state_f.l == 0:
+                return 0
             reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
         else:
             reduced_matrix_element = _calc_reduced_multipole_matrix_element(state_i.l, state_f.l, operator, kappa)
+        wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_i.s, state_i.j, state_i.l, kappa)
 
-    return prefactor * reduced_matrix_element * wigner_6j
+    value = prefactor * reduced_matrix_element * wigner_6j
+
+    # Check that we catched all cases where the reduced matrix element is zero before
+    assert value != 0, f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is zero."
+
+    return value
 
 
 def _calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int, float], kappa: int) -> float:
@@ -125,7 +151,7 @@ def _calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int
         The reduced matrix element $(j_f||\hat{j}_{10}||j_i)$.
 
     """
-    if j_i != j_f:
+    if j_i != j_f or j_i == 0:
         return 0
     if kappa == 1:
         return np.sqrt(j_i * (j_i + 1) * (2 * j_i + 1))

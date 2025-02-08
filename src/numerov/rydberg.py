@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from numerov.angular.angular_matrix_element import OperatorType
+    from numerov.model import Database
 
 
 logger = logging.getLogger(__name__)
@@ -75,19 +76,32 @@ class RydbergState:
             self.create_model()
         return self._model
 
-    def create_model(self, db_path: Optional[str] = None, add_spin_orbit: bool = True) -> None:
+    def create_model(
+        self, add_spin_orbit: bool = True, database: Optional["Database"] = None, db_path: Optional[str] = None
+    ) -> None:
         """Create the model potential for the Rydberg state.
 
         Args:
-            db_path: Optional path to a SQLite database file containing the quantum defects.
-            Default None, i.e. use the default quantum_defects.sql.
             add_spin_orbit: Whether to include the spin-orbit interaction in the model potential.
-            Defaults to True.
+                Defaults to True.
+            database: Optional database object containing the quantum defects.
+                Default None, i.e. use the db_path or the default database.
+            db_path: Optional path to a SQLite database file containing the quantum defects.
+                Default None, i.e. use the default quantum_defects.sql.
 
         """
         if self._model is not None:
             raise ValueError("The model was already created, you should not create a different model.")
-        self._model = Model(self.species, self.n, self.l, self.s, self.j, db_path, add_spin_orbit)
+        self._model = Model(
+            self.species,
+            self.n,
+            self.l,
+            self.s,
+            self.j,
+            add_spin_orbit=add_spin_orbit,
+            db_path=db_path,
+            database=database,
+        )
 
     @property
     def energy(self) -> float:
