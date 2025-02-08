@@ -1,11 +1,10 @@
 import logging
 from dataclasses import dataclass
-from functools import cached_property
 from typing import Literal, Optional, Union
 
 import numpy as np
 
-from numerov.model.database import QuantumDefectsDatabase
+from numerov.model.database import Database
 from numerov.units import ureg
 
 logger = logging.getLogger(__name__)
@@ -23,25 +22,25 @@ class ModelPotential:
     l: int
     s: Union[int, float]
     j: Union[int, float]
-    qdd_path: Optional[str] = None
+    db_path: Optional[str] = None
     add_spin_orbit: bool = True
     add_model_potentials: bool = True
 
     def __post_init__(self) -> None:
-        """Load the model potential and Rydberg-Ritz parameters from the QuantumDefectsDatabase.
+        """Load the model potential and Rydberg-Ritz parameters from the Database.
 
-        For more details see `database.QuantumDefectsDatabase`.
+        For more details see `database.Database`.
         """
-        self.qdd = QuantumDefectsDatabase(self.qdd_path)
+        self.db = Database(self.db_path)
 
-        self.model_params = self.qdd.get_model_potential(self.species, self.l)
-        self.ritz_params = self.qdd.get_rydberg_ritz(self.species, self.l, self.j)
+        self.model_params = self.db.get_model_potential(self.species, self.l)
+        self.ritz_params = self.db.get_rydberg_ritz(self.species, self.l, self.j)
 
-        self.ground_state = self.qdd.get_ground_state(self.species)
+        self.ground_state = self.db.get_ground_state(self.species)
         if not self.ground_state.is_allowed_shell(self.n, self.l):
             raise ValueError(f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}.")
 
-    @cached_property
+    @property
     def n_star(self) -> float:
         params = self.ritz_params
         delta_nlj = (
@@ -52,7 +51,7 @@ class ModelPotential:
         )
         return self.n - delta_nlj
 
-    @cached_property
+    @property
     def energy(self) -> float:
         r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
 

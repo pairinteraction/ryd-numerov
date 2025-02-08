@@ -181,22 +181,22 @@ class GroundState:
         return id >= gs_id
 
 
-class QuantumDefectsDatabase:
+class Database:
     """Interface to quantum defects SQL database."""
 
-    def __init__(self, qdd_path: Optional[str] = None) -> None:
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """Initialize database connection.
 
         Args:
-            qdd_path: Optional path to SQLite database file. If None, use the default
-                quantum_defects.sql in the same directory as this file.
+            db_path: Optional path to SQLite database file. If None, use the default
+                database.sql in the same directory as this file.
 
         """
-        if qdd_path is None:
-            qdd_path = str(Path(__file__).parent / "quantum_defects.sql")
+        if db_path is None:
+            db_path = str(Path(__file__).parent / "database.sql")
 
         self.conn = sqlite3.connect(":memory:")
-        with open(qdd_path) as f:
+        with open(db_path) as f:
             self.conn.executescript(f.read())
 
     def get_model_potential(self, species: str, l: int) -> ModelPotentialParameters:

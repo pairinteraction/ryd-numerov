@@ -1,3 +1,3 @@
-from numerov.model.model_potential import ModelPotential
+from numerov.model.model import ModelPotential
 
 __all__ = ["ModelPotential"]

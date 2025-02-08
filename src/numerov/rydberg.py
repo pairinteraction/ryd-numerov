@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union, overload
 import numpy as np
 
 from numerov.angular.angular_matrix_element import OperatorType, calc_angular_matrix_element
-from numerov.model.model_potential import ModelPotential
+from numerov.model import ModelPotential
 from numerov.radial.grid import Grid
 from numerov.radial.radial_matrix_element import calc_radial_matrix_element
 from numerov.radial.wavefunction import Wavefunction
@@ -75,11 +75,11 @@ class RydbergState:
             self.create_model()
         return self._model
 
-    def create_model(self, qdd_path: Optional[str] = None, add_spin_orbit: bool = True) -> None:
+    def create_model(self, db_path: Optional[str] = None, add_spin_orbit: bool = True) -> None:
         """Create the model potential for the Rydberg state.
 
         Args:
-            qdd_path: Optional path to a SQLite database file containing the quantum defects.
+            db_path: Optional path to a SQLite database file containing the quantum defects.
             Default None, i.e. use the default quantum_defects.sql.
             add_spin_orbit: Whether to include the spin-orbit interaction in the model potential.
             Defaults to True.
@@ -87,7 +87,7 @@ class RydbergState:
         """
         if self._model is not None:
             raise ValueError("The model was already created, you should not create a different model.")
-        self._model = ModelPotential(self.species, self.n, self.l, self.s, self.j, qdd_path, add_spin_orbit)
+        self._model = ModelPotential(self.species, self.n, self.l, self.s, self.j, db_path, add_spin_orbit)
 
     @property
     def energy(self) -> float:
