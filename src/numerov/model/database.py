@@ -47,8 +47,8 @@ class ModelPotentialParameters:
     """Model potential parameters for an atomic species and angular momentum.
 
     Attributes:
-        element: Atomic element symbol.
-        L: Angular momentum quantum number.
+        species: Atomic species.
+        l: Angular momentum quantum number.
         ac: Polarizability parameter in atomic units.
         Z: Nuclear charge.
         a1: Model potential parameter a1 in atomic units.
@@ -59,8 +59,8 @@ class ModelPotentialParameters:
 
     """
 
-    element: str
-    L: int
+    species: str
+    l: int
     ac: float
     Z: int
     a1: float
@@ -84,9 +84,9 @@ class RydbergRitzParameters:
     """Rydberg-Ritz parameters for an atomic species and quantum numbers.
 
     Attributes:
-        element: Atomic element symbol.
-        L: Angular momentum quantum number.
-        J: Total angular momentum quantum number.
+        species: Atomic species.
+        l: Angular momentum quantum number.
+        j: Total angular momentum quantum number.
         d0: Zeroth-order quantum defect.
         d2: Second-order quantum defect.
         d4: Fourth-order quantum defect.
@@ -97,9 +97,9 @@ class RydbergRitzParameters:
 
     """
 
-    element: str
-    L: int
-    J: float
+    species: str
+    l: int
+    j: float
     d0: float
     d2: float
     d4: float
@@ -127,7 +127,7 @@ class GroundState:
     """Ground state parameters for an atomic species.
 
     Attributes:
-        element: Atomic element symbol
+        species: Atomic species
         configuration: Electron configuration in noble gas notation
         n: Principal quantum number
         l: Orbital angular momentum quantum number
@@ -137,7 +137,7 @@ class GroundState:
 
     """
 
-    element: str
+    species: str
     configuration: str
     n: int
     l: int
@@ -174,7 +174,7 @@ class GroundState:
             return True
         if (n, l) not in SORTED_SHELLS:
             return True
-        if self.element == "Sr3" and (n, l) == (4, 2):  # Sr3 has a special case
+        if self.species in ["Sr_triplet"] and (n, l) == (4, 2):  # Sr_triplet has a special case
             return True
         gs_id = SORTED_SHELLS.index((self.n, self.l))
         id = SORTED_SHELLS.index((n, l))
@@ -199,102 +199,102 @@ class QuantumDefectsDatabase:
         with open(qdd_path) as f:
             self.conn.executescript(f.read())
 
-    def get_model_potential(self, element: str, L: int) -> ModelPotentialParameters:
+    def get_model_potential(self, species: str, l: int) -> ModelPotentialParameters:
         """Get model potential parameters.
 
         Args:
-            element: Atomic element symbol
-            L: Angular momentum quantum number
+            species: Atomic species
+            l: Angular momentum quantum number
 
         Returns:
             ModelPotentialParameters containing the model potential parameters.
-            If no exact match is found for L, returns parameters for largest available L.
+            If no exact match is found for l, returns parameters for largest available l.
 
         Raises:
-            ValueError: If no parameters found for element
+            ValueError: If no parameters found for species
 
         """
         # Try exact match first
-        cursor = self.conn.execute("SELECT * FROM model_potential WHERE element=? AND L=?", (element, L))
+        cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? AND l=?", (species, l))
         row = cursor.fetchone()
 
         if row is not None:
             return ModelPotentialParameters(
-                element=row[0], L=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
+                species=row[0], l=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
             )
 
-        # If no exact match, get all entries for this element
-        logger.debug("No model potential parameters found for %s with L=%d, trying largest L", element, L)
-        cursor = self.conn.execute("SELECT * FROM model_potential WHERE element=? ORDER BY L DESC", (element,))
+        # If no exact match, get all entries for this species
+        logger.debug("No model potential parameters found for %s with l=%d, trying largest l", species, l)
+        cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? ORDER BY l DESC", (species,))
         row = cursor.fetchone()
 
         if row is None:
-            raise ValueError(f"No model potential parameters found for {element}")
+            raise ValueError(f"No model potential parameters found for {species}")
 
         return ModelPotentialParameters(
-            element=row[0], L=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
+            species=row[0], l=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
         )
 
-    def get_rydberg_ritz(self, element: str, L: int, J: float) -> RydbergRitzParameters:
+    def get_rydberg_ritz(self, species: str, l: int, j: float) -> RydbergRitzParameters:
         """Get Rydberg-Ritz parameters.
 
         Args:
-            element: Atomic element symbol
-            L: Angular momentum quantum number
-            J: Total angular momentum quantum number
+            species: Atomic species
+            l: Angular momentum quantum number
+            j: Total angular momentum quantum number
 
         Returns:
             RydbergRitzParameters containing the Rydberg-Ritz coefficients.
-            If no exact match is found, returns parameters for largest available L and J.
+            If no exact match is found, returns parameters for largest available l and j.
 
         Raises:
-            ValueError: If no parameters found for element
+            ValueError: If no parameters found for species
 
         """
         # Try exact match first
-        cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE element=? AND L=? AND J=?", (element, L, J))
+        cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? AND l=? AND j=?", (species, l, j))
         row = cursor.fetchone()
 
         if row is not None:
             return RydbergRitzParameters(
-                element=row[0], L=row[1], J=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
+                species=row[0], l=row[1], j=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
             )
 
-        # If no exact match, get all entries for this element ordered by L and J
+        # If no exact match, get all entries for this species ordered by l and j
         logger.debug(
-            "No Rydberg-Ritz parameters found for %s with L=%d and J=%d, trying largest L and J", element, L, J
+            "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, trying largest l and j", species, l, j
         )
-        cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE element=? ORDER BY L DESC, J DESC", (element,))
+        cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? ORDER BY l DESC, j DESC", (species,))
         row = cursor.fetchone()
 
         if row is None:
-            raise ValueError(f"No Rydberg-Ritz parameters found for {element}")
+            raise ValueError(f"No Rydberg-Ritz parameters found for {species}")
 
         return RydbergRitzParameters(
-            element=row[0], L=row[1], J=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
+            species=row[0], l=row[1], j=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
         )
 
-    def get_ground_state(self, element: str) -> GroundState:
+    def get_ground_state(self, species: str) -> GroundState:
         """Get ground state parameters.
 
         Args:
-            element: Atomic element symbol
+            species: Atomic species
 
         Returns:
             GroundState containing the ground state quantum numbers.
 
         Raises:
-            ValueError: If no parameters found for element
+            ValueError: If no parameters found for species
 
         """
-        cursor = self.conn.execute("SELECT * FROM ground_state WHERE element=?", (element,))
+        cursor = self.conn.execute("SELECT * FROM ground_state WHERE species=?", (species,))
         row = cursor.fetchone()
 
         if row is None:
-            raise ValueError(f"No ground state parameters found for {element}")
+            raise ValueError(f"No ground state parameters found for {species}")
 
         return GroundState(
-            element=row[0],
+            species=row[0],
             configuration=row[1],
             n=row[2],
             l=row[3],

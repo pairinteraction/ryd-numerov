@@ -52,9 +52,9 @@ class RydbergState:
 
     def __post_init__(self) -> None:
         if self.s is None:
-            if self.species.endswith("singlet") or self.species.endswith("1"):
+            if self.species.endswith("singlet"):
                 self.s = 0
-            elif self.species.endswith("triplet") or self.species.endswith("3"):
+            elif self.species.endswith("triplet"):
                 self.s = 1
             else:
                 self.s = 0.5
