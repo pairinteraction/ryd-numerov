@@ -147,13 +147,15 @@ class RydbergState:
             # it takes into account that for large n but small l the wavefunction is very extended
             xmax = 2 * self.n * (self.n + 15 + (self.n - self.l) / 4)
 
-        # Since the potential diverges at z=0 we set the minimum zmin to 2 * dz
-        zmin = max(np.sqrt(xmin), dz)
+        zmin = np.sqrt(xmin)
         zmax = np.sqrt(xmax)
 
-        # put all grid points on a standard grid, i.e. 0, dz, 2dz, ...
+        # put all grid points on a standard grid, i.e. [dz, 2*dz, 3*dz, ...]
         # this is necessary to allow integration of two different wavefunctions
         zmin = (zmin // dz) * dz
+
+        # Since the potential diverges at z=0 we set the minimum zmin to dz
+        zmin = max(zmin, dz)
 
         # set the grid object
         self._grid = Grid(zmin, zmax, dz)
