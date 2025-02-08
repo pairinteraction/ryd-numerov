@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING, Optional, Union, overload
 
 import numpy as np
 
-from numerov.angular.angular_matrix_element import OperatorType, calc_angular_matrix_element
-from numerov.model import ModelPotential
-from numerov.radial.grid import Grid
-from numerov.radial.radial_matrix_element import calc_radial_matrix_element
-from numerov.radial.wavefunction import Wavefunction
+from numerov.angular import calc_angular_matrix_element
+from numerov.model import Model
+from numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from numerov.units import BaseQuantities
 
 if TYPE_CHECKING:
     from pint.facets.plain import PlainQuantity
     from typing_extensions import Self
+
+    from numerov.angular.angular_matrix_element import OperatorType
 
 
 logger = logging.getLogger(__name__)
@@ -65,12 +65,12 @@ class RydbergState:
         assert self.j >= abs(self.l - self.s) and self.j <= self.l + self.s, "j must be between l - s and l + s"
         assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
 
-        self._model: ModelPotential = None
+        self._model: Model = None
         self._grid: Grid = None
         self._wavefunction: Wavefunction = None
 
     @property
-    def model(self) -> ModelPotential:
+    def model(self) -> Model:
         if self._model is None:
             self.create_model()
         return self._model
@@ -87,7 +87,7 @@ class RydbergState:
         """
         if self._model is not None:
             raise ValueError("The model was already created, you should not create a different model.")
-        self._model = ModelPotential(self.species, self.n, self.l, self.s, self.j, db_path, add_spin_orbit)
+        self._model = Model(self.species, self.n, self.l, self.s, self.j, db_path, add_spin_orbit)
 
     @property
     def energy(self) -> float:
@@ -173,16 +173,16 @@ class RydbergState:
 
     @overload
     def calc_angular_matrix_element(
-        self, other: "Self", operator: OperatorType, k_angular: int, q: int
+        self, other: "Self", operator: "OperatorType", k_angular: int, q: int
     ) -> "PlainQuantity[float]": ...
 
     @overload
     def calc_angular_matrix_element(
-        self, other: "Self", operator: OperatorType, k_angular: int, q: int, unit: str
+        self, other: "Self", operator: "OperatorType", k_angular: int, q: int, unit: str
     ) -> float: ...
 
     def calc_angular_matrix_element(
-        self, other: "Self", operator: OperatorType, k_angular: int, q: int, unit: Optional[str] = None
+        self, other: "Self", operator: "OperatorType", k_angular: int, q: int, unit: Optional[str] = None
     ):
         angular_matrix_element_au = calc_angular_matrix_element(self, other, operator, k_angular, q)
         if unit == "a.u.":

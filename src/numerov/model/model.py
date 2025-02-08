@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ModelPotential:
+class Model:
     """A class to represent the Rydberg model potential.
 
     All parameters and potentials are in atomic units.

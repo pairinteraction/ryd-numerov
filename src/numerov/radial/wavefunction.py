@@ -1,5 +1,4 @@
 import logging
-from functools import cached_property
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -7,9 +6,8 @@ import numpy as np
 from numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from numerov.model import ModelPotential
+    from numerov.model import Model
     from numerov.radial.grid import Grid
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +26,7 @@ class Wavefunction:
     def __init__(
         self,
         grid: "Grid",
-        model: "ModelPotential",
+        model: "Model",
     ) -> None:
         """Create a Wavefunction object.
 
@@ -50,7 +48,7 @@ class Wavefunction:
         return self._grid
 
     @property
-    def model(self) -> "ModelPotential":
+    def model(self) -> "Model":
         """The model potential object containing the potential information."""
         return self._model
 
@@ -61,12 +59,12 @@ class Wavefunction:
             self.integrate()
         return self._wlist
 
-    @cached_property
+    @property
     def ulist(self) -> np.ndarray:
         r"""The dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r)."""
         return np.sqrt(self.grid.zlist) * self.wlist
 
-    @cached_property
+    @property
     def Rlist(self) -> np.ndarray:
         r"""The radial wavefunction R(r) in atomic units."""
         return self.ulist / self.grid.xlist

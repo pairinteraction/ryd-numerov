@@ -49,12 +49,12 @@ def calc_angular_matrix_element(
 
     """
     prefactor = minus_one_pow(state_i.j - kappa + state_f.m)
-    reduced_matrix_element = calc_reduced_j_matrix_element(state_i, state_f, operator, kappa)
+    reduced_matrix_element = calc_reduced_angular_matrix_element(state_i, state_f, operator, kappa)
     wigner_3j = calc_wigner_3j(state_i.j, kappa, state_f.j, state_i.m, q, -state_f.m)
     return prefactor * reduced_matrix_element * wigner_3j
 
 
-def calc_reduced_j_matrix_element(
+def calc_reduced_angular_matrix_element(
     state_i: "RydbergState",
     state_f: "RydbergState",
     operator: OperatorType,
@@ -96,19 +96,19 @@ def calc_reduced_j_matrix_element(
     prefactor *= np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
 
     if operator == "S":
-        reduced_matrix_element = calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
+        reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
         wigner_6j = calc_wigner_6j(state_f.s, state_f.j, state_i.l, state_i.j, state_i.s, kappa)
     else:
         wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_i.s, state_i.j, state_i.l, kappa)
         if operator == "L":
-            reduced_matrix_element = calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
+            reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
         else:
-            reduced_matrix_element = calc_reduced_multipole_matrix_element(state_i.l, state_f.l, operator, kappa)
+            reduced_matrix_element = _calc_reduced_multipole_matrix_element(state_i.l, state_f.l, operator, kappa)
 
     return prefactor * reduced_matrix_element * wigner_6j
 
 
-def calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int, float], kappa: int) -> float:
+def _calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int, float], kappa: int) -> float:
     r"""Calculate the reduced matrix element $(j_f||\hat{j}_{10}||j_i)$ for a momentum operator.
 
     The matrix elements of the momentum operators $j \in \{l, s\}$ are given by
@@ -132,7 +132,7 @@ def calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int,
     raise NotImplementedError("Currently only kappa=1 is supported.")
 
 
-def calc_reduced_multipole_matrix_element(l_i: int, l_f: int, operator: OperatorType, kappa: int) -> float:
+def _calc_reduced_multipole_matrix_element(l_i: int, l_f: int, operator: OperatorType, kappa: int) -> float:
     r"""Calculate the reduced matrix element $(l||\hat{p}_{k0}||l')$ for the multipole operator.
 
     The matrix elements of the multipole operators are given by (see also: Gaunt coefficient)
