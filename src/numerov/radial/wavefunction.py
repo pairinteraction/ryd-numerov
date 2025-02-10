@@ -109,7 +109,13 @@ class Wavefunction:
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
-        glist = 8 * self.model.ritz_params.mu * grid.zlist**2 * (self.model.energy - self.model.calc_V_tot(grid.xlist))
+        glist = (
+            8
+            * self.model.ritz_params.mu
+            * grid.zlist
+            * grid.zlist
+            * (self.model.energy - self.model.calc_V_tot(grid.xlist))
+        )
 
         if run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
@@ -135,15 +141,15 @@ class Wavefunction:
             logger.warning("Using python implementation of Numerov integration, this is much slower!")
             wlist = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
 
+        wlist = np.array(wlist)
         if run_backward:
-            wlist = np.array(wlist)[::-1]
+            wlist = wlist[::-1]
             grid.set_grid_range(step_start=grid.steps - len(wlist))
         else:
-            wlist = np.array(wlist)
             grid.set_grid_range(step_stop=len(wlist))
 
         # normalize the wavefunction, see docstring
-        norm = np.sqrt(2 * np.sum(wlist**2 * grid.zlist**2) * grid.dz)
+        norm = np.sqrt(2 * np.sum(wlist * wlist * grid.zlist * grid.zlist) * grid.dz)
         wlist /= norm
 
         self._wlist = wlist
@@ -177,7 +183,7 @@ class Wavefunction:
             wmax = np.max(self.wlist[int(0.1 * grid.steps) :])
             wmin = np.min(self.wlist[int(0.1 * grid.steps) :])
             self._wlist *= (self.wlist <= wmax) * (self.wlist >= wmin)
-            norm = np.sqrt(2 * np.sum(self.wlist**2 * grid.zlist**2) * grid.dz)
+            norm = np.sqrt(2 * np.sum(self.wlist * self.wlist * grid.zlist * grid.zlist) * grid.dz)
             self._wlist /= norm
 
         if self.wlist[0] < 0:

@@ -135,7 +135,10 @@ class Model:
         params = self.model_params
         if params.ac == 0 or not self.add_model_potentials:
             return np.zeros_like(x)
-        V_p = -params.ac / (2 * x**4) * (1 - np.exp(-((x / params.xc) ** 6)))
+        x2 = x * x
+        x4 = x2 * x2
+        x6 = x4 * x2
+        V_p = -params.ac / (2 * x4) * (1 - np.exp(-(x6 / params.xc**6)))
         return V_p
 
     def calc_V_so(self, x: np.ndarray) -> np.ndarray:
@@ -158,7 +161,8 @@ class Model:
 
         """
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
-        V_so = alpha**2 / (4 * x**3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
+        x3 = x * x * x
+        V_so = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
         if x[0] < self.model_params.xc:
             V_so *= x > self.model_params.xc
         return V_so
@@ -180,7 +184,8 @@ class Model:
             V_l: The centrifugal potential V_l(x) in atomic units.
 
         """
-        V_l = self.ritz_params.mu ** (-1) * self.l * (self.l + 1) / (2 * x**2)
+        x2 = x * x
+        V_l = (1 / self.ritz_params.mu) * self.l * (self.l + 1) / (2 * x2)
         return V_l
 
     def calc_V_sqrt(self, x: np.ndarray) -> np.ndarray:
@@ -201,7 +206,8 @@ class Model:
             V_sqrt: The sqrt transformation potential V_sqrt(x) in atomic units.
 
         """
-        V_sqrt = self.ritz_params.mu ** (-1) * (3 / 32) / x**2
+        x2 = x * x
+        V_sqrt = (1 / self.ritz_params.mu) * (3 / 32) / x2
         return V_sqrt
 
     def calc_V_phys(self, x: np.ndarray) -> np.ndarray:
@@ -276,7 +282,7 @@ class Model:
             return hydrogen_z_i
 
         zlist = np.arange(dz, max(2 * hydrogen_z_i, 10), dz)
-        xlist = zlist**2
+        xlist = zlist * zlist
         V_phys = self.calc_V_phys(xlist)
 
         if which == "classical":
