@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from typing import Literal, Optional, Union
 
+import numexpr as ne
 import numpy as np
 
 from numerov.model.database import Database
@@ -26,6 +27,7 @@ class Model:
     add_model_potentials: bool = True
     db_path: Optional[str] = None
     database: Optional[Database] = None
+    use_numepr: bool = False
 
     def __post_init__(self) -> None:
         """Load the model potential and Rydberg-Ritz parameters from the Database.
@@ -111,7 +113,14 @@ class Model:
         if not self.add_model_potentials:
             return -1 / x
         params = self.model_params
-        Z_nl = 1 + (params.Z - 1) * np.exp(-params.a1 * x) - x * (params.a3 + params.a4 * x) * np.exp(-params.a2 * x)
+        if self.use_numepr:
+            a1, a2 = params.a1, params.a2  # noqa: F841
+            exp_a1 = ne.evaluate("exp(-a1 * x)")
+            exp_a2 = ne.evaluate("exp(-a2 * x)")
+        else:
+            exp_a1 = np.exp(-params.a1 * x)
+            exp_a2 = np.exp(-params.a2 * x)
+        Z_nl = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
         V_c = -Z_nl / x
         return V_c
 
@@ -138,7 +147,12 @@ class Model:
         x2 = x * x
         x4 = x2 * x2
         x6 = x4 * x2
-        V_p = -params.ac / (2 * x4) * (1 - np.exp(-(x6 / params.xc**6)))
+        if self.use_numepr:
+            xc = params.xc  # noqa: F841
+            exp_x6 = ne.evaluate("exp(-(x6 / xc**6))")
+        else:
+            exp_x6 = np.exp(-(x6 / params.xc**6))
+        V_p = -params.ac / (2 * x4) * (1 - exp_x6)
         return V_p
 
     def calc_V_so(self, x: np.ndarray) -> np.ndarray:

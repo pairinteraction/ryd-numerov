@@ -18,6 +18,7 @@ authors = [
 requires-python = ">= 3.10"
 dependencies = [
     "numpy>=2.1",
+    "numexpr>=2.10",
     "numba>=0.61",
     "pint>=0.24",
     "scipy>=1.15",
