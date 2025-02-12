@@ -127,7 +127,7 @@ class Wavefunction:
             # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
             # or it reaches a local minimum (thus goiing away from the x-axis)
             x_min = self.model.calc_z_turning_point("classical", dz=grid.dz)
-            x_min = max(x_min, 5 * abs(dx))
+            x_min = max(x_min, 5 * abs(dx), self.get_xmin())
 
         else:  # forward
             y0, y1 = 0, w0
@@ -156,7 +156,15 @@ class Wavefunction:
 
         self.sanity_check(x_stop, run_backward)
 
-    def sanity_check(self, z_stop: float, run_backward: bool) -> None:
+    def get_xmin(self) -> float:
+        """Implement a few special cases for the xmin point of the integration."""
+        species, n, l = self.model.species, self.model.n, self.model.l
+        if species == "Rb" and n == 4 and l == 3:
+            return 2
+
+        return 0
+
+    def sanity_check(self, z_stop: float, run_backward: bool) -> bool:
         """Do some sanity checks on the wavefunction.
 
         Check if the wavefuntion fulfills the following conditions:
@@ -167,67 +175,109 @@ class Wavefunction:
         - The integration stopped before z_stop (for l>0)
         """
         grid = self.grid
+        sanity_check = True
+        n, l, j = self.model.n, self.model.l, self.model.j
 
+        # Check the maximum of the wavefunction
         idmax = np.argmax(np.abs(self.wlist))
         if run_backward and idmax < 0.05 * grid.steps:
-            logger.error(
+            sanity_check = False
+            logger.warning(
                 "The maximum of the wavefunction is close to the inner boundary (idmax=%s) "
                 + "probably due to inner divergence of the wavefunction. "
-                + "n=%s, l=%s, j=%s",
+                + "Trying to fix this, but the result might still be incorrect or at least inprecise.",
                 idmax,
-                self.model.n,
-                self.model.l,
-                self.model.j,
             )
-            logger.warning("Trying to fix this, but the result migth still be incorrect or at least inprecise.")
             wmax = np.max(self.wlist[int(0.1 * grid.steps) :])
             wmin = np.min(self.wlist[int(0.1 * grid.steps) :])
             self._wlist *= (self.wlist <= wmax) * (self.wlist >= wmin)
             norm = np.sqrt(2 * np.sum(self.wlist * self.wlist * grid.zlist * grid.zlist) * grid.dz)
             self._wlist /= norm
 
+        # Check the wavefunction at the inner boundary
         if self.wlist[0] < 0:
+            sanity_check = False
             logger.warning("The wavefunction is negative at the inner boundary, %s", self.wlist[0])
 
-        max_ind = {0: 1, 1: 1, 2: 1, 3: 4, 4: 6, 5: 8}.get(self.model.l, 10)
-        if self.model.l != 0 and not 0 < np.mean(self.wlist[:max_ind]) < 1e-3:
+        inner_ind = {0: 5, 1: 5}.get(l, 10)
+        inner_weight = (
+            2
+            * np.sum(self.wlist[:inner_ind] * self.wlist[:inner_ind] * grid.zlist[:inner_ind] * grid.zlist[:inner_ind])
+            * grid.dz
+        )
+        inner_weight_scaled_to_whole_grid = inner_weight * grid.steps / inner_ind
+
+        tolerance = 1e-5
+        if l in [4, 5, 6]:
+            # apparently the wavefunction converges worse for those l values
+            # maybe this has something to do with the model potential parameters, which are only given for l <= 3
+            tolerance = 1e-4
+        if n < 10:
+            # for low n the wavefunction also converges bad
+            tolerance = 1e-3
+        if n <= 6:
+            # for n < 6 the wavefunction converges very bad
+            tolerance = 5e-3
+
+        if inner_weight_scaled_to_whole_grid > tolerance:
+            sanity_check = False
             logger.warning(
-                "The wavefunction (for l=%d) is not close to zero (or negative) at the inner boundary, mean=%.2e",
-                self.model.l,
-                np.mean(self.wlist[:max_ind]),
+                "The wavefunction is not close to zero at the inner boundary, (inner_weight_scaled_to_whole_grid=%.2e)",
+                inner_weight_scaled_to_whole_grid,
             )
 
-        outer_wf = self.wlist[int(0.95 * grid.steps) :]
+        # Check the wavefunction at the outer boundary
+        outer_ind = int(0.95 * grid.steps)
+        outer_wf = self.wlist[outer_ind:]
         if np.mean(outer_wf) > 1e-7:
+            sanity_check = False
             logger.warning(
-                "The wavefunction is not close to zero at the outer boundary, mean=%.2e, outer_wf=%s",
+                "The wavefunction is not close to zero at the outer boundary, mean=%.2e",
                 np.mean(outer_wf),
-                outer_wf,
             )
 
-        # TODO instead of just checking the mean of the wf also check the percantage of the integral
-        # i.e. something like \int_{r_outer_bound}^{\inf} r^2 |R(r)|^2 dr < tol
-        # and \int_{0}^{r_inner_bound} r^2 |R(r)|^2 dr < tol
+        outer_weight = 2 * np.sum(outer_wf * outer_wf * grid.zlist[outer_ind:] * grid.zlist[outer_ind:]) * grid.dz
+        outer_weight_scaled_to_whole_grid = outer_weight * grid.steps / len(outer_wf)
+        if outer_weight_scaled_to_whole_grid > 1e-10:
+            sanity_check = False
+            logger.warning(
+                "The wavefunction is not close to zero at the outer boundary, (outer_weight_scaled_to_whole_grid=%.2e)",
+                outer_weight_scaled_to_whole_grid,
+            )
 
         # Check the number of nodes
         nodes = np.sum(np.abs(np.diff(np.sign(self.wlist)))) // 2
-        if nodes != self.model.n - self.model.l - 1:
-            logger.warning(
-                f"The wavefunction has {nodes} nodes, but should have {self.model.n - self.model.l - 1} nodes."
-            )
+        if nodes != n - l - 1:
+            sanity_check = False
+            logger.warning(f"The wavefunction has {nodes} nodes, but should have {n - l - 1} nodes.")
 
         # Check that numerov stopped and did not run until x_stop
-        if self.model.l > 0:
+        if l > 0:
             if run_backward and z_stop > grid.zlist[0] - grid.dz / 2:
+                sanity_check = False
                 logger.warning("The integration did not stop at the zmin boundary, z=%s, %s", grid.zlist[0], z_stop)
             if not run_backward and z_stop < grid.zlist[-1] + grid.dz / 2:
+                sanity_check = False
                 logger.warning("The integration did not stop at the zmax boundary, z=%s", grid.zlist[-1])
-        elif self.model.l == 0 and run_backward:
+        elif l == 0 and run_backward:
             if z_stop > 1.5 * grid.dz:
+                sanity_check = False
                 logger.warning("The integration for l=0 should go until z=dz, but a z_stop=%s was used.", z_stop)
             elif grid.zlist[0] > 2.5 * grid.dz:
                 # zlist[0] should be dz, but if it is 2 * dz this is also fine
                 # e.g. this might happen if the integration just stopped at the last step due to a negative y value
+                sanity_check = False
                 logger.warning(
                     "The integration for l=0 did stop before the zmin boundary, z=%s, %s", grid.zlist[0], grid.dz
                 )
+
+        if not sanity_check:
+            logger.error(
+                "The wavefunction (species=%s n=%d, l=%d, j=%.1f) has some issues.",
+                self.model.species,
+                n,
+                l,
+                j,
+            )
+
+        return sanity_check
