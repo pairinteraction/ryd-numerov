@@ -127,7 +127,7 @@ class Wavefunction:
             # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
             # or it reaches a local minimum (thus goiing away from the x-axis)
             x_min = self.model.calc_z_turning_point("classical", dz=grid.dz)
-            x_min = max(x_min, 5 * dx)
+            x_min = max(x_min, 5 * abs(dx))
 
         else:  # forward
             y0, y1 = 0, w0
