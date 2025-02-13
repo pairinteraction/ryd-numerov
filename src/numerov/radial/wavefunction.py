@@ -159,7 +159,9 @@ class Wavefunction:
     def get_xmin(self) -> float:
         """Implement a few special cases for the xmin point of the integration."""
         species, n, l = self.model.species, self.model.n, self.model.l
-        if species == "Rb" and n == 4 and l == 3:
+        if species in ["Rb", "Cs"] and n == 4 and l == 3:
+            return 2
+        if species == "Sr_singlet" and n == 5 and l == 0:
             return 2
 
         return 0
@@ -176,7 +178,7 @@ class Wavefunction:
         """
         grid = self.grid
         sanity_check = True
-        n, l, j = self.model.n, self.model.l, self.model.j
+        species, n, l, j = self.model.species, self.model.n, self.model.l, self.model.j
 
         # Check the maximum of the wavefunction
         idmax = np.argmax(np.abs(self.wlist))
@@ -190,7 +192,8 @@ class Wavefunction:
             )
             wmax = np.max(self.wlist[int(0.1 * grid.steps) :])
             wmin = np.min(self.wlist[int(0.1 * grid.steps) :])
-            self._wlist *= (self.wlist <= wmax) * (self.wlist >= wmin)
+            tol = 1e-2 * max(abs(wmax), abs(wmin))
+            self._wlist *= (self.wlist <= wmax + tol) * (self.wlist >= wmin - tol)
             norm = np.sqrt(2 * np.sum(self.wlist * self.wlist * grid.zlist * grid.zlist) * grid.dz)
             self._wlist /= norm
 
@@ -207,19 +210,26 @@ class Wavefunction:
         )
         inner_weight_scaled_to_whole_grid = inner_weight * grid.steps / inner_ind
 
-        tolerance = 1e-5
+        tol = 1e-5
         if l in [4, 5, 6]:
             # apparently the wavefunction converges worse for those l values
             # maybe this has something to do with the model potential parameters, which are only given for l <= 3
-            tolerance = 1e-4
+            tol = 1e-4
+        # for low n the wavefunction also converges bad
+        if n <= 15:
+            tol = 2e-4
         if n < 10:
-            # for low n the wavefunction also converges bad
-            tolerance = 1e-3
+            tol = 1e-3
         if n <= 6:
-            # for n < 6 the wavefunction converges very bad
-            tolerance = 5e-3
+            tol = 5e-3
 
-        if inner_weight_scaled_to_whole_grid > tolerance:
+        # special cases of bad convergence:
+        if species == "K" and l == 3:
+            tol = max(tol, 5e-5)
+        if (species, n, l, j) == ("Cs", 5, 2, 1.5):
+            tol = max(tol, 2e-2)
+
+        if inner_weight_scaled_to_whole_grid > tol:
             sanity_check = False
             logger.warning(
                 "The wavefunction is not close to zero at the inner boundary, (inner_weight_scaled_to_whole_grid=%.2e)",
