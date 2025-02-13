@@ -7,7 +7,7 @@ from numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, minus_one_pow
 if TYPE_CHECKING:
     from numerov.rydberg import RydbergState
 
-OperatorType = Literal["L", "S", "Y", "p"]
+OperatorType = Literal["L", "S", "Y", "p", "mu"]
 
 
 def calc_angular_matrix_element(
@@ -41,6 +41,7 @@ def calc_angular_matrix_element(
                 - "S" for the spin angular momentum operator,
                 - "Y" for the spherical harmonics operator,
                 - "p" for the spherical multipole operator.
+                - "mu" for the magnetic moment operator.
         kappa: The quantum number $\kappa$ of the angular momentum operator.
         q: The quantum number $q$ of the angular momentum operator.
 
@@ -48,9 +49,9 @@ def calc_angular_matrix_element(
         The angular matrix element $\bra{state_f} \hat{O}_{kq} \ket{state_i}$.
 
     """
-    prefactor = minus_one_pow(state_i.j - kappa + state_f.m)
+    prefactor = minus_one_pow(state_f.j - state_f.m)
     reduced_matrix_element = calc_reduced_angular_matrix_element(state_i, state_f, operator, kappa)
-    wigner_3j = calc_wigner_3j(state_i.j, kappa, state_f.j, state_i.m, q, -state_f.m)
+    wigner_3j = calc_wigner_3j(state_f.j, kappa, state_i.j, -state_f.m, q, state_i.m)
     return prefactor * reduced_matrix_element * wigner_3j
 
 
@@ -90,7 +91,7 @@ def calc_reduced_angular_matrix_element(
         The reduced matrix element $\langle j || \hat{O}_{k0} || j' \rangle$.
 
     """
-    assert operator in ["L", "S", "Y", "p"]
+    assert operator in ["L", "S", "Y", "p", "mu"]
 
     if operator in ["p", "Y"] and (
         abs(state_f.l - state_i.l) > kappa
@@ -100,7 +101,9 @@ def calc_reduced_angular_matrix_element(
     ):
         return 0
 
-    if operator in ["L", "S"] and (state_f.l != state_i.l or abs(state_f.j - state_i.j) > 1):
+    if operator in ["L", "S", "mu"] and (
+        state_f.l != state_i.l or state_f.s != state_i.s or abs(state_f.j - state_i.j) > 1
+    ):
         return 0
 
     if operator == "S" and state_f.s == 0:
@@ -109,22 +112,30 @@ def calc_reduced_angular_matrix_element(
     if operator == "L" and state_f.l == 0:
         return 0
 
-    prefactor = minus_one_pow(state_f.s + state_f.l + state_i.j + kappa)
-    prefactor *= np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
+    if operator == "mu":
+        mu_B = 0.5  # Bohr magneton in atomic units
+        g_s = 2.0023192
+        value_s = calc_reduced_angular_matrix_element(state_i, state_f, "S", kappa)
+        g_l = 1
+        value_l = calc_reduced_angular_matrix_element(state_i, state_f, "L", kappa)
+        mu = mu_B * (
+            g_s * value_s + g_l * value_l
+        )  # note the missing minus is convention how we use it in pairinteraction ...
+        return mu
+
+    prefactor = np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
 
     if operator == "S":
-        if state_f.s == 0:
-            return 0
+        prefactor *= minus_one_pow(state_f.l + state_i.s + state_f.j + kappa)
         reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
-        wigner_6j = calc_wigner_6j(state_f.s, state_f.j, state_i.l, state_i.j, state_i.s, kappa)
+        wigner_6j = calc_wigner_6j(state_f.s, state_f.j, state_f.l, state_i.j, state_i.s, kappa)
     else:
+        prefactor *= minus_one_pow(state_f.l + state_f.s + state_i.j + kappa)
         if operator == "L":
-            if state_f.l == 0:
-                return 0
             reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
         else:
             reduced_matrix_element = _calc_reduced_multipole_matrix_element(state_i.l, state_f.l, operator, kappa)
-        wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_i.s, state_i.j, state_i.l, kappa)
+        wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_f.s, state_i.j, state_i.l, kappa)
 
     value = prefactor * reduced_matrix_element * wigner_6j
 
