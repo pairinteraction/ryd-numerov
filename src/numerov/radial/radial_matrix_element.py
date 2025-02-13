@@ -14,7 +14,7 @@ def calc_radial_matrix_element(
     state1: "RydbergState",
     state2: "RydbergState",
     r_power: int = 0,
-    integration_method: Literal["trapezoid", "scipy_simpson", "scipy_trapezoid"] = "trapezoid",
+    integration_method: Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"] = "sum",
 ) -> float:
     r"""Calculate the radial matrix element between two Rydberg states.
 
@@ -117,11 +117,14 @@ def calc_radial_matrix_element_from_w_z(
     integrand = 2 * w1 * w2
     for _ in range(2 * r_power + 2):
         integrand *= z1
+
+    if integration_method == "sum":
+        return np.sum(integrand) * dz
     if integration_method == "trapezoid":
         return float(np.trapz(integrand, dx=dz))
-    elif integration_method == "scipy_trapezoid":
+    if integration_method == "scipy_trapezoid":
         return float(scipy.integrate.trapezoid(integrand, dx=dz))
-    elif integration_method == "scipy_simpson":
+    if integration_method == "scipy_simpson":
         return float(scipy.integrate.simpson(integrand, dx=dz))
-    else:
-        raise ValueError(f"Invalid integration method: {integration_method}")
+
+    raise ValueError(f"Invalid integration method: {integration_method}")
