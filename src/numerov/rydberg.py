@@ -19,6 +19,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+ALKALI_SPECIES = ["H", "Li", "Na", "K", "Rb", "Cs", "Fr"]
+ALKALINE_EARTH_SPECIES = ["Be", "Mg", "Ca", "Sr", "Ba", "Ra"]
+
 
 @dataclass
 class RydbergState:
@@ -69,6 +72,14 @@ class RydbergState:
         self._model: Model = None
         self._grid: Grid = None
         self._wavefunction: Wavefunction = None
+
+    @property
+    def is_alkali(self) -> bool:
+        return self.species.split("_")[0] in ALKALI_SPECIES
+
+    @property
+    def is_alkaline_earth(self) -> bool:
+        return self.species.split("_")[0] in ALKALINE_EARTH_SPECIES
 
     @property
     def model(self) -> Model:
