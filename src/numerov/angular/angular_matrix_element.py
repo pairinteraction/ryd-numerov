@@ -1,40 +1,52 @@
-from typing import TYPE_CHECKING, Literal, Union
+from typing import Literal, Union
 
 import numpy as np
 
 from numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, check_triangular, minus_one_pow
 
-if TYPE_CHECKING:
-    from numerov.rydberg import RydbergState
-
 OperatorType = Literal["L", "S", "Y", "p", "mu"]
 
 
 def calc_angular_matrix_element(
-    state_i: "RydbergState",
-    state_f: "RydbergState",
+    s1: float,
+    l1: int,
+    j1: float,
+    m1: float,
+    s2: float,
+    l2: int,
+    j2: float,
+    m2: float,
     operator: OperatorType,
     kappa: int,
     q: int,
 ) -> float:
-    r"""Calculate the angular matrix element $\bra{state_f} \hat{O}_{kq} \ket{state_i}$.
+    r"""Calculate the angular matrix element $\bra{state_2} \hat{O}_{kq} \ket{state_1}$.
 
-    For the states $\bra{state_f} = \bra{l,s,j,m}$ and $\ket{state_i} = \ket{l',s',j',m'}$,
+    For the states $\bra{state_2} = \bra{s2,l2,j2,m2}$ and $\ket{state_1} = \ket{s1,l1,j1,m1}$,
     the angular matrix elements of the angular momentum operators $\hat{O}_{kq}$ are given by
 
     .. math::
-        \bra{state_f} \hat{O}_{kq} \ket{state_i}
-        = \bra{l,s,j,m} \hat{O}_{kq} \ket{l',s',j',m'}
-        = \langle j', m', k, q | j, m \rangle \langle j || \hat{O}_{k0} || j' \rangle / \sqrt{2j + 1}
-        = (-1)^{j' - \kappa + m} wigner_3j(j', kappa, j, m', q, -m)
-        \langle j || \hat{O}_{k0} || j' \rangle
+        \bra{state_2} \hat{O}_{kq} \ket{state_1}
+        = \bra{s2,l2,j2,m2} \hat{O}_{kq} \ket{s1,l1,j1,m1}
+        = \langle j1, m1, k, q | j2, m2 \rangle \langle j2 || \hat{O}_{k0} || j1 \rangle / \sqrt{2 * j2 + 1}
+        = (-1)^{j1 - \kappa + m2} wigner_3j(j1, kappa, j2, m1, q, -m2)
+        \langle j2 || \hat{O}_{k0} || j1 \rangle
 
     where we first used the Wigner-Eckhart theorem
     and then the Wigner 3-j symbol to express the Clebsch-Gordan coefficient.
 
+    Note we changed the formulas to match the pairinteraction paper convention:
+    https://doi.org/10.1088/1361-6455/aa743a
+
     Args:
-        state_i: The initial state $\ket{state_i} = \ket{l',s',j',m'}$.
-        state_f: The final state $\bra{state_f} = \bra{l,s,j,m}$.
+        s1: The spin quantum number of the initial state.
+        l1: The orbital quantum number of the initial state.
+        j1: The total angular momentum quantum number of the initial state.
+        m1: The magnetic quantum number of the initial state.
+        s2: The spin quantum number of the final state.
+        l2: The orbital quantum number of the final state.
+        j2: The total angular momentum quantum number of the final state.
+        m2: The magnetic quantum number of the final state.
         operator: The angular momentum operator type $\hat{O}_{kq}$.
             Can be one of the following:
                 - "L" for the orbital angular momentum operator,
@@ -46,66 +58,76 @@ def calc_angular_matrix_element(
         q: The quantum number $q$ of the angular momentum operator.
 
     Returns:
-        The angular matrix element $\bra{state_f} \hat{O}_{kq} \ket{state_i}$.
+        The angular matrix element $\bra{state_2} \hat{O}_{kq} \ket{state_1}$.
 
     """
-    prefactor = minus_one_pow(state_f.j - state_f.m)
-    reduced_matrix_element = calc_reduced_angular_matrix_element(state_i, state_f, operator, kappa)
-    wigner_3j = calc_wigner_3j(state_f.j, kappa, state_i.j, -state_f.m, q, state_i.m)
+    prefactor = minus_one_pow(j2 - m2)
+    reduced_matrix_element = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, operator, kappa)
+    wigner_3j = calc_wigner_3j(j2, kappa, j1, -m2, q, m1)
     return prefactor * reduced_matrix_element * wigner_3j
 
 
 def calc_reduced_angular_matrix_element(
-    state_i: "RydbergState",
-    state_f: "RydbergState",
+    s1: float,
+    l1: int,
+    j1: float,
+    s2: float,
+    l2: int,
+    j2: float,
     operator: OperatorType,
     kappa: int,
     _lazy_evaluation: bool = True,
 ) -> float:
-    r"""Calculate the reduced matrix element $\langle j || \hat{O}_{k0} || j' \rangle$.
+    r"""Calculate the reduced matrix element $\langle j2 || \hat{O}_{k0} || j1 \rangle$.
 
-    The reduced matrix elements $\langle j || \hat{O}_{k0} || j' \rangle$ for
-    $\bra{j} = \bra{\gamma, s, l, j}$ and $\ket{j'} = \ket{\gamma', s', l', j'}$
-    simplify for the special cases $s = s'$ or $l = l'$ to the following expressions:
+    The reduced matrix elements $\langle j2 || \hat{O}_{k0} || j1 \rangle$ for
+    $\bra{j2} = \bra{\gamma_2, s2, l2, j2}$ and $\ket{j1} = \ket{\gamma_1, s1, l1, j1}$
+    simplify for the special cases $s2 = s1$ or $l2 = l1$ to the following expressions:
     (see https://www.phys.ksu.edu/reu2015/danielkeylon/Wigner.pdf, and Edmonds: "Angular Momentum in Quantum Mechanics")
 
-    For $s = s'$ (i.e. when \hat{O}_{k0} only acts on l), the reduced matrix element is given by
+    For $s2 = s1$ (i.e. when \hat{O}_{k0} only acts on l), the reduced matrix element is given by
     .. math::
-        \langle \gamma, s, l, j || \hat{O}_{k0} || \gamma', s, l', j' \rangle
-        = (-1)**(s + l + j' + kappa) sqrt{2j + 1} sqrt{2j' + 1} wigner_6j(l, j, s, j', l', kappa)
-        \langle \gamma, l || \hat{O}_{k0} || \gamma', l' \rangle
+        \langle \gamma_2, s2, l2, j2 || \hat{O}_{k0} || \gamma_1, s2, l1, j1 \rangle
+        = (-1)**(s2 + l2 + j1 + kappa) sqrt{2j + 1} sqrt{2j1 + 1} wigner_6j(l2, j2, s2, j1, l1, kappa)
+        \langle \gamma_2, l2 || \hat{O}_{k0} || \gamma_1, l1 \rangle
 
-    And for $l = l'$ (i.e. when \hat{O}_{k0} only acts on s), the reduced matrix element is given by
+    And for $l2 = l1$ (i.e. when \hat{O}_{k0} only acts on s), the reduced matrix element is given by
     .. math::
-        \langle \gamma, s, l, j || \hat{O}_{k0} || \gamma', s', l, j' \rangle
-        = (-1)**(s + l + j' + kappa) sqrt{2j + 1} sqrt{2j' + 1} wigner_6j(s, j, l, j', s', kappa)
-        \langle \gamma, s || \hat{O}_{k0} || \gamma', s' \rangle
+        \langle \gamma_2, s2, l2, j2 || \hat{O}_{k0} || \gamma_1, s1, l2, j1 \rangle
+        = (-1)**(s2 + l2 + j1 + kappa) sqrt{2j + 1} sqrt{2 * j1 + 1} wigner_6j(s2, j2, l2, j1, s1, kappa)
+        \langle \gamma_2, s2 || \hat{O}_{k0} || \gamma_1, s1 \rangle
 
+    Note we changed the formulas to match the pairinteraction paper convention:
+    https://doi.org/10.1088/1361-6455/aa743a
 
     Args:
-        state_i: The initial state $\ket{state_i} = \ket{l',s',j',m'}$.
-        state_f: The final state $\bra{state_f} = \bra{l,s,j,m}$.
+        s1: The spin quantum number of the initial state.
+        l1: The orbital quantum number of the initial state.
+        j1: The total angular momentum quantum number of the initial state.
+        s2: The spin quantum number of the final state.
+        l2: The orbital quantum number of the final state.
+        j2: The total angular momentum quantum number of the final state.
         operator: The angular momentum operator $\hat{O}_{kq}$.
         kappa: The quantum number $\kappa$ of the angular momentum operator.
 
     Returns:
-        The reduced matrix element $\langle j || \hat{O}_{k0} || j' \rangle$.
+        The reduced matrix element $\langle j2 || \hat{O}_{k0} || j1 \rangle$.
 
     """
     assert operator in ["L", "S", "Y", "p", "mu"]
 
     should_be_zero = False
-    if not check_triangular(state_f.j, state_i.j, kappa):
+    if not check_triangular(j2, j1, kappa):
         should_be_zero = True
-    elif operator in ["Y", "p", "L"] and not check_triangular(state_f.l, state_i.l, kappa):
+    elif operator in ["Y", "p", "L"] and not check_triangular(l2, l1, kappa):
         should_be_zero = True
-    elif operator in ["S"] and not check_triangular(state_f.s, state_i.s, kappa):
+    elif operator in ["S"] and not check_triangular(s2, s1, kappa):
         should_be_zero = True
-    elif operator in ["p", "Y"] and (state_f.l + state_i.l + kappa) % 2 != 0:
+    elif operator in ["p", "Y"] and (l2 + l1 + kappa) % 2 != 0:
         should_be_zero = True
-    elif operator in ["L", "S", "mu"] and (state_f.l != state_i.l or state_f.s != state_i.s):
+    elif operator in ["L", "S", "mu"] and (l2 != l1 or s2 != s1):
         should_be_zero = True
-    elif (operator == "S" and state_f.s == 0) or (operator == "L" and state_f.l == 0):
+    elif (operator == "S" and s2 == 0) or (operator == "L" and l2 == 0):
         should_be_zero = True
 
     if should_be_zero and _lazy_evaluation:
@@ -114,99 +136,101 @@ def calc_reduced_angular_matrix_element(
     if operator == "mu":
         mu_B = 0.5  # Bohr magneton in atomic units
         g_s = 2.0023192
-        value_s = calc_reduced_angular_matrix_element(state_i, state_f, "S", kappa)
+        value_s = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "S", kappa)
         g_l = 1
-        value_l = calc_reduced_angular_matrix_element(state_i, state_f, "L", kappa)
+        value_l = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "L", kappa)
         mu = mu_B * (
             g_s * value_s + g_l * value_l
         )  # TODO note the missing minus is convention how we use it in pairinteraction ...
         return mu
 
-    prefactor = np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
+    prefactor = np.sqrt(2 * j1 + 1) * np.sqrt(2 * j2 + 1)
 
+    reduced_matrix_element: float
     if operator == "S":
-        prefactor *= minus_one_pow(state_f.l + state_i.s + state_f.j + kappa)
-        if state_i.l != state_f.l:
+        prefactor *= minus_one_pow(l2 + s1 + j2 + kappa)
+        if l1 != l2:
             reduced_matrix_element = 0
         else:
-            reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
-        wigner_6j = calc_wigner_6j(state_f.s, state_f.j, state_f.l, state_i.j, state_i.s, kappa)
+            reduced_matrix_element = _calc_reduced_momentum_matrix_element(s1, s2, kappa)
+        wigner_6j = calc_wigner_6j(s2, j2, l2, j1, s1, kappa)
     else:
-        prefactor *= minus_one_pow(state_f.l + state_f.s + state_i.j + kappa)
+        prefactor *= minus_one_pow(l2 + s2 + j1 + kappa)
         if operator == "L":
-            if state_i.s != state_f.s:
+            if s1 != s2:
                 reduced_matrix_element = 0
             else:
-                reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
+                reduced_matrix_element = _calc_reduced_momentum_matrix_element(l1, l2, kappa)
         else:
-            reduced_matrix_element = _calc_reduced_multipole_matrix_element(state_i.l, state_f.l, operator, kappa)
-        wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_f.s, state_i.j, state_i.l, kappa)
+            reduced_matrix_element = _calc_reduced_multipole_matrix_element(l1, l2, operator, kappa)
+        wigner_6j = calc_wigner_6j(l2, j2, s2, j1, l1, kappa)
 
     value = prefactor * reduced_matrix_element * wigner_6j
 
     # Check that we catched all cases where the reduced matrix element is zero before
     if should_be_zero and value != 0:
         raise ValueError(
-            f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} "
+            f"The reduced angular matrix element for {(s1, l1, j1)}, {(s2, l2, j2)}, {operator}, {kappa} "
             "is not zero (but should be zero)."
         )
     if value == 0 and not should_be_zero:
         raise ValueError(
-            f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa}"
+            f"The reduced angular matrix element for {(s1, l1, j1)}, {(s2, l2, j2)}, {operator}, {kappa}"
             "is zero (but should not be zero)."
         )
 
     return value
 
 
-def _calc_reduced_momentum_matrix_element(j_i: Union[int, float], j_f: Union[int, float], kappa: int) -> float:
-    r"""Calculate the reduced matrix element $(j_f||\hat{j}_{10}||j_i)$ for a momentum operator.
+def _calc_reduced_momentum_matrix_element(x1: Union[int, float], x2: Union[int, float], kappa: int) -> float:
+    r"""Calculate the reduced matrix element $(x2||\hat{x}_{10}||x1)$ for a momentum operator.
 
-    The matrix elements of the momentum operators $j \in \{l, s\}$ are given by
+    The matrix elements of the momentum operators $x \in \{l, s\}$ are given by
 
     .. math::
-        (j_f||\hat{j}_{10}||j_i) = \delta_{j_f, j_i} \sqrt{j_i(j_i+1)(2j_i+1)}
+        (x2||\hat{x}_{10}||x1) = \delta_{x2, x1} \sqrt{x1 (x1 + 1) (2 * x1 + 1)}
 
     Args:
-        j_i: The angular momentum quantum number $j_i$ of the initial state.
-        j_f: The angular momentum quantum number $j_f$ of the final state.
+        x1: The angular momentum quantum number of the initial state.
+        x2: The angular momentum quantum number of the final state.
         kappa: The quantum number $\kappa$ of the angular momentum operator.
 
     Returns:
-        The reduced matrix element $(j_f||\hat{j}_{10}||j_i)$.
+        The reduced matrix element $(x2||\hat{x}_{10}||x1)$.
 
     """
-    if j_i != j_f or j_i == 0:
+    if x1 != x2 or x1 == 0:
         return 0
     if kappa == 1:
-        return np.sqrt(j_i * (j_i + 1) * (2 * j_i + 1))
+        return np.sqrt(x1 * (x1 + 1) * (2 * x1 + 1))
     raise NotImplementedError("Currently only kappa=1 is supported.")
 
 
-def _calc_reduced_multipole_matrix_element(l_i: int, l_f: int, operator: OperatorType, kappa: int) -> float:
-    r"""Calculate the reduced matrix element $(l||\hat{p}_{k0}||l')$ for the multipole operator.
+def _calc_reduced_multipole_matrix_element(l1: int, l2: int, operator: OperatorType, kappa: int) -> float:
+    r"""Calculate the reduced matrix element $(l2||\hat{p}_{k0}||l1)$ for the multipole operator.
 
     The matrix elements of the multipole operators are given by (see also: Gaunt coefficient)
 
     .. math::
-        (l||\hat{p}_{k0}||l') = (-1)^l \sqrt{(2l+1)(2l'+1)} \begin{pmatrix} l & k & l' \\ 0 & 0 & 0 \end{pmatrix}
+        (l2||\hat{p}_{k0}||l1) = (-1)^l2 \sqrt{(2 * l2 + 1)(2 * l1 + 1)}
+                                    \begin{pmatrix} l2 & k & l1 \\ 0 & 0 & 0 \end{pmatrix}
 
     Args:
-        l_i: The angular momentum quantum number $l$ of the initial state.
-        l_f: The angular momentum quantum number $l'$ of the final state.
+        l1: The oribtal momentum quantum number of the initial state.
+        l2: The oribtal momentum quantum number of the final state.
         operator: The multipole operator, either "Y" or "p".
         kappa: The quantum number $\kappa$ of the angular momentum operator.
 
     Returns:
-        The reduced matrix element $(l||\hat{p}_{k0}||l')$.
+        The reduced matrix element $(l2||\hat{p}_{k0}||l1)$.
 
     """
     assert operator in ["Y", "p"]
 
-    prefactor = minus_one_pow(l_f)
-    prefactor *= np.sqrt((2 * l_i + 1) * (2 * l_f + 1))
+    prefactor = minus_one_pow(l2)
+    prefactor *= np.sqrt((2 * l1 + 1) * (2 * l2 + 1))
     if operator == "Y":
         prefactor *= np.sqrt((2 * kappa + 1) / (4 * np.pi))
 
-    wigner_3j = calc_wigner_3j(l_f, kappa, l_i, 0, 0, 0)
+    wigner_3j = calc_wigner_3j(l2, kappa, l1, 0, 0, 0)
     return prefactor * wigner_3j

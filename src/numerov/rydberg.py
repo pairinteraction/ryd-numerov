@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Union, overload
 import numpy as np
 
 from numerov.angular import calc_angular_matrix_element
+from numerov.angular.angular_matrix_element import OperatorType
 from numerov.model import Model
 from numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from numerov.units import BaseQuantities
@@ -13,7 +14,6 @@ if TYPE_CHECKING:
     from pint.facets.plain import PlainQuantity
     from typing_extensions import Self
 
-    from numerov.angular.angular_matrix_element import OperatorType
     from numerov.model import Database
 
 
@@ -206,7 +206,9 @@ class RydbergState:
     def calc_angular_matrix_element(
         self, other: "Self", operator: "OperatorType", k_angular: int, q: int, unit: Optional[str] = None
     ):
-        angular_matrix_element_au = calc_angular_matrix_element(self, other, operator, k_angular, q)
+        self_qns = (self.s, self.l, self.j, self.m)
+        other_qns = (other.s, other.l, other.j, other.m)
+        angular_matrix_element_au = calc_angular_matrix_element(*self_qns, *other_qns, operator, k_angular, q)
         if unit == "a.u.":
             return angular_matrix_element_au
         angular_matrix_element = angular_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
@@ -250,9 +252,9 @@ class RydbergState:
             The multipole matrix element.
 
         """
-        operator = "p"
-        radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
-        angular_matrix_element_au = calc_angular_matrix_element(self, other, operator, k_angular, q)
+        operator: OperatorType = "p"
+        radial_matrix_element_au = self.calc_radial_matrix_element(other, k_radial, unit="a.u.")
+        angular_matrix_element_au = self.calc_angular_matrix_element(other, operator, k_angular, q, unit="a.u.")
         multipole_matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
         if unit == "a.u.":
             return multipole_matrix_element_au
