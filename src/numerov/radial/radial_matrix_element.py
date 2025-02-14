@@ -9,12 +9,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+INTEGRATION_METHODS = Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
+
 
 def calc_radial_matrix_element(
     state1: "RydbergState",
     state2: "RydbergState",
     r_power: int = 0,
-    integration_method: Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"] = "sum",
+    integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
     r"""Calculate the radial matrix element between two Rydberg states.
 
@@ -32,8 +34,9 @@ def calc_radial_matrix_element(
         state1: First Rydberg state
         state2: Second Rydberg state
         r_power: Power of r in the matrix element
-        (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
-        integration_method: Integration method to use, one of "simpson" or "trapezoid" (default="simpson")
+            (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
+        integration_method: Integration method to use, one of ["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
+            (default="sum")
 
     Returns:
         float: The radial matrix element in atomic units.
@@ -53,7 +56,7 @@ def calc_radial_matrix_element_from_w_z(
     z2: np.ndarray,
     w2: np.ndarray,
     r_power: int = 0,
-    integration_method: Literal["simpson", "trapezoid"] = "simpson",
+    integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
     r"""Calculate the radial matrix element of two wavefunctions w1(z1) and w2(z2).
 
@@ -73,8 +76,9 @@ def calc_radial_matrix_element_from_w_z(
         z2: z coordinates of the second wavefunction
         w2: w(z) values of the second wavefunction
         r_power: Power of r in the matrix element
-        (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
-        integration_method: Integration method to use, one of "simpson" or "trapezoid" (default="simpson")
+            (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
+        integration_method: Integration method to use, one of ["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
+            (default="sum")
 
     Returns:
         float: The radial matrix element
