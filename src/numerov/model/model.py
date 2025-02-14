@@ -295,7 +295,7 @@ class Model:
         if which == "hydrogen":
             return hydrogen_z_i
 
-        zlist = np.arange(dz, max(2 * hydrogen_z_i, 10), dz)
+        zlist = np.arange(max(dz, hydrogen_z_i - 10), max(hydrogen_z_i + 10, 10), dz)
         xlist = zlist * zlist
         V_phys = self.calc_V_phys(xlist)
 

@@ -90,20 +90,20 @@ def calc_radial_matrix_element_from_w_z(
     # Select overlapping points
     dz = z1[1] - z1[0]
     if z1[0] < zmin - dz / 2:
-        ind = round((zmin - z1[0]) / dz)
+        ind = int((zmin - z1[0]) / dz + 0.5)
         z1 = z1[ind:]
         w1 = w1[ind:]
     elif z2[0] < zmin - dz / 2:
-        ind = round((zmin - z2[0]) / dz)
+        ind = int((zmin - z2[0]) / dz + 0.5)
         z2 = z2[ind:]
         w2 = w2[ind:]
 
     if z1[-1] > zmax + dz / 2:
-        ind = round((z1[-1] - zmax) / dz)
+        ind = int((z1[-1] - zmax) / dz + 0.5)
         z1 = z1[:-ind]
         w1 = w1[:-ind]
     elif z2[-1] > zmax + dz / 2:
-        ind = round((z2[-1] - zmax) / dz)
+        ind = int((z2[-1] - zmax) / dz + 0.5)
         z2 = z2[:-ind]
         w2 = w2[:-ind]
 
