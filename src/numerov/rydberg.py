@@ -56,12 +56,7 @@ class RydbergState:
 
     def __post_init__(self) -> None:
         if self.s is None:
-            if self.species.endswith("singlet"):
-                self.s = 0
-            elif self.species.endswith("triplet"):
-                self.s = 1
-            else:
-                self.s = 0.5
+            self.s = get_spin_from_species(self.species)
 
         assert isinstance(self.s, (float, int)), "s must be a float or int"
         assert self.n >= 1, "n must be larger than 0"
@@ -267,3 +262,11 @@ class RydbergState:
         if unit is None:
             return multipole_matrix_element
         return multipole_matrix_element.to(unit).magnitude
+
+
+def get_spin_from_species(species: str) -> float:
+    if species.endswith("singlet"):
+        return 0
+    if species.endswith("triplet"):
+        return 1
+    return 0.5
