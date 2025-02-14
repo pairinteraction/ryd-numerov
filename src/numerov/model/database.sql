@@ -40,17 +40,19 @@ INSERT INTO `model_potential` VALUES ('Cs', 2, '15.6440', 55, '4.32466196', '1.6
 INSERT INTO `model_potential` VALUES ('Cs', 3, '15.6440', 55, '3.01048361', '1.40000001', '-3.20036138', '0.00034538', '1.99969677');
 
 -- Own fit, ac: J. Phys. B 43 202001 (2010), singlet states -- TODO perform fit with ac=91.10
-INSERT INTO `model_potential` VALUES ('Sr_singlet', 0, '0', 1, '1', '1', '0', '0', '1');
-INSERT INTO `model_potential` VALUES ('Sr_singlet', 1, '0', 1, '1', '1', '0', '0', '1');
-INSERT INTO `model_potential` VALUES ('Sr_singlet', 2, '0', 1, '1', '1', '0', '0', '1');
-INSERT INTO `model_potential` VALUES ('Sr_singlet', 3, '0', 1, '1', '1', '0', '0', '1');
 
--- TODO Own fit, ac: J. Phys. B 43 202001 (2010), triplet states -- TODO perform fit with ac=91.10
-INSERT INTO `model_potential` VALUES ('Sr_triplet', 0, '0', 1, '1', '1', '0', '0', '1');
-INSERT INTO `model_potential` VALUES ('Sr_triplet', 1, '0', 1, '1', '1', '0', '0', '1');
-INSERT INTO `model_potential` VALUES ('Sr_triplet', 2, '0', 1, '1', '1', '0', '0', '1');
-INSERT INTO `model_potential` VALUES ('Sr_triplet', 3, '0', 1, '1', '1', '0', '0', '1');
+-- http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
+INSERT INTO `model_potential` VALUES ('Sr_singlet', 0, '7.5', 38, '3.36124', '1.3337', '0', '5.94337', '1.59');
+INSERT INTO `model_potential` VALUES ('Sr_singlet', 1, '7.5', 38, '3.28205', '1.24035', '0', '3.78861', '1.58');
+INSERT INTO `model_potential` VALUES ('Sr_singlet', 2, '7.5', 38, '2.155', '1.4545', '0', '4.5111', '1.57');
+INSERT INTO `model_potential` VALUES ('Sr_singlet', 3, '7.5', 38, '2.1547', '1.14099', '0', '2.1987', '1.56');
 
+-- http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
+-- TODO FIXME: currently we simply use the same parameters as for the singlet states
+INSERT INTO `model_potential` VALUES ('Sr_triplet', 0, '7.5', 38, '3.36124', '1.3337', '0', '5.94337', '1.59');
+INSERT INTO `model_potential` VALUES ('Sr_triplet', 1, '7.5', 38, '3.28205', '1.24035', '0', '3.78861', '1.58');
+INSERT INTO `model_potential` VALUES ('Sr_triplet', 2, '7.5', 38, '2.155', '1.4545', '0', '4.5111', '1.57');
+INSERT INTO `model_potential` VALUES ('Sr_triplet', 3, '7.5', 38, '2.1547', '1.14099', '0', '2.1987', '1.56');
 
 
 --------------------------------------------------------
@@ -175,12 +177,15 @@ INSERT INTO `rydberg_ritz` VALUES ('Cs', 4, '3.5', '0.00703865', '-0.049252', '0
 -- [3]
 INSERT INTO `rydberg_ritz` VALUES ('Cs', 5, '4.5', '0.0', '0.0', '0.0', '0.0', '0.0', '109736.86224');
 
--- Comput. Phys. Commun. 261, 107814 (2021), singlet states
-INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 0, '0', '3.26912', '-0.178', '3.5', '0.0', '0.0', '109736.631');
-INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 1, '1', '2.724', '-3.4', '-220', '0.0', '0.0', '109736.631');
-INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 2, '2', '2.3847', '-42.0', '-620', '0.0', '0.0', '109736.631');
-INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 3, '3', '0.0909', '-2.44', '62', '0.0', '0.0', '109736.631');
-INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 4, '4', '0.0', '0.0', '0.0', '0.0', '0.0', '109736.631');
+-- https://doi.org/10.1103/PhysRevA.108.022815
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 0, '0', '3.2688559', '-0.0879', '-3.36', '0.0', '0.0', '109736.631');
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 1, '1', '2.7314851', '-5.1501', '-140.0', '0.0', '0.0', '109736.631');
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 2, '2', '2.3821857', '-40.5009', '-878.6', '0.0', '0.0', '109736.631');
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 3, '3', '0.0873868', '-1.5446', '7.56', '0.0', '0.0', '109736.631');
+-- http://dx.doi.org/10.17169/refubium-34581
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 4, '4', '0.038', '0.0', '0.0', '0.0', '0.0', '109736.631');
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 5, '5', '0.0134759', '0.0', '0.0', '0.0', '0.0', '109736.631');
+INSERT INTO `rydberg_ritz` VALUES ('Sr_singlet', 6, '6', '0.0', '0.0', '0.0', '0.0', '0.0', '109736.631');
 
 -- Comput. Phys. Commun. 45, 107814 (2021), triplet states
 INSERT INTO `rydberg_ritz` VALUES ('Sr_triplet', 0, '1', '3.370773', '0.420', '-0.4', '0.0', '0.0', '109736.631');
@@ -214,7 +219,7 @@ INSERT INTO `ground_state` VALUES ('Na', '[Ne]3s', 3, 0, 0.5, 0.5, 0.5, '0');
 INSERT INTO `ground_state` VALUES ('K', '[Ar]4s', 4, 0, 0.5, 0.5, 0.5, '0');
 INSERT INTO `ground_state` VALUES ('Rb', '[Kr]5s', 5, 0, 0.5, 0.5, 0.5, '1010029.1646');
 INSERT INTO `ground_state` VALUES ('Cs', '[Xe]6s', 6, 0, 0.5, 0.5, 0.5, '0');
-INSERT INTO `ground_state` VALUES ('Sr_singlet', '[Kr]5s2', 5, 0, 0.0, 0.0, 0.0, '0');
+INSERT INTO `ground_state` VALUES ('Sr_singlet', '[Kr]5s2', 5, 0, 0.0, 0.0, 0.0, '1377012.721');  -- TODO FIXME
 INSERT INTO `ground_state` VALUES ('Sr_triplet', '[Kr]5s5p', 5, 1, 1.0, 0.0, 0.0, '1377012.721');
 
 COMMIT;

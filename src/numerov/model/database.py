@@ -214,7 +214,6 @@ class Database:
             ValueError: If no parameters found for species
 
         """
-        # Try exact match first
         cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? AND l=?", (species, l))
         row = cursor.fetchone()
 
@@ -223,11 +222,10 @@ class Database:
                 species=row[0], l=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
             )
 
-        # If no exact match, get all entries for this species
         logger.debug("No model potential parameters found for %s with l=%d, trying largest l", species, l)
+
         cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? ORDER BY l DESC", (species,))
         row = cursor.fetchone()
-
         if row is None:
             raise ValueError(f"No model potential parameters found for {species}")
 
@@ -251,28 +249,23 @@ class Database:
             ValueError: If no parameters found for species
 
         """
-        # Try exact match first
         cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? AND l=? AND j=?", (species, l, j))
         row = cursor.fetchone()
-
         if row is not None:
             return RydbergRitzParameters(
                 species=row[0], l=row[1], j=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
             )
 
-        # If no exact match, get all entries for this species ordered by l and j
         logger.debug(
-            "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, trying largest l and j", species, l, j
+            "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, returning parameters with d_i=0", species, l, j
         )
+
         cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? ORDER BY l DESC, j DESC", (species,))
         row = cursor.fetchone()
-
         if row is None:
             raise ValueError(f"No Rydberg-Ritz parameters found for {species}")
 
-        return RydbergRitzParameters(
-            species=row[0], l=row[1], j=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
-        )
+        return RydbergRitzParameters(species=species, l=l, j=j, d0=0, d2=0, d4=0, d6=0, d8=0, Ry=row[8])
 
     def get_ground_state(self, species: str) -> GroundState:
         """Get ground state parameters.
