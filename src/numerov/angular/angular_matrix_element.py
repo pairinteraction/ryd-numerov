@@ -60,6 +60,7 @@ def calc_reduced_angular_matrix_element(
     state_f: "RydbergState",
     operator: OperatorType,
     kappa: int,
+    _lazy_evaluation: bool = True,
 ) -> float:
     r"""Calculate the reduced matrix element $\langle j || \hat{O}_{k0} || j' \rangle$.
 
@@ -96,16 +97,19 @@ def calc_reduced_angular_matrix_element(
     should_be_zero = False
     if not check_triangular(state_f.j, state_i.j, kappa):
         should_be_zero = True
-    if operator in ["Y", "p", "L"] and not check_triangular(state_f.l, state_i.l, kappa):
+    elif operator in ["Y", "p", "L"] and not check_triangular(state_f.l, state_i.l, kappa):
         should_be_zero = True
-    if operator in ["S"] and not check_triangular(state_f.s, state_i.s, kappa):
+    elif operator in ["S"] and not check_triangular(state_f.s, state_i.s, kappa):
         should_be_zero = True
-    if operator in ["p", "Y"] and (state_f.l + state_i.l + kappa) % 2 != 0:
+    elif operator in ["p", "Y"] and (state_f.l + state_i.l + kappa) % 2 != 0:
         should_be_zero = True
-    if operator in ["L", "S", "mu"] and (state_f.l != state_i.l or state_f.s != state_i.s):
+    elif operator in ["L", "S", "mu"] and (state_f.l != state_i.l or state_f.s != state_i.s):
         should_be_zero = True
-    if (operator == "S" and state_f.s == 0) or (operator == "L" and state_f.l == 0):
+    elif (operator == "S" and state_f.s == 0) or (operator == "L" and state_f.l == 0):
         should_be_zero = True
+
+    if should_be_zero and _lazy_evaluation:
+        return 0
 
     if operator == "mu":
         mu_B = 0.5  # Bohr magneton in atomic units
@@ -141,13 +145,16 @@ def calc_reduced_angular_matrix_element(
     value = prefactor * reduced_matrix_element * wigner_6j
 
     # Check that we catched all cases where the reduced matrix element is zero before
-    # assert value != 0, f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is zero."
     if should_be_zero and value != 0:
         raise ValueError(
-            f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is not zero."
+            f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} "
+            "is not zero (but should be zero)."
         )
     if value == 0 and not should_be_zero:
-        raise ValueError(f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is zero.")
+        raise ValueError(
+            f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa}"
+            "is zero (but should not be zero)."
+        )
 
     return value
 
