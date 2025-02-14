@@ -43,3 +43,7 @@ def minus_one_pow(n: float) -> int:
     if n % 2 == 1:
         return -1
     raise ValueError(f"Invalid input {n}.")
+
+
+def check_triangular(j1: float, j2: float, j3: float) -> bool:
+    return abs(j1 - j2) <= j3 <= j1 + j2

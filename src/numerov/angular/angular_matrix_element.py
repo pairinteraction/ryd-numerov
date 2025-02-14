@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Literal, Union
 
 import numpy as np
 
-from numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, minus_one_pow
+from numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, check_triangular, minus_one_pow
 
 if TYPE_CHECKING:
     from numerov.rydberg import RydbergState
@@ -93,24 +93,19 @@ def calc_reduced_angular_matrix_element(
     """
     assert operator in ["L", "S", "Y", "p", "mu"]
 
-    if operator in ["p", "Y"] and (
-        abs(state_f.l - state_i.l) > kappa
-        or (state_f.l - state_i.l) % 2 != kappa % 2
-        or abs(state_f.j - state_i.j) > kappa
-        or state_f.j + state_i.j < kappa
-    ):
-        return 0
-
-    if operator in ["L", "S", "mu"] and (
-        state_f.l != state_i.l or state_f.s != state_i.s or abs(state_f.j - state_i.j) > 1
-    ):
-        return 0
-
-    if operator == "S" and state_f.s == 0:
-        return 0
-
-    if operator == "L" and state_f.l == 0:
-        return 0
+    should_be_zero = False
+    if not check_triangular(state_f.j, state_i.j, kappa):
+        should_be_zero = True
+    if operator in ["Y", "p", "L"] and not check_triangular(state_f.l, state_i.l, kappa):
+        should_be_zero = True
+    if operator in ["S"] and not check_triangular(state_f.s, state_i.s, kappa):
+        should_be_zero = True
+    if operator in ["p", "Y"] and (state_f.l + state_i.l + kappa) % 2 != 0:
+        should_be_zero = True
+    if operator in ["L", "S", "mu"] and (state_f.l != state_i.l or state_f.s != state_i.s):
+        should_be_zero = True
+    if (operator == "S" and state_f.s == 0) or (operator == "L" and state_f.l == 0):
+        should_be_zero = True
 
     if operator == "mu":
         mu_B = 0.5  # Bohr magneton in atomic units
@@ -120,19 +115,25 @@ def calc_reduced_angular_matrix_element(
         value_l = calc_reduced_angular_matrix_element(state_i, state_f, "L", kappa)
         mu = mu_B * (
             g_s * value_s + g_l * value_l
-        )  # note the missing minus is convention how we use it in pairinteraction ...
+        )  # TODO note the missing minus is convention how we use it in pairinteraction ...
         return mu
 
     prefactor = np.sqrt(2 * state_i.j + 1) * np.sqrt(2 * state_f.j + 1)
 
     if operator == "S":
         prefactor *= minus_one_pow(state_f.l + state_i.s + state_f.j + kappa)
-        reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
+        if state_i.l != state_f.l:
+            reduced_matrix_element = 0
+        else:
+            reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.s, state_f.s, kappa)
         wigner_6j = calc_wigner_6j(state_f.s, state_f.j, state_f.l, state_i.j, state_i.s, kappa)
     else:
         prefactor *= minus_one_pow(state_f.l + state_f.s + state_i.j + kappa)
         if operator == "L":
-            reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
+            if state_i.s != state_f.s:
+                reduced_matrix_element = 0
+            else:
+                reduced_matrix_element = _calc_reduced_momentum_matrix_element(state_i.l, state_f.l, kappa)
         else:
             reduced_matrix_element = _calc_reduced_multipole_matrix_element(state_i.l, state_f.l, operator, kappa)
         wigner_6j = calc_wigner_6j(state_f.l, state_f.j, state_f.s, state_i.j, state_i.l, kappa)
@@ -140,7 +141,13 @@ def calc_reduced_angular_matrix_element(
     value = prefactor * reduced_matrix_element * wigner_6j
 
     # Check that we catched all cases where the reduced matrix element is zero before
-    assert value != 0, f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is zero."
+    # assert value != 0, f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is zero."
+    if should_be_zero and value != 0:
+        raise ValueError(
+            f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is not zero."
+        )
+    if value == 0 and not should_be_zero:
+        raise ValueError(f"The reduced angular matrix element for {state_i}, {state_f}, {operator}, {kappa} is zero.")
 
     return value
 
