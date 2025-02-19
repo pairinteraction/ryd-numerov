@@ -1,7 +1,5 @@
 # Configuration file for the Sphinx documentation builder.
-import os
 
-from sphinx.application import Sphinx
 
 import numerov
 
@@ -69,15 +67,3 @@ autosummary_ignore_module_all = False
 autodoc_class_signature = "mixed"  # combine class and __init__ doc
 autodoc_typehints = "both"
 autodoc_type_aliases = {}  # make type aliases nicer
-
-
-def setup(app: Sphinx) -> None:
-    examples_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "examples"))
-    examples_rst = os.path.join(examples_dir, "list_examples.rst")
-
-    with open(examples_rst, "w") as f:
-        f.write(".. nbgallery::\n\n")
-        for filename in sorted(os.listdir(examples_dir)):
-            if filename.endswith(".ipynb"):
-                example_name = os.path.splitext(filename)[0]
-                f.write(f"   {example_name}\n")

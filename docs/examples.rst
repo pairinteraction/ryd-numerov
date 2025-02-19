@@ -3,13 +3,30 @@ Examples
 
 
 
-.. rubric:: Introduction
+.. rubric:: Examples
 
 Here we show the usage of the API.
 
-.. The following file gets automatically generated from the setup function in conf.py
-.. toctree::
-    :maxdepth: 2
-    :caption: Jupyter Notebook Examples
+.. nbgallery::
+   examples/dipole_matrix_elements
+   examples/hydrogen_wavefunction
+   examples/rubidium_wavefunction
 
-    examples/list_examples.rst
+
+.. rubric:: Comparisons
+
+Some comparisons to pairinteraction and ARC
+
+.. nbgallery::
+   examples/comparisons/compare_dipole_matrix_element.ipynb
+   examples/comparisons/compare_radial_matrix_element.ipynb
+   examples/comparisons/compare_wavefunctions.ipynb
+   examples/comparisons/compare_zmin.ipynb
+
+
+.. rubric:: Benchmark
+
+Some timing benchmarks.
+
+.. nbgallery::
+   examples/benchmark/benchmark_njit.ipynb

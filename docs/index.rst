@@ -3,7 +3,7 @@ Rydberg Numerov
 ***************
 
 The *Rydberg Numerov* software calculates properties of Rydberg states.
-We expecially focus on the calculation of the radial wavefunction of Rydberg states via the Numerov method.
+We especially focus on the calculation of the radial wavefunction of Rydberg states via the Numerov method.
 
 
 .. _LGPL v3: https://www.gnu.org/licenses/lgpl-3.0.html
