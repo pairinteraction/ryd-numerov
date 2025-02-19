@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Union, overload
+from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 import numpy as np
 from scipy.special import exprel
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+TransitionRateMethod = Literal["exact", "approximation"]
 
 ALKALI_SPECIES = ["H", "Li", "Na", "K", "Rb", "Cs", "Fr"]
 ALKALINE_EARTH_SPECIES = ["Be", "Mg", "Ca", "Sr", "Ba", "Ra"]
@@ -301,39 +303,93 @@ class RydbergState:
 
         return relevant_states, np.array(energy_differences), np.array(electric_dipole_moments)
 
-    @overload
-    def get_spontaneous_transition_rates(self) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
+    def _get_list_of_radial_dipole_coupled_states(
+        self, n_min: int, n_max: int, only_smaller_energy: bool = True
+    ) -> tuple[list["Self"], np.ndarray, np.ndarray]:
+        relevant_states = []
+        energy_differences = []
+        radial_matrix_elements = []
+        for n in range(n_min, n_max + 1):
+            for l in [self.l - 1, self.l + 1]:
+                for j in np.arange(self.j - 1, self.j + 2):
+                    if (
+                        not 0 <= l < n
+                        or not abs(l - self.s) <= j <= l + self.s
+                        or not self.model.ground_state.is_allowed_shell(n, l)
+                    ):
+                        continue
+                    other = self.__class__(self.species, n, l, j, s=self.s)
+                    other.create_model(database=self.model.database)
+                    if other.energy < self.energy or not only_smaller_energy:
+                        relevant_states.append(other)
+                        energy_differences.append(self.energy - other.energy)
+                        radial_me_au = calc_radial_matrix_element(self, other, 1)
+                        radial_matrix_elements.append(radial_me_au)
+
+                        assert radial_me_au != 0, (
+                            f"Reduced electric dipole moment between {self} and {other} is zero. This should not happen"
+                        )
+
+        return relevant_states, np.array(energy_differences), np.array(radial_matrix_elements)
 
     @overload
-    def get_spontaneous_transition_rates(self, unit: str) -> tuple[list["Self"], np.ndarray]: ...
+    def get_spontaneous_transition_rates(
+        self, *, method: TransitionRateMethod = "exact"
+    ) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
+
+    @overload
+    def get_spontaneous_transition_rates(
+        self, unit: str, method: TransitionRateMethod = "exact"
+    ) -> tuple[list["Self"], np.ndarray]: ...
 
     def get_spontaneous_transition_rates(
         self,
         unit: Optional[str] = None,
+        method: TransitionRateMethod = "exact",
     ):
-        relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
-            1, self.n
-        )
+        """Calculate the spontaneous transition rates for the Rydberg state.
 
-        # transition rates are given by the Einstein A coefficients
-        transition_rates_au: np.ndarray = (
-            np.abs(electric_dipole_moments) ** 2
-            * energy_differences**3
-            * (4 / 3)
-            / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
+        The spontaneous transition rates are given by the Einstein A coefficients.
+
+        Args:
+            unit: The unit to which to convert the radial matrix element.
+                Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
+                Default None will return a pint quantity.
+            method: How to calculate the transition rates.
+                Can be "exact" or "approximation".
+                Defaults to "exact".
+
+        Returns:
+            The relevant states and the transition rates.
+
+        """
+        transition_rates_au: np.ndarray
+        if method == "exact":
+            # see https://en.wikipedia.org/wiki/Einstein_coefficients
+            relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
+                1, self.n
+            )
+            transition_rates_au = np.abs(electric_dipole_moments) ** 2
+        elif method == "approximation":
+            # see https://journals.aps.org/pra/pdf/10.1103/PhysRevA.79.052504
+            relevant_states, energy_differences, radial_matrix_elements = (
+                self._get_list_of_radial_dipole_coupled_states(1, self.n)
+            )
+            l_list = np.array([state.l for state in relevant_states])
+            lmax_list = np.array([max(self.l, l) for l in l_list])
+            transition_rates_au = np.abs(radial_matrix_elements) ** 2 * lmax_list / (2 * l_list + 1)
+        else:
+            raise ValueError(f"Method {method} not supported.")
+
+        transition_rates_au *= (
+            energy_differences**3 * (4 / 3) / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
         )
 
         if unit == "a.u.":
             # Note in a.u.: hbar = 1 and 4 pi * epsilon_0 = 1
             return relevant_states, transition_rates_au
 
-        transition_rates = (
-            transition_rates_au
-            * BaseQuantities["ELECTRIC_DIPOLE"] ** 2
-            * BaseQuantities["ENERGY"] ** 2
-            / BaseQuantities["VELOCITY"] ** 3
-            / (ureg.hbar**4 * (4 * np.pi * ureg.epsilon_0))
-        )
+        transition_rates = transition_rates_au / BaseQuantities["TIME"]
 
         if unit is None:
             return relevant_states, transition_rates
@@ -341,7 +397,11 @@ class RydbergState:
 
     @overload
     def get_black_body_transition_rates(
-        self, temperature: Union[float, "PlainQuantity[float]"], temperature_unit: Optional[str] = None
+        self,
+        temperature: Union[float, "PlainQuantity[float]"],
+        temperature_unit: Optional[str] = None,
+        *,
+        method: TransitionRateMethod = "exact",
     ) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
 
     @overload
@@ -350,6 +410,7 @@ class RydbergState:
         temperature: Union[float, "PlainQuantity[float]"],
         temperature_unit: Optional[str],
         unit: str,
+        method: TransitionRateMethod = "exact",
     ) -> tuple[list["Self"], np.ndarray]: ...
 
     @overload
@@ -358,6 +419,7 @@ class RydbergState:
         temperature: Union[float, "PlainQuantity[float]"],
         *,
         unit: str,
+        method: TransitionRateMethod = "exact",
     ) -> tuple[list["Self"], np.ndarray]: ...
 
     def get_black_body_transition_rates(
@@ -365,41 +427,67 @@ class RydbergState:
         temperature: Union[float, "PlainQuantity[float]"],
         temperature_unit: Optional[str] = None,
         unit: Optional[str] = None,
-        delta_n: int = 20,
+        method: TransitionRateMethod = "exact",
     ):
-        # black body transition rates = stimulated emission + absorption
+        """Calculate the black body transition rates for the Rydberg state.
+
+        The black body transitions rates are given by the Einstein B coefficients,
+        with a weight factor given by Planck's law.
+
+        Args:
+            temperature: The temperature, for which to calculate the black body transition rates.
+            temperature_unit: The unit of the temperature.
+                Default None will assume the temperature is given as pint quantity.
+            unit: The unit to which to convert the radial matrix element.
+                Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
+                Default None will return a pint quantity.
+            method: How to calculate the transition rates.
+                Can be "exact" or "approximation".
+                Defaults to "exact".
+
+        Returns:
+            The relevant states and the transition rates.
+
+        """
+        # TODO add a good way to determine a sensful n_max
+        n_max = self.n + 25
+
+        transition_rates_au: np.ndarray
+        if method == "exact":
+            # see https://en.wikipedia.org/wiki/Einstein_coefficients
+            relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
+                1, n_max, only_smaller_energy=False
+            )
+            transition_rates_au: np.ndarray = np.abs(electric_dipole_moments) ** 2
+        elif method == "approximation":
+            # see https://journals.aps.org/pra/pdf/10.1103/PhysRevA.79.052504
+            relevant_states, energy_differences, radial_matrix_elements = (
+                self._get_list_of_radial_dipole_coupled_states(1, n_max, only_smaller_energy=False)
+            )
+            l_list = np.array([state.l for state in relevant_states])
+            lmax_list = np.array([max(self.l, l) for l in l_list])
+            transition_rates_au = np.abs(radial_matrix_elements) ** 2 * lmax_list / (2 * l_list + 1)
+        else:
+            raise ValueError(f"Method {method} not supported.")
+
         if temperature_unit is not None:
             temperature = ureg.Quantity(temperature, temperature_unit)
         temperature_au = (temperature * ureg.boltzmann_constant).to_base_units().magnitude
 
-        relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
-            1, self.n + delta_n, only_smaller_energy=False
-        )
-
-        # transition rates are given by the Einstein B coefficients with the weight factor given by plancks law
         # for numerical stability we use 1 / exprel(x) = x / (exp(x) - 1)
-        weight: np.ndarray = (
-            energy_differences**2
+        transition_rates_au *= (
+            (4 / 3)
+            * energy_differences**2
             * temperature_au
             / exprel(energy_differences / temperature_au)
             / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
         )
 
-        transition_rates_au: np.ndarray = np.abs(electric_dipole_moments) ** 2 * weight * (4 / 3)
-        #  / (ureg.hbar**4 * ureg.c**3 * 4 * np.pi ureg.epsilon_0)
-
         if unit == "a.u.":
             # Note in a.u.: hbar = 1 and 4 pi * epsilon_0 = 1
             return relevant_states, transition_rates_au
 
-        transition_rates = (
-            transition_rates_au
-            * BaseQuantities["ELECTRIC_DIPOLE"] ** 2
-            * BaseQuantities["ENERGY"] ** 2
-            * BaseQuantities["TEMPERATURE"]
-            / BaseQuantities["VELOCITY"] ** 3
-            / (ureg.hbar**4 * (4 * np.pi * ureg.epsilon_0))
-        )
+        transition_rates = transition_rates_au / BaseQuantities["TIME"]
 
         if unit is None:
             return relevant_states, transition_rates
@@ -410,13 +498,26 @@ class RydbergState:
         self,
         temperature: Union[float, "PlainQuantity[float]"] = 0,
         temperature_unit: Optional[str] = None,
+        *,
+        method: TransitionRateMethod = "exact",
     ) -> "PlainQuantity[float]": ...
 
     @overload
-    def get_lifetime(self, *, unit: str) -> float: ...
+    def get_lifetime(
+        self,
+        *,
+        unit: str,
+        method: TransitionRateMethod = "exact",
+    ) -> float: ...
 
     @overload
-    def get_lifetime(self, temperature: Union[float, "PlainQuantity[float]"], *, unit: str) -> float: ...
+    def get_lifetime(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"],
+        *,
+        unit: str,
+        method: TransitionRateMethod = "exact",
+    ) -> float: ...
 
     @overload
     def get_lifetime(
@@ -425,18 +526,20 @@ class RydbergState:
         temperature_unit: Optional[str] = None,
         *,
         unit: str,
+        method: TransitionRateMethod = "exact",
     ) -> float: ...
 
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]"] = 0,
+        temperature: Union[float, "PlainQuantity[float]", None] = None,
         temperature_unit: Optional[str] = None,
         unit: Optional[str] = None,
+        method: TransitionRateMethod = "exact",
     ):
-        _, transition_rates = self.get_spontaneous_transition_rates(unit="a.u.")
-        if temperature != 0:
+        _, transition_rates = self.get_spontaneous_transition_rates(unit="a.u.", method=method)
+        if temperature is not None:
             _, black_body_transition_rates = self.get_black_body_transition_rates(
-                temperature, temperature_unit, unit="a.u."
+                temperature, temperature_unit, unit="a.u.", method=method
             )
             transition_rates = np.append(transition_rates, black_body_transition_rates)
 
