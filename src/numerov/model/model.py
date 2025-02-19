@@ -11,6 +11,12 @@ from numerov.units import ureg
 logger = logging.getLogger(__name__)
 
 
+class InvalidStateError(Exception):
+    """Exception raised when the specified state does not exist because it is below the ground state."""
+
+    pass
+
+
 @dataclass
 class Model:
     """A class to represent the Rydberg model potential.
@@ -45,7 +51,9 @@ class Model:
 
         self.ground_state = self.database.get_ground_state(self.species)
         if not self.ground_state.is_allowed_shell(self.n, self.l):
-            raise ValueError(f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}.")
+            raise InvalidStateError(
+                f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}."
+            )
 
     @property
     def n_star(self) -> float:
