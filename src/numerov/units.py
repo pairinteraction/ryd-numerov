@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 import numpy as np
 from pint import UnitRegistry
@@ -16,9 +16,12 @@ Dimension = Literal[
     "MAGNETIC_FIELD",
     "DISTANCE",
     "ENERGY",
+    "CHARGE",
+    "VELOCITY",
+    "TEMPERATURE",
+    "TIME",
     "RADIAL_MATRIX_ELEMENT",
     "ANGULAR_MATRIX_ELEMENT",
-    "CHARGE",
     "ELECTRIC_DIPOLE",
     "ELECTRIC_QUADRUPOLE",
     "ELECTRIC_QUADRUPOLE_ZERO",
@@ -27,33 +30,35 @@ Dimension = Literal[
     "ARBITRARY",
     "ZERO",
 ]
-BaseUnits: dict[Dimension, "PlainUnit"] = {
-    # ELECTRIC_FIELD: 1 V/cm = 1.94469038e-10 electron_mass * bohr / atomic_unit_of_time ** 3 / atomic_unit_of_current
-    "ELECTRIC_FIELD": ureg.Quantity(1, "V/cm").to_base_units().units,
-    # MAGNETIC_FIELD: 1 T = 4.25438216e-06 electron_mass / atomic_unit_of_time ** 2 / atomic_unit_of_current
-    "MAGNETIC_FIELD": ureg.Quantity(1, "T").to_base_units().units,
-    # DISTANCE: 1 mum = 18897.2612 bohr
-    "DISTANCE": ureg.Quantity(1, "micrometer").to_base_units().units,
-    # ENERGY: 1 hartree = 1 electron_mass * bohr ** 2 / atomic_unit_of_time ** 2
-    "ENERGY": ureg.Unit("hartree"),
-    # DISTANCE: 1 mum = 18897.2612 bohr
-    "RADIAL_MATRIX_ELEMENT": ureg.Unit("bohr"),
-    #
-    "ANGULAR_MATRIX_ELEMENT": ureg.Unit(""),
-    #
-    "CHARGE": ureg.Quantity(1, "e").to_base_units().units,
-    # ELECTRIC_DIPOLE: 1 e * a0 = 1 atomic_unit_of_current * atomic_unit_of_time * bohr
-    "ELECTRIC_DIPOLE": ureg.Quantity(1, "e * a0").to_base_units().units,
-    # ELECTRIC_QUADRUPOLE: 1 e * a0^2 = 1 atomic_unit_of_current * atomic_unit_of_time * bohr ** 2
-    "ELECTRIC_QUADRUPOLE": ureg.Quantity(1, "e * a0^2").to_base_units().units,
-    # ELECTRIC_QUADRUPOLE_ZERO: 1 e * a0^2 = 1 atomic_unit_of_current * atomic_unit_of_time * bohr ** 2
-    "ELECTRIC_QUADRUPOLE_ZERO": ureg.Quantity(1, "e * a0^2").to_base_units().units,
-    # ELECTRIC_OCTUPOLE: 1 e * a0^3 = 1 atomic_unit_of_current * atomic_unit_of_time * bohr ** 3
-    "ELECTRIC_OCTUPOLE": ureg.Quantity(1, "e * a0^3").to_base_units().units,
-    # MAGNETIC_DIPOLE: 1 hbar e / m_e = 1 bohr ** 2 * atomic_unit_of_current
-    "MAGNETIC_DIPOLE": ureg.Quantity(1, "hbar e / m_e").to_base_units().units,
-    "ARBITRARY": ureg.Unit(""),
-    "ZERO": ureg.Unit(""),
-}
+DimensionLike = Union[Dimension, tuple[Dimension, Dimension]]
 
-BaseQuantities: dict[Dimension, "PlainQuantity"] = {k: ureg.Quantity(1, v) for k, v in BaseUnits.items()}
+# au_time = atomic_unit_of_time; au_current = atomic_unit_of_current; m_e = electron_mass
+_CommonUnits: dict[Dimension, str] = {
+    "ELECTRIC_FIELD": "V/cm",  # 1 V/cm = 1.9446903811524456e-10 bohr * m_e / au_current / au_time ** 3
+    "MAGNETIC_FIELD": "T",  # 1 T = 4.254382157342044e-06 m_e / au_current / au_time ** 2
+    "DISTANCE": "micrometer",  # 1 mum = 18897.26124622279 bohr
+    "ENERGY": "hartree",  # 1 hartree = 1 bohr ** 2 * m_e / au_time ** 2
+    "CHARGE": "e",  # 1 e = 1 au_current * au_time
+    "VELOCITY": "speed_of_light",  # 1 c = 137.03599908356244 bohr / au_time
+    "TEMPERATURE": "K",  # 1 K = 3.1668115634555572e-06 atomic_unit_of_temperature
+    "TIME": "s",  # 1 s = 4.134137333518244e+16 au_time
+    "RADIAL_MATRIX_ELEMENT": "bohr",  # 1 bohr
+    "ANGULAR_MATRIX_ELEMENT": "",  # 1 dimensionless
+    "ELECTRIC_DIPOLE": "e * a0",  # 1 e * a0 = 1 au_current * au_time * bohr
+    "ELECTRIC_QUADRUPOLE": "e * a0^2",  # 1 e * a0^2 = 1 au_current * au_time * bohr ** 2
+    "ELECTRIC_QUADRUPOLE_ZERO": "e * a0^2",  # 1 e * a0^2 = 1 au_current * au_time * bohr ** 2
+    "ELECTRIC_OCTUPOLE": "e * a0^3",  # 1 e * a0^3 = 1 au_current * au_time * bohr ** 3
+    "MAGNETIC_DIPOLE": "hbar e / m_e",  # 1 hbar e / m_e = 1 au_current * bohr ** 2
+    "ARBITRARY": "",  # 1 dimensionless
+    "ZERO": "",  # 1 dimensionless
+}
+BaseUnits: dict[Dimension, "PlainUnit"] = {
+    k: ureg.Quantity(1, unit).to_base_units().units for k, unit in _CommonUnits.items()
+}
+BaseQuantities: dict[Dimension, "PlainQuantity[float]"] = {k: ureg.Quantity(1, unit) for k, unit in BaseUnits.items()}
+
+Context = Literal["spectroscopy", "Gaussian"]
+BaseContexts: dict[Dimension, Context] = {
+    "MAGNETIC_FIELD": "Gaussian",
+    "ENERGY": "spectroscopy",
+}

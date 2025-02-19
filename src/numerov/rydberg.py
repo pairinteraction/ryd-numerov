@@ -211,7 +211,7 @@ class RydbergState:
         angular_matrix_element_au = calc_angular_matrix_element(*self_qns, *other_qns, operator, k_angular, q)
         if unit == "a.u.":
             return angular_matrix_element_au
-        angular_matrix_element = angular_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
+        angular_matrix_element = angular_matrix_element_au * BaseQuantities["ANGULAR_MATRIX_ELEMENT"]
         if unit is None:
             return angular_matrix_element
         return angular_matrix_element.to(unit).magnitude
@@ -259,7 +259,10 @@ class RydbergState:
         if unit == "a.u.":
             return multipole_matrix_element_au
         multipole_matrix_element = (
-            multipole_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"] ** k_radial * BaseQuantities["CHARGE"]
+            multipole_matrix_element_au
+            * BaseQuantities["CHARGE"]
+            * BaseQuantities["RADIAL_MATRIX_ELEMENT"] ** k_radial
+            * BaseQuantities["ANGULAR_MATRIX_ELEMENT"] ** k_angular
         )
         if unit is None:
             return multipole_matrix_element
