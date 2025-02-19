@@ -3,12 +3,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional, Union, overload
 
 import numpy as np
+from scipy.special import exprel
 
 from numerov.angular import calc_angular_matrix_element
 from numerov.angular.angular_matrix_element import OperatorType
 from numerov.model import Model
 from numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
-from numerov.units import BaseQuantities
+from numerov.units import BaseQuantities, ureg
 
 if TYPE_CHECKING:
     from pint.facets.plain import PlainQuantity
@@ -267,6 +268,186 @@ class RydbergState:
         if unit is None:
             return multipole_matrix_element
         return multipole_matrix_element.to(unit).magnitude
+
+    def _get_list_of_dipole_coupled_states(
+        self, n_min: int, n_max: int, only_smaller_energy: bool = True
+    ) -> tuple[list["Self"], np.ndarray, np.ndarray]:
+        relevant_states = []
+        energy_differences = []
+        electric_dipole_moments = []
+        for n in range(n_min, n_max + 1):
+            for l in [self.l - 1, self.l + 1]:
+                for j in np.arange(self.j - 1, self.j + 2):
+                    for m in np.arange(self.m - 1, self.m + 2):
+                        if (
+                            not 0 <= l < n
+                            or not -j <= m <= j
+                            or not abs(l - self.s) <= j <= l + self.s
+                            or not self.model.ground_state.is_allowed_shell(n, l)
+                        ):
+                            continue
+                        other = self.__class__(self.species, n, l, j, m, self.s)
+                        other.create_model(database=self.model.database)
+                        if other.energy < self.energy or not only_smaller_energy:
+                            relevant_states.append(other)
+                            energy_differences.append(self.energy - other.energy)
+                            q = round(other.m - self.m)
+                            dipole_moment_au = self.calc_multipole_matrix_element(other, 1, 1, q=q, unit="a.u.")
+                            electric_dipole_moments.append(dipole_moment_au)
+
+                            assert dipole_moment_au != 0, (
+                                f"Electric dipole moment between {self} and {other} is zero. This should not happen."
+                            )
+
+        return relevant_states, np.array(energy_differences), np.array(electric_dipole_moments)
+
+    @overload
+    def get_spontaneous_transition_rates(self) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
+
+    @overload
+    def get_spontaneous_transition_rates(self, unit: str) -> tuple[list["Self"], np.ndarray]: ...
+
+    def get_spontaneous_transition_rates(
+        self,
+        unit: Optional[str] = None,
+    ):
+        relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
+            1, self.n
+        )
+
+        # transition rates are given by the Einstein A coefficients
+        transition_rates_au: np.ndarray = (
+            np.abs(electric_dipole_moments) ** 2
+            * energy_differences**3
+            * (4 / 3)
+            / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
+        )
+
+        if unit == "a.u.":
+            # Note in a.u.: hbar = 1 and 4 pi * epsilon_0 = 1
+            return relevant_states, transition_rates_au
+
+        transition_rates = (
+            transition_rates_au
+            * BaseQuantities["ELECTRIC_DIPOLE"] ** 2
+            * BaseQuantities["ENERGY"] ** 2
+            / BaseQuantities["VELOCITY"] ** 3
+            / (ureg.hbar**4 * (4 * np.pi * ureg.epsilon_0))
+        )
+
+        if unit is None:
+            return relevant_states, transition_rates
+        return relevant_states, transition_rates.to(unit).magnitude
+
+    @overload
+    def get_black_body_transition_rates(
+        self, temperature: Union[float, "PlainQuantity[float]"], temperature_unit: Optional[str] = None
+    ) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
+
+    @overload
+    def get_black_body_transition_rates(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"],
+        temperature_unit: Optional[str],
+        unit: str,
+    ) -> tuple[list["Self"], np.ndarray]: ...
+
+    @overload
+    def get_black_body_transition_rates(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"],
+        *,
+        unit: str,
+    ) -> tuple[list["Self"], np.ndarray]: ...
+
+    def get_black_body_transition_rates(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"],
+        temperature_unit: Optional[str] = None,
+        unit: Optional[str] = None,
+        delta_n: int = 20,
+    ):
+        # black body transition rates = stimulated emission + absorption
+        if temperature_unit is not None:
+            temperature = ureg.Quantity(temperature, temperature_unit)
+        temperature_au = (temperature * ureg.boltzmann_constant).to_base_units().magnitude
+
+        relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
+            1, self.n + delta_n, only_smaller_energy=False
+        )
+
+        # transition rates are given by the Einstein B coefficients with the weight factor given by plancks law
+        # for numerical stability we use 1 / exprel(x) = x / (exp(x) - 1)
+        weight: np.ndarray = (
+            energy_differences**2
+            * temperature_au
+            / exprel(energy_differences / temperature_au)
+            / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
+        )
+
+        transition_rates_au: np.ndarray = np.abs(electric_dipole_moments) ** 2 * weight * (4 / 3)
+        #  / (ureg.hbar**4 * ureg.c**3 * 4 * np.pi ureg.epsilon_0)
+
+        if unit == "a.u.":
+            # Note in a.u.: hbar = 1 and 4 pi * epsilon_0 = 1
+            return relevant_states, transition_rates_au
+
+        transition_rates = (
+            transition_rates_au
+            * BaseQuantities["ELECTRIC_DIPOLE"] ** 2
+            * BaseQuantities["ENERGY"] ** 2
+            * BaseQuantities["TEMPERATURE"]
+            / BaseQuantities["VELOCITY"] ** 3
+            / (ureg.hbar**4 * (4 * np.pi * ureg.epsilon_0))
+        )
+
+        if unit is None:
+            return relevant_states, transition_rates
+        return relevant_states, transition_rates.to(unit).magnitude
+
+    @overload
+    def get_lifetime(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"] = 0,
+        temperature_unit: Optional[str] = None,
+    ) -> "PlainQuantity[float]": ...
+
+    @overload
+    def get_lifetime(self, *, unit: str) -> float: ...
+
+    @overload
+    def get_lifetime(self, temperature: Union[float, "PlainQuantity[float]"], *, unit: str) -> float: ...
+
+    @overload
+    def get_lifetime(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"] = 0,
+        temperature_unit: Optional[str] = None,
+        *,
+        unit: str,
+    ) -> float: ...
+
+    def get_lifetime(
+        self,
+        temperature: Union[float, "PlainQuantity[float]"] = 0,
+        temperature_unit: Optional[str] = None,
+        unit: Optional[str] = None,
+    ):
+        _, transition_rates = self.get_spontaneous_transition_rates(unit="a.u.")
+        if temperature != 0:
+            _, black_body_transition_rates = self.get_black_body_transition_rates(
+                temperature, temperature_unit, unit="a.u."
+            )
+            transition_rates = np.append(transition_rates, black_body_transition_rates)
+
+        lifetime_au = 1 / np.sum(transition_rates)
+
+        if unit == "a.u.":
+            return lifetime_au
+        lifetime = lifetime_au * BaseQuantities["TIME"]
+        if unit is None:
+            return lifetime
+        return lifetime.to(unit).magnitude
 
 
 def get_spin_from_species(species: str) -> float:

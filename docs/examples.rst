@@ -11,6 +11,7 @@ Here we show the usage of the API.
    examples/dipole_matrix_elements
    examples/hydrogen_wavefunction
    examples/rubidium_wavefunction
+   examples/lifetimes
 
 
 .. rubric:: Comparisons
