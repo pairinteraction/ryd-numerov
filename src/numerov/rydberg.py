@@ -363,37 +363,7 @@ class RydbergState:
             The relevant states and the transition rates.
 
         """
-        transition_rates_au: np.ndarray
-        if method == "exact":
-            # see https://en.wikipedia.org/wiki/Einstein_coefficients
-            relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
-                1, self.n
-            )
-            transition_rates_au = np.abs(electric_dipole_moments) ** 2
-        elif method == "approximation":
-            # see https://journals.aps.org/pra/pdf/10.1103/PhysRevA.79.052504
-            relevant_states, energy_differences, radial_matrix_elements = (
-                self._get_list_of_radial_dipole_coupled_states(1, self.n)
-            )
-            l_list = np.array([state.l for state in relevant_states])
-            lmax_list = np.array([max(self.l, l) for l in l_list])
-            transition_rates_au = np.abs(radial_matrix_elements) ** 2 * lmax_list / (2 * l_list + 1)
-        else:
-            raise ValueError(f"Method {method} not supported.")
-
-        transition_rates_au *= (
-            energy_differences**3 * (4 / 3) / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
-        )
-
-        if unit == "a.u.":
-            # Note in a.u.: hbar = 1 and 4 pi * epsilon_0 = 1
-            return relevant_states, transition_rates_au
-
-        transition_rates = transition_rates_au / BaseQuantities["TIME"]
-
-        if unit is None:
-            return relevant_states, transition_rates
-        return relevant_states, transition_rates.to(unit).magnitude
+        return self._get_transition_rates("spontaneous", unit=unit, method=method)
 
     @overload
     def get_black_body_transition_rates(
@@ -449,20 +419,38 @@ class RydbergState:
             The relevant states and the transition rates.
 
         """
-        # TODO add a good way to determine a sensful n_max
-        n_max = self.n + 25
+        if temperature_unit is not None:
+            temperature = ureg.Quantity(temperature, temperature_unit)
+        temperature_au = (temperature * ureg.boltzmann_constant).to_base_units().magnitude
+        return self._get_transition_rates("black_body", temperature_au, unit=unit, method=method)
+
+    def _get_transition_rates(
+        self,
+        which_transitions: Literal["spontaneous", "black_body"],
+        temperature_au: Union[float, None] = None,
+        unit: Optional[str] = None,
+        method: TransitionRateMethod = "exact",
+    ) -> tuple[list["Self"], Union[np.ndarray, "PlainQuantity[np.ndarray]"]]:
+        assert which_transitions in ["spontaneous", "black_body"]
+
+        is_spontaneous = which_transitions == "spontaneous"
+        if is_spontaneous:
+            n_max = self.n
+        else:
+            # TODO add a good way to determine a sensful n_max
+            n_max = self.n + 25
 
         transition_rates_au: np.ndarray
         if method == "exact":
             # see https://en.wikipedia.org/wiki/Einstein_coefficients
             relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
-                1, n_max, only_smaller_energy=False
+                1, n_max, only_smaller_energy=is_spontaneous
             )
             transition_rates_au: np.ndarray = np.abs(electric_dipole_moments) ** 2
         elif method == "approximation":
             # see https://journals.aps.org/pra/pdf/10.1103/PhysRevA.79.052504
             relevant_states, energy_differences, radial_matrix_elements = (
-                self._get_list_of_radial_dipole_coupled_states(1, n_max, only_smaller_energy=False)
+                self._get_list_of_radial_dipole_coupled_states(1, n_max, only_smaller_energy=is_spontaneous)
             )
             l_list = np.array([state.l for state in relevant_states])
             lmax_list = np.array([max(self.l, l) for l in l_list])
@@ -470,18 +458,19 @@ class RydbergState:
         else:
             raise ValueError(f"Method {method} not supported.")
 
-        if temperature_unit is not None:
-            temperature = ureg.Quantity(temperature, temperature_unit)
-        temperature_au = (temperature * ureg.boltzmann_constant).to_base_units().magnitude
-
-        # for numerical stability we use 1 / exprel(x) = x / (exp(x) - 1)
         transition_rates_au *= (
-            (4 / 3)
-            * energy_differences**2
-            * temperature_au
-            / exprel(energy_differences / temperature_au)
-            / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
+            (4 / 3) * energy_differences**2 / ureg.Quantity(1, "speed_of_light").to_base_units().magnitude ** 3
         )
+
+        if is_spontaneous:
+            transition_rates_au *= energy_differences
+        else:
+            assert temperature_au is not None, "Temperature must be given for black body transitions."
+            # for numerical stability we use 1 / exprel(x) = x / (exp(x) - 1)
+            if temperature_au == 0:
+                transition_rates_au *= 0
+            else:
+                transition_rates_au *= temperature_au / exprel(energy_differences / temperature_au)
 
         if unit == "a.u.":
             # Note in a.u.: hbar = 1 and 4 pi * epsilon_0 = 1
