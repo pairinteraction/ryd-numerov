@@ -152,7 +152,7 @@ def calc_reduced_angular_matrix_element(
         if l1 != l2:
             reduced_matrix_element = 0
         else:
-            reduced_matrix_element = _calc_reduced_momentum_matrix_element(s1, s2, kappa)
+            reduced_matrix_element = momentum_matrix_element(s1, s2, kappa)
         wigner_6j = calc_wigner_6j(s2, j2, l2, j1, s1, kappa)
     else:
         prefactor *= minus_one_pow(l2 + s2 + j1 + kappa)
@@ -160,9 +160,9 @@ def calc_reduced_angular_matrix_element(
             if s1 != s2:
                 reduced_matrix_element = 0
             else:
-                reduced_matrix_element = _calc_reduced_momentum_matrix_element(l1, l2, kappa)
+                reduced_matrix_element = momentum_matrix_element(l1, l2, kappa)
         else:
-            reduced_matrix_element = _calc_reduced_multipole_matrix_element(l1, l2, operator, kappa)
+            reduced_matrix_element = multipole_matrix_element(l1, l2, operator, kappa)
         wigner_6j = calc_wigner_6j(l2, j2, s2, j1, l1, kappa)
 
     value = prefactor * reduced_matrix_element * wigner_6j
@@ -182,7 +182,7 @@ def calc_reduced_angular_matrix_element(
     return value
 
 
-def _calc_reduced_momentum_matrix_element(x1: Union[int, float], x2: Union[int, float], kappa: int) -> float:
+def momentum_matrix_element(x1: Union[int, float], x2: Union[int, float], kappa: int) -> float:
     r"""Calculate the reduced matrix element $(x2||\hat{x}_{10}||x1)$ for a momentum operator.
 
     The matrix elements of the momentum operators $x \in \{l, s\}$ are given by
@@ -206,7 +206,7 @@ def _calc_reduced_momentum_matrix_element(x1: Union[int, float], x2: Union[int, 
     raise NotImplementedError("Currently only kappa=1 is supported.")
 
 
-def _calc_reduced_multipole_matrix_element(l1: int, l2: int, operator: OperatorType, kappa: int) -> float:
+def multipole_matrix_element(l1: int, l2: int, operator: OperatorType, kappa: int) -> float:
     r"""Calculate the reduced matrix element $(l2||\hat{p}_{k0}||l1)$ for the multipole operator.
 
     The matrix elements of the multipole operators are given by (see also: Gaunt coefficient)

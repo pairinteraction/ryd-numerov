@@ -45,12 +45,12 @@ def calc_radial_matrix_element(
     # Make sure the wavefunctions are integrated before accessing the grid
     wf1 = state1.wavefunction
     wf2 = state2.wavefunction
-    return calc_radial_matrix_element_from_w_z(
+    return _calc_radial_matrix_element_from_w_z(
         wf1.grid.zlist, wf1.wlist, wf2.grid.zlist, wf2.wlist, r_power, integration_method
     )
 
 
-def calc_radial_matrix_element_from_w_z(
+def _calc_radial_matrix_element_from_w_z(
     z1: np.ndarray,
     w1: np.ndarray,
     z2: np.ndarray,
