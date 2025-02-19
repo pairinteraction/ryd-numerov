@@ -70,12 +70,13 @@ class Model:
         where
 
         .. math::
-            \\delta_{nlj} = d_0 + \frac{d_2}{(n - d_0)^2} + \frac{d_4}{(n - d_0)^4} + \frac{d_6}{(n - d_0)^6}
+            \\delta_{nlj} = d_{0} + \frac{d_{2}}{(n - d_{0})^2}
+            + \frac{d_{4}}{(n - d_{0})^4} + \frac{d_{6}}{(n - d_{0})^6}
 
         is the quantum defect. The energy of the Rydberg state is then given by
 
         .. math::
-            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\\infty} \frac{1}{n^*}
+            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
 

@@ -78,24 +78,27 @@ def calc_reduced_angular_matrix_element(
     kappa: int,
     _lazy_evaluation: bool = True,
 ) -> float:
-    r"""Calculate the reduced matrix element $\langle j2 || \hat{O}_{k0} || j1 \rangle$.
+    r"""Calculate the reduced matrix element :math:`\langle j2 || \hat{O}_{k0} || j1 \rangle`.
 
-    The reduced matrix elements $\langle j2 || \hat{O}_{k0} || j1 \rangle$ for
-    $\bra{j2} = \bra{\gamma_2, s2, l2, j2}$ and $\ket{j1} = \ket{\gamma_1, s1, l1, j1}$
-    simplify for the special cases $s2 = s1$ or $l2 = l1$ to the following expressions:
+    The reduced matrix elements :math:`\langle j2 || \hat{O}_{k0} || j1 \rangle` for
+    :math:`\bra{j2} = \bra{\gamma_2, s2, l2, j2}` and :math:`\ket{j1} = \ket{\gamma_1, s1, l1, j1}`
+    simplify for the special cases :math:`s2 = s1` or :math:`l2 = l1` to the following expressions:
     (see https://www.phys.ksu.edu/reu2015/danielkeylon/Wigner.pdf, and Edmonds: "Angular Momentum in Quantum Mechanics")
 
-    For $s2 = s1$ (i.e. when \hat{O}_{k0} only acts on l), the reduced matrix element is given by
-    .. math::
-        \langle \gamma_2, s2, l2, j2 || \hat{O}_{k0} || \gamma_1, s2, l1, j1 \rangle
-        = (-1)**(s2 + l2 + j1 + kappa) sqrt{2j + 1} sqrt{2j1 + 1} wigner_6j(l2, j2, s2, j1, l1, kappa)
-        \langle \gamma_2, l2 || \hat{O}_{k0} || \gamma_1, l1 \rangle
+    For :math:`s2 = s1` (i.e. when :math:`\hat{O}_{k0}` only acts on :math:`l`), the reduced matrix element is given by
 
-    And for $l2 = l1$ (i.e. when \hat{O}_{k0} only acts on s), the reduced matrix element is given by
     .. math::
-        \langle \gamma_2, s2, l2, j2 || \hat{O}_{k0} || \gamma_1, s1, l2, j1 \rangle
-        = (-1)**(s2 + l2 + j1 + kappa) sqrt{2j + 1} sqrt{2 * j1 + 1} wigner_6j(s2, j2, l2, j1, s1, kappa)
-        \langle \gamma_2, s2 || \hat{O}_{k0} || \gamma_1, s1 \rangle
+        \langle \gamma_{2}, s2, l2, j2 || \hat{O}_{k0} || \gamma_{1}, s2, l1, j1 \rangle
+        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2j1 + 1} \text{wigner_6j}(l2, j2, s2, j1, l1, \kappa)
+        \langle \gamma_{2}, l2 || \hat{O}_{k0} || \gamma_{1}, l1 \rangle
+
+    And for :math:`l2 = l1` (i.e. when :math:`\hat{O}_{k0}` only acts on :math:`s`),
+    the reduced matrix element is given by
+
+    .. math::
+        \langle \gamma_{2}, s2, l2, j2 || \hat{O}_{k0} || \gamma_{1}, s1, l2, j1 \rangle
+        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2 * j1 + 1} \text{wigner_6j}(s2, j2, l2, j1, s1, \kappa)
+        \langle \gamma_{2}, s2 || \hat{O}_{k0} || \gamma_{1}, s1 \rangle
 
     Note we changed the formulas to match the pairinteraction paper convention:
     https://doi.org/10.1088/1361-6455/aa743a
@@ -107,11 +110,11 @@ def calc_reduced_angular_matrix_element(
         s2: The spin quantum number of the final state.
         l2: The orbital quantum number of the final state.
         j2: The total angular momentum quantum number of the final state.
-        operator: The angular momentum operator $\hat{O}_{kq}$.
-        kappa: The quantum number $\kappa$ of the angular momentum operator.
+        operator: The angular momentum operator :math:`\hat{O}_{kq}`.
+        kappa: The quantum number :math:`\kappa` of the angular momentum operator.
 
     Returns:
-        The reduced matrix element $\langle j2 || \hat{O}_{k0} || j1 \rangle$.
+        The reduced matrix element :math:`\langle j2 || \hat{O}_{k0} || j1 \rangle`.
 
     """
     assert operator in ["L", "S", "Y", "p", "mu"]
