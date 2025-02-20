@@ -220,30 +220,35 @@ class RydbergState:
         return angular_matrix_element.to(unit).magnitude
 
     @overload
-    def calc_multipole_matrix_element(
-        self, other: "Self", k_radial: int, k_angular: int, q: int
+    def calc_matrix_element(
+        self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int
     ) -> "PlainQuantity[float]": ...
 
     @overload
-    def calc_multipole_matrix_element(
-        self, other: "Self", k_radial: int, k_angular: int, q: int, unit: str
+    def calc_matrix_element(
+        self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int, unit: str
     ) -> float: ...
 
-    def calc_multipole_matrix_element(
-        self, other: "Self", k_radial: int, k_angular: int, q: int, unit: Optional[str] = None
+    def calc_matrix_element(
+        self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int, unit: Optional[str] = None
     ):
-        r"""Calculate the multipole matrix element.
+        r"""Calculate the matrix element.
 
-        Calculate the multipole matrix element between two Rydberg states
+        Calculate the matrix element between two Rydberg states
         \ket{self}=\ket{n',l',j',m'} and \ket{other}= \ket{n,l,j,m}.
 
         .. math::
-            \langle n,l,j,m,s | r^k_radial p_{k_angular,q} | n',l',j',m',s' \rangle
+            \langle n,l,j,m,s | r^k_radial \hat{O}_{k_angular,q} | n',l',j',m',s' \rangle
 
-        where p_{k_angular,q} is the spherical multipole operators of rank k_angular and component q.
+        where \hat{O}_{k_angular,q} is the operators of rank k_angular and component q,
+        for which to calculate the matrix element.
 
         Args:
             other: The other Rydberg state \ket{n,l,j,m,s} to which to calculate the matrix element.
+            operator: The operator for which to calculate the matrix element.
+                Can be "p" for the electric dipole operator,
+                "mu" for the magnetic moment,
+                or "Y" for the spherical harmonics.
             k_radial: The radial matrix element power k.
             k_angular: The rank of the angular operator.
             q: The component of the angular operator.
@@ -252,24 +257,23 @@ class RydbergState:
                 Default None will return a pint quantity.
 
         Returns:
-            The multipole matrix element.
+            The matrix element for the given operator.
 
         """
-        operator: OperatorType = "p"
         radial_matrix_element_au = self.calc_radial_matrix_element(other, k_radial, unit="a.u.")
         angular_matrix_element_au = self.calc_angular_matrix_element(other, operator, k_angular, q, unit="a.u.")
-        multipole_matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
+        matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
         if unit == "a.u.":
-            return multipole_matrix_element_au
-        multipole_matrix_element = (
-            multipole_matrix_element_au
+            return matrix_element_au
+        matrix_element = (
+            matrix_element_au
             * BaseQuantities["CHARGE"]
             * BaseQuantities["RADIAL_MATRIX_ELEMENT"] ** k_radial
             * BaseQuantities["ANGULAR_MATRIX_ELEMENT"] ** k_angular
         )
         if unit is None:
-            return multipole_matrix_element
-        return multipole_matrix_element.to(unit).magnitude
+            return matrix_element
+        return matrix_element.to(unit).magnitude
 
     def _get_list_of_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
@@ -294,7 +298,7 @@ class RydbergState:
                             relevant_states.append(other)
                             energy_differences.append(self.energy - other.energy)
                             q = round(other.m - self.m)
-                            dipole_moment_au = self.calc_multipole_matrix_element(other, 1, 1, q=q, unit="a.u.")
+                            dipole_moment_au = self.calc_matrix_element(other, 1, 1, q=q, unit="a.u.")
                             electric_dipole_moments.append(dipole_moment_au)
 
                             assert dipole_moment_au != 0, (
