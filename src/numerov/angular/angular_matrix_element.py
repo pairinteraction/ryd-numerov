@@ -142,9 +142,7 @@ def calc_reduced_angular_matrix_element(
         value_s = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "S", kappa)
         g_l = 1
         value_l = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "L", kappa)
-        mu = mu_B * (
-            g_s * value_s + g_l * value_l
-        )  # TODO note the missing minus is convention how we use it in pairinteraction ...
+        mu = -mu_B * (g_s * value_s + g_l * value_l)
         return mu
 
     prefactor = np.sqrt(2 * j1 + 1) * np.sqrt(2 * j2 + 1)
