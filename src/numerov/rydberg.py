@@ -352,7 +352,7 @@ class RydbergState:
         The spontaneous transition rates are given by the Einstein A coefficients.
 
         Args:
-            unit: The unit to which to convert the radial matrix element.
+            unit: The unit to which to convert the result to.
                 Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
                 Default None will return a pint quantity.
             method: How to calculate the transition rates.
@@ -408,7 +408,7 @@ class RydbergState:
             temperature: The temperature, for which to calculate the black body transition rates.
             temperature_unit: The unit of the temperature.
                 Default None will assume the temperature is given as pint quantity.
-            unit: The unit to which to convert the radial matrix element.
+            unit: The unit to which to convert the result.
                 Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
                 Default None will return a pint quantity.
             method: How to calculate the transition rates.
@@ -434,11 +434,8 @@ class RydbergState:
         assert which_transitions in ["spontaneous", "black_body"]
 
         is_spontaneous = which_transitions == "spontaneous"
-        if is_spontaneous:
-            n_max = self.n
-        else:
-            # TODO add a good way to determine a sensful n_max
-            n_max = self.n + 25
+        # TODO add a good way to determine a sensful n_max
+        n_max = self.n + 25
 
         transition_rates_au: np.ndarray
         if method == "exact":
@@ -446,7 +443,7 @@ class RydbergState:
             relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
                 1, n_max, only_smaller_energy=is_spontaneous
             )
-            transition_rates_au: np.ndarray = np.abs(electric_dipole_moments) ** 2
+            transition_rates_au = np.abs(electric_dipole_moments) ** 2
         elif method == "approximation":
             # see https://journals.aps.org/pra/pdf/10.1103/PhysRevA.79.052504
             relevant_states, energy_differences, radial_matrix_elements = (
@@ -485,7 +482,7 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]"] = 0,
+        temperature: Union[float, "PlainQuantity[float]", None] = None,
         temperature_unit: Optional[str] = None,
         *,
         method: TransitionRateMethod = "exact",
@@ -502,7 +499,7 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]"],
+        temperature: Union[float, "PlainQuantity[float]", None],
         *,
         unit: str,
         method: TransitionRateMethod = "exact",
@@ -511,7 +508,7 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]"] = 0,
+        temperature: Union[float, "PlainQuantity[float]", None] = None,
         temperature_unit: Optional[str] = None,
         *,
         unit: str,
