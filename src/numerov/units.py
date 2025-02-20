@@ -11,6 +11,15 @@ if TYPE_CHECKING:
 ureg = UnitRegistry(system="atomic")
 
 
+OperatorType = Literal["MAGNETIC", "ELECTRIC", "SPHERICAL", "MAGNETIC_S", "MAGNETIC_L"]
+MatrixElementType = Literal[
+    "MAGNETIC_DIPOLE",  # MAGNETIC with k_radial = 0, k_angular = 1
+    "ELECTRIC_DIPOLE",  # ELECTRIC with k_radial = 1, k_angular = 1
+    "ELECTRIC_QUADRUPOLE",  # ELECTRIC with k_radial = 2, k_angular = 2
+    "ELECTRIC_OCTUPOLE",  # ELECTRIC with k_radial = 3, k_angular = 3
+    "ELECTRIC_QUADRUPOLE_ZERO",  # ELECTRIC with k_radial = 2, k_angular = 0
+]
+
 Dimension = Literal[
     "ELECTRIC_FIELD",
     "MAGNETIC_FIELD",
@@ -48,7 +57,7 @@ _CommonUnits: dict[Dimension, str] = {
     "ELECTRIC_QUADRUPOLE": "e * a0^2",  # 1 e * a0^2 = 1 au_current * au_time * bohr ** 2
     "ELECTRIC_QUADRUPOLE_ZERO": "e * a0^2",  # 1 e * a0^2 = 1 au_current * au_time * bohr ** 2
     "ELECTRIC_OCTUPOLE": "e * a0^3",  # 1 e * a0^3 = 1 au_current * au_time * bohr ** 3
-    "MAGNETIC_DIPOLE": "hbar e / m_e",  # 1 hbar e / m_e = 1 au_current * bohr ** 2
+    "MAGNETIC_DIPOLE": "bohr_magneton",  # 1 bohr_magneton = 0.5 au_current * bohr ** 2'
     "ARBITRARY": "",  # 1 dimensionless
     "ZERO": "",  # 1 dimensionless
 }

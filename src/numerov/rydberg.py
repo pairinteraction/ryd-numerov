@@ -1,15 +1,14 @@
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
 
 import numpy as np
 from scipy.special import exprel
 
 from numerov.angular import calc_angular_matrix_element
-from numerov.angular.angular_matrix_element import OperatorType
 from numerov.model import Model
 from numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
-from numerov.units import BaseQuantities, ureg
+from numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
     from pint.facets.plain import PlainQuantity
@@ -196,28 +195,12 @@ class RydbergState:
             return radial_matrix_element
         return radial_matrix_element.to(unit).magnitude
 
-    @overload
-    def calc_angular_matrix_element(
-        self, other: "Self", operator: "OperatorType", k_angular: int, q: int
-    ) -> "PlainQuantity[float]": ...
-
-    @overload
-    def calc_angular_matrix_element(
-        self, other: "Self", operator: "OperatorType", k_angular: int, q: int, unit: str
-    ) -> float: ...
-
-    def calc_angular_matrix_element(
-        self, other: "Self", operator: "OperatorType", k_angular: int, q: int, unit: Optional[str] = None
-    ):
+    def calc_angular_matrix_element(self, other: "Self", operator: "OperatorType", k_angular: int, q: int) -> float:
+        """Calculate the dimensionless angular matrix element."""
         self_qns = (self.s, self.l, self.j, self.m)
         other_qns = (other.s, other.l, other.j, other.m)
         angular_matrix_element_au = calc_angular_matrix_element(*self_qns, *other_qns, operator, k_angular, q)
-        if unit == "a.u.":
-            return angular_matrix_element_au
-        angular_matrix_element = angular_matrix_element_au * BaseQuantities["ANGULAR_MATRIX_ELEMENT"]
-        if unit is None:
-            return angular_matrix_element
-        return angular_matrix_element.to(unit).magnitude
+        return angular_matrix_element_au
 
     @overload
     def calc_matrix_element(
@@ -245,10 +228,8 @@ class RydbergState:
 
         Args:
             other: The other Rydberg state \ket{n,l,j,m,s} to which to calculate the matrix element.
-            operator: The operator for which to calculate the matrix element.
-                Can be "p" for the electric dipole operator,
-                "mu" for the magnetic moment,
-                or "Y" for the spherical harmonics.
+            operator: The operator type for which to calculate the matrix element.
+                Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
             k_radial: The radial matrix element power k.
             k_angular: The rank of the angular operator.
             q: The component of the angular operator.
@@ -260,17 +241,31 @@ class RydbergState:
             The matrix element for the given operator.
 
         """
+        assert operator in get_args(OperatorType), (
+            f"Operator {operator} not supported, must be one of {get_args(OperatorType)}"
+        )
         radial_matrix_element_au = self.calc_radial_matrix_element(other, k_radial, unit="a.u.")
-        angular_matrix_element_au = self.calc_angular_matrix_element(other, operator, k_angular, q, unit="a.u.")
+        angular_matrix_element_au = self.calc_angular_matrix_element(other, operator, k_angular, q)
         matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
+
+        if operator == "MAGNETIC":
+            matrix_element_au *= -0.5  # - mu_B in atomic units
+        elif operator == "ELECTRIC":
+            pass  # e in atomic units is 1
+
         if unit == "a.u.":
             return matrix_element_au
-        matrix_element = (
-            matrix_element_au
-            * BaseQuantities["CHARGE"]
-            * BaseQuantities["RADIAL_MATRIX_ELEMENT"] ** k_radial
-            * BaseQuantities["ANGULAR_MATRIX_ELEMENT"] ** k_angular
-        )
+
+        matrix_element = matrix_element_au * (ureg.Quantity(1, "a0") ** k_radial)
+        if operator == "ELECTRIC":
+            matrix_element *= ureg.Quantity(1, "e")
+        elif operator == "MAGNETIC":
+            # 2 mu_B = hbar e / m_e = 1 a.u. = 1 atomic_unit_of_current * bohr ** 2
+            # Note: we use the convention, that the magnetic dipole moments are given
+            # as the same dimensionality as the Bohr magneton (mu = - mu_B (g_l l + g_s s))
+            # such that - mu * B (where the magnetic field B is given in dimension Tesla) is an energy
+            matrix_element *= ureg.Quantity(2, "bohr_magneton")
+
         if unit is None:
             return matrix_element
         return matrix_element.to(unit).magnitude
@@ -298,7 +293,7 @@ class RydbergState:
                             relevant_states.append(other)
                             energy_differences.append(self.energy - other.energy)
                             q = round(other.m - self.m)
-                            dipole_moment_au = self.calc_matrix_element(other, 1, 1, q=q, unit="a.u.")
+                            dipole_moment_au = self.calc_matrix_element(other, "ELECTRIC", 1, 1, q=q, unit="a.u.")
                             electric_dipole_moments.append(dipole_moment_au)
 
                             assert dipole_moment_au != 0, (
