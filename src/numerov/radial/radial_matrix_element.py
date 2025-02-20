@@ -15,7 +15,7 @@ INTEGRATION_METHODS = Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapez
 def calc_radial_matrix_element(
     state1: "RydbergState",
     state2: "RydbergState",
-    r_power: int = 0,
+    k_radial: int = 0,
     integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
     r"""Calculate the radial matrix element between two Rydberg states.
@@ -33,7 +33,7 @@ def calc_radial_matrix_element(
     Args:
         state1: First Rydberg state
         state2: Second Rydberg state
-        r_power: Power of r in the matrix element
+        k_radial: Power of r in the matrix element
             (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
         integration_method: Integration method to use, one of ["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
             (default="sum")
@@ -42,11 +42,18 @@ def calc_radial_matrix_element(
         float: The radial matrix element in atomic units.
 
     """
-    # Make sure the wavefunctions are integrated before accessing the grid
+    # Special cases for the overlap integral (k_radial = 0)
+    if k_radial == 0 and (state1.l, state1.j) == (state2.l, state2.j):
+        if state1.n == state2.n:
+            return 1
+        else:
+            return 0
+
+    # Ensure wavefunctions are integrated before accessing the grid
     wf1 = state1.wavefunction
     wf2 = state2.wavefunction
     return _calc_radial_matrix_element_from_w_z(
-        wf1.grid.zlist, wf1.wlist, wf2.grid.zlist, wf2.wlist, r_power, integration_method
+        wf1.grid.zlist, wf1.wlist, wf2.grid.zlist, wf2.wlist, k_radial, integration_method
     )
 
 
@@ -55,7 +62,7 @@ def _calc_radial_matrix_element_from_w_z(
     w1: np.ndarray,
     z2: np.ndarray,
     w2: np.ndarray,
-    r_power: int = 0,
+    k_radial: int = 0,
     integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
     r"""Calculate the radial matrix element of two wavefunctions w1(z1) and w2(z2).
@@ -75,7 +82,7 @@ def _calc_radial_matrix_element_from_w_z(
         w1: w(z) values of the first wavefunction
         z2: z coordinates of the second wavefunction
         w2: w(z) values of the second wavefunction
-        r_power: Power of r in the matrix element
+        k_radial: Power of r in the matrix element
             (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
         integration_method: Integration method to use, one of ["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
             (default="sum")
@@ -119,7 +126,7 @@ def _calc_radial_matrix_element_from_w_z(
     assert z1[-1] - z2[-1] < tol, f"Last point mismatch: {z1[-1]=} != {z2[-1]=}"
 
     integrand = 2 * w1 * w2
-    for _ in range(2 * r_power + 2):
+    for _ in range(2 * k_radial + 2):
         integrand *= z1
 
     if integration_method == "sum":
