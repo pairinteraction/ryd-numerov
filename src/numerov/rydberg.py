@@ -376,8 +376,8 @@ class RydbergState:
     @overload
     def get_black_body_transition_rates(
         self,
-        temperature: Union[float, "PlainQuantity[float]"],
-        temperature_unit: Optional[str],
+        temperature: "PlainQuantity[float]",
+        *,
         unit: str,
         method: TransitionRateMethod = "exact",
     ) -> tuple[list["Self"], np.ndarray]: ...
@@ -385,8 +385,8 @@ class RydbergState:
     @overload
     def get_black_body_transition_rates(
         self,
-        temperature: Union[float, "PlainQuantity[float]"],
-        *,
+        temperature: float,
+        temperature_unit: str,
         unit: str,
         method: TransitionRateMethod = "exact",
     ) -> tuple[list["Self"], np.ndarray]: ...
@@ -433,8 +433,7 @@ class RydbergState:
         assert which_transitions in ["spontaneous", "black_body"]
 
         is_spontaneous = which_transitions == "spontaneous"
-        # TODO add a good way to determine a sensful n_max
-        n_max = self.n + 25
+        n_max = self.n + 30
 
         transition_rates_au: np.ndarray
         if method == "exact":
@@ -498,7 +497,7 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]", None],
+        temperature: "PlainQuantity[float]",
         *,
         unit: str,
         method: TransitionRateMethod = "exact",
@@ -507,9 +506,8 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]", None] = None,
-        temperature_unit: Optional[str] = None,
-        *,
+        temperature: float,
+        temperature_unit: str,
         unit: str,
         method: TransitionRateMethod = "exact",
     ) -> float: ...
