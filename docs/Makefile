@@ -29,4 +29,4 @@ clean:
 	@$(SPHINXBUILD) -M clean $(ALLSPHINXOPTS)
 
 livehtml:
-	sphinx-autobuild -b html $(ALLSPHINXOPTS) --watch ../src/numerov/
+	sphinx-autobuild -b html $(ALLSPHINXOPTS) --watch ../src/ryd_numerov/

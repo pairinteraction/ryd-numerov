@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "rydberg-numerov"
+name = "ryd-numerov"
 dynamic = ["version"]
 
 description = "A Python package for calculating Rydberg wavefuntions."
@@ -40,6 +40,7 @@ test = [
   "pytest>=8.0",
   "sympy>=1.12.1",
   "nbmake>=1.3",
+  "ryd-numerov[benchmark]"
 ]
 doc = [
   "sphinx >= 7",
@@ -62,10 +63,10 @@ dev = [
 ]
 
 [dependency-groups]
-dev = ["rydberg-numerov[doc,test,benchmark,dev]"]
+dev = ["ryd-numerov[doc,test,benchmark,dev]"]
 
 [tool.setuptools.dynamic]
-version = {attr = "numerov.__version__"}
+version = {attr = "ryd_numerov.__version__"}
 
 [tool.uv]
 override-dependencies = [

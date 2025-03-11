@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from numerov.rydberg import RydbergState
-from numerov.units import BaseUnits, ureg
+from ryd_numerov.rydberg import RydbergState
+from ryd_numerov.units import BaseUnits, ureg
 
 
 @pytest.mark.parametrize("l", [0, 1, 20])

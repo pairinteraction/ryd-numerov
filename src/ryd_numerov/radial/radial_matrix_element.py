@@ -5,7 +5,7 @@ import numpy as np
 import scipy.integrate
 
 if TYPE_CHECKING:
-    from numerov.rydberg import RydbergState
+    from ryd_numerov.rydberg import RydbergState
 
 logger = logging.getLogger(__name__)
 

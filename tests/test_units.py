@@ -1,4 +1,4 @@
-from numerov.units import ureg
+from ryd_numerov.units import ureg
 
 
 def test_constants() -> None:

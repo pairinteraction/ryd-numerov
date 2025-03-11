@@ -2,8 +2,8 @@ from typing import Union, get_args
 
 import numpy as np
 
-from numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, check_triangular, minus_one_pow
-from numerov.units import OperatorType
+from ryd_numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, check_triangular, minus_one_pow
+from ryd_numerov.units import OperatorType
 
 
 def calc_angular_matrix_element(

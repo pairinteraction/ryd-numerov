@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from numerov.radial import calc_radial_matrix_element
-from numerov.rydberg import RydbergState
+from ryd_numerov.radial import calc_radial_matrix_element
+from ryd_numerov.rydberg import RydbergState
 
 
 @pytest.mark.parametrize(

@@ -1,15 +1,15 @@
 # Configuration file for the Sphinx documentation builder.
 
 
-import numerov
+import ryd_numerov
 
 # -- Project information -----------------------------------------------------
 
-project = "numerov"
-copyright = "2017, Rydberg Numerov Developers"
+project = "ryd-numerov"
+copyright = "2025, Rydberg Numerov Developers"
 author = "Rydberg Numerov Developers"
 
-version = numerov.__version__  # The short X.Y version, use via |version|
+version = ryd_numerov.__version__  # The short X.Y version, use via |version|
 release = version  # The full version, including alpha/beta/rc tags, use via |release|
 
 language = "en"

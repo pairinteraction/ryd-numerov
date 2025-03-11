@@ -5,16 +5,16 @@ from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
 import numpy as np
 from scipy.special import exprel
 
-from numerov.angular import calc_angular_matrix_element
-from numerov.model import Model
-from numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
-from numerov.units import BaseQuantities, OperatorType, ureg
+from ryd_numerov.angular import calc_angular_matrix_element
+from ryd_numerov.model import Model
+from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
+from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
     from pint.facets.plain import PlainQuantity
     from typing_extensions import Self
 
-    from numerov.model import Database
+    from ryd_numerov.model import Database
 
 
 logger = logging.getLogger(__name__)

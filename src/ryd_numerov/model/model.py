@@ -5,8 +5,8 @@ from typing import Literal, Optional, Union
 import numexpr as ne
 import numpy as np
 
-from numerov.model.database import Database
-from numerov.units import ureg
+from ryd_numerov.model.database import Database
+from ryd_numerov.units import ureg
 
 logger = logging.getLogger(__name__)
 

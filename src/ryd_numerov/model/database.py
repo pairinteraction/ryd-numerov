@@ -12,7 +12,7 @@ from typing import Optional
 
 import numpy as np
 
-from numerov.units import ureg
+from ryd_numerov.units import ureg
 
 logger = logging.getLogger(__name__)
 

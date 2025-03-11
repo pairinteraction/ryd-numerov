@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
+from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from numerov.model import Model
-    from numerov.radial.grid import Grid
+    from ryd_numerov.model import Model
+    from ryd_numerov.radial.grid import Grid
 
 logger = logging.getLogger(__name__)
 

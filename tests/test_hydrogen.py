@@ -4,7 +4,7 @@ from sympy.abc import r as sympy_r
 from sympy.physics import hydrogen as sympy_hydrogen
 from sympy.utilities.lambdify import lambdify
 
-from numerov.rydberg import RydbergState
+from ryd_numerov.rydberg import RydbergState
 
 
 @pytest.mark.parametrize(
