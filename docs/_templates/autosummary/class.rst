@@ -1,8 +1,4 @@
 {{ name | escape | underline }}
-Full {{ objtype }} path: {{ fullname | escape }}
-
-.. inheritance-diagram:: {{ fullname }}
-    :parts: 1
 
 .. currentmodule:: {{ module }}
 

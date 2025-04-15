@@ -536,6 +536,7 @@ class RydbergState:
         r"""Calculate the lifetime of the Rydberg state.
 
         The lifetime is given by the inverse of the sum of the transition rates:
+
         .. math::
             \tau = \frac{1}{\\sum_i A_i}
 

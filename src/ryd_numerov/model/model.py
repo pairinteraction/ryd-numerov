@@ -274,18 +274,19 @@ class Model:
         r"""Calculate the inner turning point z_i for the model potential.
 
         There are three different turning points we consider:
-        - The hydrogen turning point, where for the idealized hydrogen atom the potential equals the energy,
-        i.e. V_c(r_i) + V_l(r_i) = E.
-        This is exactly the case at
 
-        .. math::
-            r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
+        - The hydrogen turning point, where for the idealized hydrogen atom the potential equals the energy,
+          i.e. V_c(r_i) + V_l(r_i) = E.
+          This is exactly the case at
+
+            .. math::
+                r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
 
         - The classical turning point, where the physical potential of the Rydberg model potential equals the energy,
-        i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = E.
+          i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = E.
 
         - The zero-crossing turning point, where the physical potential of the Rydberg model potential equals zero,
-        i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = 0.
+          i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = 0.
 
         Args:
             which: Which turning point to calculate, one of "hydrogen", "classical", "zerocrossing".
