@@ -11,10 +11,10 @@ from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
-    from pint.facets.plain import PlainQuantity
     from typing_extensions import Self
 
     from ryd_numerov.model import Database
+    from ryd_numerov.units import NDArray, PintArray, PintFloat
 
 
 logger = logging.getLogger(__name__)
@@ -187,14 +187,14 @@ class RydbergState:
         return self._wavefunction
 
     @overload
-    def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PlainQuantity[float]": ...
+    def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PintFloat": ...
 
     @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int, unit: str) -> float: ...
 
     def calc_radial_matrix_element(
         self, other: "Self", k_radial: int, unit: Optional[str] = None
-    ) -> Union["PlainQuantity[float]", float]:
+    ) -> Union["PintFloat", float]:
         radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
         if unit == "a.u.":
             return radial_matrix_element_au
@@ -215,7 +215,7 @@ class RydbergState:
     @overload
     def calc_matrix_element(
         self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int
-    ) -> "PlainQuantity[float]": ...
+    ) -> "PintFloat": ...
 
     @overload
     def calc_matrix_element(
@@ -224,7 +224,7 @@ class RydbergState:
 
     def calc_matrix_element(
         self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int, unit: Optional[str] = None
-    ) -> Union["PlainQuantity[float]", float]:
+    ) -> Union["PintFloat", float]:
         r"""Calculate the matrix element.
 
         Calculate the matrix element between two Rydberg states
@@ -282,7 +282,7 @@ class RydbergState:
 
     def _get_list_of_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
-    ) -> tuple[list["Self"], np.ndarray, np.ndarray]:
+    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
         if self.m is None:
             raise ValueError("m must be set to get the dipole coupled states.")
 
@@ -318,7 +318,7 @@ class RydbergState:
 
     def _get_list_of_radial_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
-    ) -> tuple[list["Self"], np.ndarray, np.ndarray]:
+    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
         relevant_states = []
         energy_differences = []
         radial_matrix_elements = []
@@ -348,18 +348,18 @@ class RydbergState:
     @overload
     def get_spontaneous_transition_rates(
         self, *, method: TransitionRateMethod = "exact"
-    ) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
+    ) -> tuple[list["Self"], "PintArray"]: ...
 
     @overload
     def get_spontaneous_transition_rates(
         self, unit: str, method: TransitionRateMethod = "exact"
-    ) -> tuple[list["Self"], np.ndarray]: ...
+    ) -> tuple[list["Self"], "NDArray"]: ...
 
     def get_spontaneous_transition_rates(
         self,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], Union["PlainQuantity[np.ndarray]", np.ndarray]]:
+    ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
         """Calculate the spontaneous transition rates for the Rydberg state.
 
         The spontaneous transition rates are given by the Einstein A coefficients.
@@ -381,20 +381,20 @@ class RydbergState:
     @overload
     def get_black_body_transition_rates(
         self,
-        temperature: Union[float, "PlainQuantity[float]"],
+        temperature: Union[float, "PintFloat"],
         temperature_unit: Optional[str] = None,
         *,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], "PlainQuantity[np.ndarray]"]: ...
+    ) -> tuple[list["Self"], "PintArray"]: ...
 
     @overload
     def get_black_body_transition_rates(
         self,
-        temperature: "PlainQuantity[float]",
+        temperature: "PintFloat",
         *,
         unit: str,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], np.ndarray]: ...
+    ) -> tuple[list["Self"], "NDArray"]: ...
 
     @overload
     def get_black_body_transition_rates(
@@ -403,15 +403,15 @@ class RydbergState:
         temperature_unit: str,
         unit: str,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], np.ndarray]: ...
+    ) -> tuple[list["Self"], "NDArray"]: ...
 
     def get_black_body_transition_rates(
         self,
-        temperature: Union[float, "PlainQuantity[float]"],
+        temperature: Union[float, "PintFloat"],
         temperature_unit: Optional[str] = None,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], Union["PlainQuantity[np.ndarray]", np.ndarray]]:
+    ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
         """Calculate the black body transition rates for the Rydberg state.
 
         The black body transitions rates are given by the Einstein B coefficients,
@@ -443,13 +443,13 @@ class RydbergState:
         temperature_au: Union[float, None] = None,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], Union[np.ndarray, "PlainQuantity[np.ndarray]"]]:
+    ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
         assert which_transitions in ["spontaneous", "black_body"]
 
         is_spontaneous = which_transitions == "spontaneous"
         n_max = self.n + 30
 
-        transition_rates_au: np.ndarray
+        transition_rates_au: NDArray
         if method == "exact":
             # see https://en.wikipedia.org/wiki/Einstein_coefficients
             relevant_states, energy_differences, electric_dipole_moments = self._get_list_of_dipole_coupled_states(
@@ -494,11 +494,11 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]", None] = None,
+        temperature: Union[float, "PintFloat", None] = None,
         temperature_unit: Optional[str] = None,
         *,
         method: TransitionRateMethod = "exact",
-    ) -> "PlainQuantity[float]": ...
+    ) -> "PintFloat": ...
 
     @overload
     def get_lifetime(
@@ -511,7 +511,7 @@ class RydbergState:
     @overload
     def get_lifetime(
         self,
-        temperature: "PlainQuantity[float]",
+        temperature: "PintFloat",
         *,
         unit: str,
         method: TransitionRateMethod = "exact",
@@ -528,11 +528,11 @@ class RydbergState:
 
     def get_lifetime(
         self,
-        temperature: Union[float, "PlainQuantity[float]", None] = None,
+        temperature: Union[float, "PintFloat", None] = None,
         temperature_unit: Optional[str] = None,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ) -> Union["PlainQuantity[float]", float]:
+    ) -> Union["PintFloat", float]:
         r"""Calculate the lifetime of the Rydberg state.
 
         The lifetime is given by the inverse of the sum of the transition rates:

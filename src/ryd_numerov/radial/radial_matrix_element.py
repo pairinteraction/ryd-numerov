@@ -6,6 +6,7 @@ import scipy.integrate
 
 if TYPE_CHECKING:
     from ryd_numerov.rydberg import RydbergState
+    from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -57,10 +58,10 @@ def calc_radial_matrix_element(
 
 
 def _calc_radial_matrix_element_from_w_z(
-    z1: np.ndarray,
-    w1: np.ndarray,
-    z2: np.ndarray,
-    w2: np.ndarray,
+    z1: "NDArray",
+    w1: "NDArray",
+    z2: "NDArray",
+    w2: "NDArray",
     k_radial: int = 0,
     integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
@@ -126,7 +127,7 @@ def _calc_radial_matrix_element_from_w_z(
     return _integrate(integrand, dz, integration_method)
 
 
-def _sanity_check_integration(z1: np.ndarray, z2: np.ndarray) -> None:
+def _sanity_check_integration(z1: "NDArray", z2: "NDArray") -> None:
     tol = 1e-10
     assert len(z1) == len(z2), f"Length mismatch: {len(z1)=} != {len(z2)=}"
     assert z1[0] - z2[0] < tol, f"First point mismatch: {z1[0]=} != {z2[0]=}"
@@ -135,7 +136,7 @@ def _sanity_check_integration(z1: np.ndarray, z2: np.ndarray) -> None:
     assert z1[-1] - z2[-1] < tol, f"Last point mismatch: {z1[-1]=} != {z2[-1]=}"
 
 
-def _integrate(integrand: np.ndarray, dz: float, method: INTEGRATION_METHODS) -> float:
+def _integrate(integrand: "NDArray", dz: float, method: INTEGRATION_METHODS) -> float:
     """Integrate the given integrand using the specified method."""
     if method == "sum":
         value = np.sum(integrand) * dz

@@ -8,6 +8,7 @@ from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_nume
 if TYPE_CHECKING:
     from ryd_numerov.model import Model
     from ryd_numerov.radial.grid import Grid
+    from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class Wavefunction:
         self._grid = grid
         self._model = model
 
-        self._w_list: Optional[np.ndarray] = None
+        self._w_list: Optional[NDArray] = None
 
     @property
     def grid(self) -> "Grid":
@@ -51,19 +52,19 @@ class Wavefunction:
         return self._model
 
     @property
-    def w_list(self) -> np.ndarray:
+    def w_list(self) -> "NDArray":
         r"""The dimensionless scaled wavefunction w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r)."""
         if self._w_list is None:
             return self.integrate()
         return self._w_list
 
     @property
-    def u_list(self) -> np.ndarray:
+    def u_list(self) -> "NDArray":
         r"""The dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r)."""
         return np.sqrt(self.grid.z_list) * self.w_list
 
     @property
-    def r_list(self) -> np.ndarray:
+    def r_list(self) -> "NDArray":
         r"""The radial wavefunction R(r) in atomic units."""
         return self.u_list / self.grid.x_list
 

@@ -3,10 +3,15 @@ from typing import TYPE_CHECKING, Any, Literal, Union
 from pint import UnitRegistry
 
 if TYPE_CHECKING:
-    import numpy as np
+    import numpy.typing as npt
     from pint.facets.plain import PlainQuantity, PlainUnit
+    from typing_extensions import TypeAlias
 
-    Array = np.ndarray[Any, Any]
+    NDArray: TypeAlias = npt.NDArray[Any]
+    PintFloat: TypeAlias = PlainQuantity[float]
+    PintArray: TypeAlias = PlainQuantity[NDArray]
+    # type ignore because pint has no type support for complex
+    PintComplex: TypeAlias = PlainQuantity[complex]  # type: ignore [type-var]
 
 ureg = UnitRegistry(system="atomic")
 
@@ -64,7 +69,7 @@ _CommonUnits: dict[Dimension, str] = {
 BaseUnits: dict[Dimension, "PlainUnit"] = {
     k: ureg.Quantity(1, unit).to_base_units().units for k, unit in _CommonUnits.items()
 }
-BaseQuantities: dict[Dimension, "PlainQuantity[float]"] = {k: ureg.Quantity(1, unit) for k, unit in BaseUnits.items()}
+BaseQuantities: dict[Dimension, "PintFloat"] = {k: ureg.Quantity(1, unit) for k, unit in BaseUnits.items()}
 
 Context = Literal["spectroscopy", "Gaussian"]
 BaseContexts: dict[Dimension, Context] = {

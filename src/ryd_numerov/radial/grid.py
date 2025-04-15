@@ -1,6 +1,9 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from ryd_numerov.units import NDArray
 
 
 class Grid:
@@ -57,7 +60,7 @@ class Grid:
         return self.z_list[-1]  # type: ignore [no-any-return]  # FIXME: numpy indexing
 
     @property
-    def z_list(self) -> np.ndarray:
+    def z_list(self) -> "NDArray":
         """The grid in the scaled dimensionless coordinate z = sqrt{x}.
 
         In this coordinate the grid points are chosen equidistant,
@@ -76,7 +79,7 @@ class Grid:
         return self.z_max**2
 
     @property
-    def x_list(self) -> np.ndarray:
+    def x_list(self) -> "NDArray":
         """The grid in the dimensionless coordinate x = r/a_0."""
         return self.z_list**2
 
