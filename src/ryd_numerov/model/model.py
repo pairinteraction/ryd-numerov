@@ -1,12 +1,15 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal, Optional, Union
+from typing import TYPE_CHECKING, Literal, Optional, Union
 
 import numexpr as ne
 import numpy as np
 
 from ryd_numerov.model.database import Database
 from ryd_numerov.units import ureg
+
+if TYPE_CHECKING:
+    from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +99,7 @@ class Model:
         params = self.ritz_params
         return -0.5 * params.mu / self.n_star**2
 
-    def calc_potential_core(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_core(self, x: "NDArray") -> "NDArray":
         r"""Calculate the core potential V_c(x) in atomic units.
 
         The core potential is given as
@@ -129,7 +132,7 @@ class Model:
         z_nl: NDArray = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
         return -z_nl / x
 
-    def calc_potential_core_polarization(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_core_polarization(self, x: "NDArray") -> "NDArray":
         r"""Calculate the core polarization potential V_p(x) in atomic units.
 
         The core polarization potential is given as
@@ -160,7 +163,7 @@ class Model:
         v_p: NDArray = -params.ac / (2 * x4) * (1 - exp_x6)
         return v_p
 
-    def calc_potential_spin_orbit(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_spin_orbit(self, x: "NDArray") -> "NDArray":
         r"""Calculate the spin-orbit coupling potential V_so(x) in atomic units.
 
         The spin-orbit coupling potential is given as
@@ -186,7 +189,7 @@ class Model:
             v_so *= x > self.model_params.xc
         return v_so
 
-    def calc_potential_centrifugal(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_centrifugal(self, x: "NDArray") -> "NDArray":
         r"""Calculate the centrifugal potential V_l(x) in atomic units.
 
         The centrifugal potential is given as
@@ -206,7 +209,7 @@ class Model:
         x2 = x * x
         return (1 / self.ritz_params.mu) * self.l * (self.l + 1) / (2 * x2)
 
-    def calc_effective_potential_sqrt(self, x: np.ndarray) -> np.ndarray:
+    def calc_effective_potential_sqrt(self, x: "NDArray") -> "NDArray":
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
 
         The sqrt transformation potential arises from the transformation from the wavefunction u(x) to w(z),
@@ -227,7 +230,7 @@ class Model:
         x2 = x * x
         return (1 / self.ritz_params.mu) * (3 / 32) / x2
 
-    def calc_total_physical_potential(self, x: np.ndarray) -> np.ndarray:
+    def calc_total_physical_potential(self, x: "NDArray") -> "NDArray":
         r"""Calculate the total physical potential V_phys(x) in atomic units.
 
         The total physical potential is the sum of the core potential, polarization potential,
@@ -250,7 +253,7 @@ class Model:
             v_tot += self.calc_potential_spin_orbit(x)
         return v_tot
 
-    def calc_total_effective_potential(self, x: np.ndarray) -> np.ndarray:
+    def calc_total_effective_potential(self, x: "NDArray") -> "NDArray":
         r"""Calculate the total potential V_tot(x) in atomic units.
 
         The total effective potential includes all physical and non-physical potentials:
