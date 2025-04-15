@@ -42,8 +42,7 @@ def getRadialMatrixElement(
     r2, psi2_r2 = radialWavefunction(atom, n2, l2, j2, step, use_fixed_arc)
 
     upTo = min(len(r1), len(r2))
-    dipoleElement = scipy.integrate.trapezoid(
+    return scipy.integrate.trapezoid(
         np.multiply(np.multiply(psi1_r1[0:upTo], psi2_r2[0:upTo]), r1[0:upTo]),
         x=r1[0:upTo],
     )
-    return dipoleElement

@@ -6,7 +6,7 @@ from ryd_numerov.rydberg import RydbergState
 
 
 @pytest.mark.parametrize(
-    "n, dn, dl, dj",
+    ("n", "dn", "dl", "dj"),
     [
         (100, 3, 1, 0),
         (60, 2, 0, 0),
@@ -39,7 +39,7 @@ def test_circular_matrix_element(n: int, dn: int, dl: int, dj: int) -> None:
 
 
 @pytest.mark.parametrize(
-    "species, n, l, j",
+    ("species", "n", "l", "j"),
     [
         # for hydrogen the expectation value of r is exact for all states
         ("H", 1, 0, 0.5),

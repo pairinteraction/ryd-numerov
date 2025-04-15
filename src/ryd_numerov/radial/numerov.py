@@ -59,16 +59,14 @@ def _run_numerov_integration_python(
         ) / (1 + dx**2 / 12 * g_list[i])
 
         if (run_forward and x > x_min) or (run_backward and x < x_min):
-            if y_list[-2] > y_list[-1] > 0:
-                if y < 0 or y > y_list[-1]:
-                    if verbose:
-                        print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
-                    break
-            if run_forward and y_list[-2] < y_list[-1] < 0:
-                if y > 0 or y < y_list[-1]:
-                    if verbose:
-                        print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
-                    break
+            if y_list[-2] > y_list[-1] > 0 and (y < 0 or y > y_list[-1]):
+                if verbose:
+                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
+                break
+            if run_forward and y_list[-2] < y_list[-1] < 0 and (y > 0 or y < y_list[-1]):
+                if verbose:
+                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
+                break
 
         y_list.append(y)
 

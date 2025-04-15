@@ -8,7 +8,7 @@ from ryd_numerov.rydberg import RydbergState
 
 
 @pytest.mark.parametrize(
-    "species, n, l, run_backward",
+    ("species", "n", "l", "run_backward"),
     [
         ("H", 1, 0, True),
         ("H", 2, 0, True),

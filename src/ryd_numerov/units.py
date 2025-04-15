@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Any, Literal, Union
 
-import numpy as np
 from pint import UnitRegistry
 
 if TYPE_CHECKING:
+    import numpy as np
     from pint.facets.plain import PlainQuantity, PlainUnit
 
     Array = np.ndarray[Any, Any]

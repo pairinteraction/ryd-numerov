@@ -3,8 +3,6 @@ from functools import lru_cache
 from sympy import Integer
 from sympy.physics.wigner import (
     wigner_3j as sympy_wigner_3j,
-)
-from sympy.physics.wigner import (
     wigner_6j as sympy_wigner_6j,
 )
 
