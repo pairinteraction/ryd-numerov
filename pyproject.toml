@@ -28,11 +28,11 @@ dependencies = [
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Operating System :: POSIX :: Linux",
-  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 ]
 
 [project.optional-dependencies]
