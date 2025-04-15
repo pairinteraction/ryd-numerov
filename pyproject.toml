@@ -23,6 +23,7 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -31,7 +32,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
   "Typing :: Typed",
 ]
-requires-python = ">= 3.10"
+requires-python = ">= 3.9"
 dependencies = [
     "numpy >= 2.0",
     "numexpr >= 2.10",
@@ -95,6 +96,35 @@ addopts = [
 [tool.ruff]
 line-length = 120
 target-version = "py39"
-lint.select = ["F", "E", "B", "C", "W", "I", "UP", "TID25", "RUF", "ANN", "D"]
-lint.extend-ignore = ["E741", "C901", "B905", "RUF012", "ANN003", "ANN401", "D1", "D203", "D213"]
-lint.flake8-tidy-imports.ban-relative-imports = "all"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+extend-ignore = [
+  # FIXME: we should fix these in the future
+  "EM",  # Exceptions ...
+  "TRY003",  # Avoid specifying long messages outside the exception class
+  "FA",  # from __future__ ...
+  "FBT",  # Boolean arguments ...
+  "PLR0913",  # Too many arguments in function definition (... > 5)
+  "PLR2004",  # FIXME: Magic value used in comparison
+  "D1",  # FIXME: remove once more docstrings are added
+  "S101",  # FIXME: Use of assert detected
+  # We don't use the following rules
+  "COM812",  # (missing-trailing-comma) incompatible with ruff format
+  "D203",  # (incorrect-blank-line-before-class) incompatible with D211: no-blank-line-before-class
+  "D213",  # (multi-line-summary-second-line) incompatible with D212: multi-line-summary-first-line
+  "SIM114",  # Combine if branches using logical or operator; this breaks mypy, so we disable it for now
+  "TD",  # Linting TODOs; we dont need this
+  "FIX",  # Disallow TODOs, FIXMEs, etc.; enforcing this is a bit too strict
+  "E741",  # Ambiguous variable name, does not like quantum number 'l'
+]
+flake8-tidy-imports.ban-relative-imports = "all"
+mccabe.max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"docs/examples/*.ipynb" = ["T201"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
