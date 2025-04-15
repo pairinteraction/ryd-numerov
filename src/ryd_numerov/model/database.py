@@ -44,30 +44,26 @@ SORTED_SHELLS = [  # (n, l)
 
 @dataclass
 class ModelPotentialParameters:
-    """Model potential parameters for an atomic species and angular momentum.
-
-    Attributes:
-        species: Atomic species.
-        l: Angular momentum quantum number.
-        ac: Polarizability parameter in atomic units.
-        Z: Nuclear charge.
-        a1: Model potential parameter a1 in atomic units.
-        a2: Model potential parameter a2 in atomic units.
-        a3: Model potential parameter a3 in atomic units.
-        a4: Model potential parameter a4 in atomic units.
-        rc: Core radius parameter in atomic units.
-
-    """
+    """Model potential parameters for an atomic species and angular momentum."""
 
     species: str
+    """Atomic species."""
     l: int
+    """Angular momentum quantum number."""
     ac: float
+    """Polarizability parameter in atomic units."""
     Z: int
+    """Nuclear charge."""
     a1: float
+    """Model potential parameter a1 in atomic units."""
     a2: float
+    """Model potential parameter a2 in atomic units."""
     a3: float
+    """Model potential parameter a3 in atomic units."""
     a4: float
+    """Model potential parameter a4 in atomic units."""
     rc: float
+    """Core radius parameter in atomic units."""
 
     def __post_init__(self) -> None:
         if isinstance(self.rc, str) and self.rc.lower() == "inf":
@@ -81,33 +77,28 @@ class ModelPotentialParameters:
 
 @dataclass
 class RydbergRitzParameters:
-    """Rydberg-Ritz parameters for an atomic species and quantum numbers.
-
-    Attributes:
-        species: Atomic species.
-        l: Angular momentum quantum number.
-        j: Total angular momentum quantum number.
-        d0: Zeroth-order quantum defect.
-        d2: Second-order quantum defect.
-        d4: Fourth-order quantum defect.
-        d6: Sixth-order quantum defect.
-        d8: Eighth-order quantum defect.
-        Ry: Rydberg constant in cm^{-1}
-        Ry_inf: Rydberg constant in cm^{-1} for infinite nuclear mass.
-
-    """
+    """Rydberg-Ritz parameters for an atomic species and quantum numbers."""
 
     species: str
+    """Atomic species."""
     l: int
+    """Angular momentum quantum number."""
     j: float
+    """Total angular momentum quantum number."""
     d0: float
+    """Zeroth-order quantum defect."""
     d2: float
+    """Second-order quantum defect."""
     d4: float
+    """Fourth-order quantum defect."""
     d6: float
+    """Sixth-order quantum defect."""
     d8: float
+    """Eighth-order quantum defect."""
     Ry: float
-
+    """Rydberg constant in cm^{-1}"""
     Ry_inf: float = ureg.Quantity(1, "rydberg_constant").to("1/cm").magnitude
+    """Rydberg constant in cm^{-1} for infinite nuclear mass."""
 
     @property
     def mu(self) -> float:
@@ -124,27 +115,24 @@ class RydbergRitzParameters:
 
 @dataclass
 class GroundState:
-    """Ground state parameters for an atomic species.
-
-    Attributes:
-        species: Atomic species
-        configuration: Electron configuration in noble gas notation
-        n: Principal quantum number
-        l: Orbital angular momentum quantum number
-        s: Spin quantum number
-        j: Total angular momentum quantum number
-        m: Magnetic quantum number
-
-    """
+    """Ground state parameters for an atomic species."""
 
     species: str
+    """Atomic species."""
     configuration: str
+    """Electron configuration in noble gas notation."""
     n: int
+    """Principal quantum number."""
     l: int
+    """Orbital angular momentum quantum number."""
     s: float
+    """Spin quantum number."""
     j: float
+    """Total angular momentum quantum number."""
     m: float
+    """Magnetic quantum number."""
     ionization_energy: float
+    """Ionization energy in GHz."""
 
     def get_ionization_energy(self, unit: str = "hartree") -> float:
         """Return the ionization energy in the desired unit.
