@@ -1,0 +1,19 @@
+# Since the mypy pre-commit cannot automatically install all the dependencies, we add an additional mypy workflow.
+name: Type Checking
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup uv project virtual environment
+      uses: ./.github/actions/setup-uv
+    - name: Run mypy
+      run: uv run --no-project mypy .
