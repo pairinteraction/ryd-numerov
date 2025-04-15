@@ -15,10 +15,11 @@ authors = [
 maintainers = [
     { name = "Johannes Mögerle", email = "johannes.moegerle@itp3.uni-stuttgart.de" },
 ]
+license = "LGPL-3.0-or-later"
+license-files = ["LICENSE.txt", "LICENSES/*"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
   "Operating System :: POSIX :: Linux",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
@@ -46,7 +47,7 @@ dependencies = [
 tests = [
   "pytest >= 8.0",
   "nbmake >= 1.3",
-  "ryd-numerov[benchmark]"
+  "ryd-numerov[benchmark]",
 ]
 docs = [
   "sphinx >= 7",
@@ -72,13 +73,28 @@ mypy = [
 ]
 
 [dependency-groups]
-dev = ["ryd-numerov[docs,tests,benchmark,jupyter,mypy]"]
+dev = [
+  "ryd-numerov[docs,tests,benchmark,jupyter,mypy]",
+  "check-wheel-contents >= 0.6",
+]
 
 [project.urls]
 Repository = "https://github.com/pairinteraction/ryd-numerov"
 
+
 [tool.setuptools.dynamic]
 version = {attr = "ryd_numerov.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ryd_numerov = ["model/database.sql"]
+
+
+[tool.check-wheel-contents]
+toplevel = ["ryd_numerov"]
+
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -88,7 +104,7 @@ testpaths = [
 ]
 addopts = [
     "--import-mode=importlib",
-    "--nbmake",
+    # "--nbmake",  # only run nbmake locally and in one dedicated CI job
     "--doctest-modules",
 ]
 
