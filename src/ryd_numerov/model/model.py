@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 class InvalidStateError(Exception):
     """Exception raised when the specified state does not exist because it is below the ground state."""
 
-    pass
-
 
 @dataclass
 class Model:
@@ -96,8 +94,7 @@ class Model:
 
         """
         params = self.ritz_params
-        E_nlj = -0.5 * params.mu / self.n_star**2
-        return E_nlj
+        return -0.5 * params.mu / self.n_star**2
 
     def calc_V_c(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the core potential V_c(x) in atomic units.
@@ -130,8 +127,7 @@ class Model:
             exp_a1 = np.exp(-params.a1 * x)
             exp_a2 = np.exp(-params.a2 * x)
         Z_nl = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
-        V_c = -Z_nl / x
-        return V_c
+        return -Z_nl / x
 
     def calc_V_p(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the core polarization potential V_p(x) in atomic units.
@@ -161,8 +157,7 @@ class Model:
             exp_x6 = ne.evaluate("exp(-(x6 / xc**6))")
         else:
             exp_x6 = np.exp(-(x6 / params.xc**6))
-        V_p = -params.ac / (2 * x4) * (1 - exp_x6)
-        return V_p
+        return -params.ac / (2 * x4) * (1 - exp_x6)
 
     def calc_V_so(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the spin-orbit coupling potential V_so(x) in atomic units.
@@ -208,8 +203,7 @@ class Model:
 
         """
         x2 = x * x
-        V_l = (1 / self.ritz_params.mu) * self.l * (self.l + 1) / (2 * x2)
-        return V_l
+        return (1 / self.ritz_params.mu) * self.l * (self.l + 1) / (2 * x2)
 
     def calc_V_sqrt(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
@@ -230,8 +224,7 @@ class Model:
 
         """
         x2 = x * x
-        V_sqrt = (1 / self.ritz_params.mu) * (3 / 32) / x2
-        return V_sqrt
+        return (1 / self.ritz_params.mu) * (3 / 32) / x2
 
     def calc_V_phys(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the total physical potential V_phys(x) in atomic units.
@@ -269,8 +262,7 @@ class Model:
             V_tot: The total potential V_tot(x) in atomic units.
 
         """
-        V_tot = self.calc_V_phys(x) + self.calc_V_sqrt(x)
-        return V_tot
+        return self.calc_V_phys(x) + self.calc_V_sqrt(x)
 
     def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-3) -> float:
         r"""Calculate the inner turning point z_i for the model potential.

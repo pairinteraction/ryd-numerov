@@ -199,8 +199,7 @@ class RydbergState:
         """Calculate the dimensionless angular matrix element."""
         self_qns = (self.s, self.l, self.j, self.m)
         other_qns = (other.s, other.l, other.j, other.m)
-        angular_matrix_element_au = calc_angular_matrix_element(*self_qns, *other_qns, operator, k_angular, q)
-        return angular_matrix_element_au
+        return calc_angular_matrix_element(*self_qns, *other_qns, operator, k_angular, q)
 
     @overload
     def calc_matrix_element(

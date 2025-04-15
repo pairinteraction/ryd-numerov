@@ -46,8 +46,7 @@ def calc_radial_matrix_element(
     if k_radial == 0 and (state1.l, state1.j) == (state2.l, state2.j):
         if state1.n == state2.n:
             return 1
-        else:
-            return 0
+        return 0
 
     # Ensure wavefunctions are integrated before accessing the grid
     wf1 = state1.wavefunction
@@ -132,7 +131,7 @@ def _calc_radial_matrix_element_from_w_z(
     if integration_method == "sum":
         return np.sum(integrand) * dz
     if integration_method == "trapezoid":
-        return float(np.trapz(integrand, dx=dz))
+        return float(np.trapezoid(integrand, dx=dz))
     if integration_method == "scipy_trapezoid":
         return float(scipy.integrate.trapezoid(integrand, dx=dz))
     if integration_method == "scipy_simpson":

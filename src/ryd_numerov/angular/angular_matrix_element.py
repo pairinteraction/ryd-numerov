@@ -1,4 +1,4 @@
-from typing import Union, get_args
+from typing import get_args
 
 import numpy as np
 
@@ -138,8 +138,7 @@ def calc_reduced_angular_matrix_element(
         value_s = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "MAGNETIC_S", kappa)
         g_l = 1
         value_l = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "MAGNETIC_L", kappa)
-        mu = g_s * value_s + g_l * value_l
-        return mu
+        return g_s * value_s + g_l * value_l
 
     prefactor = np.sqrt(2 * j1 + 1) * np.sqrt(2 * j2 + 1)
 
@@ -173,7 +172,7 @@ def calc_reduced_angular_matrix_element(
     return value
 
 
-def spin_like_matrix_element(x1: Union[int, float], x2: Union[int, float], kappa: int) -> float:
+def spin_like_matrix_element(x1: float, x2: float, kappa: int) -> float:
     r"""Calculate the reduced spin-like matrix element $(x2||\hat{x}_{10}||x1)$ for a spin-like operator.
 
     The matrix elements of the spin-like operators $x \in \{l, s\}$ are given by
