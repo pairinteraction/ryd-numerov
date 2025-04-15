@@ -1,0 +1,34 @@
+name: Python Wheel
+
+on:
+  push:
+    branches: ["*"]
+    tags: ["v*.*.*"]  # and run on tags that describe new versions
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+
+jobs:
+  build-sdist-and-wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup uv
+      uses: ./.github/actions/setup-uv
+    - name: Build sdist and wheel
+      run: uv build
+    - name: Check wheel content
+      run: |
+        uvx check-wheel-contents dist/
+        uvx twine check dist/*
+    - name: Test wheel  # TODO: replace this by using tox or nox
+      run: |
+        uv pip uninstall .
+        uv pip install dist/ryd_numerov*.whl
+        uv run --no-project pytest
+    - name: Upload wheels
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/ryd_numerov*
