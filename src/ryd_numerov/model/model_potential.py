@@ -6,14 +6,15 @@ containing model potential parameters and Rydberg-Ritz coefficients for various 
 
 import logging
 from dataclasses import dataclass
+from typing import Optional
 
-import numpy as np
+from ryd_numerov.model.database import Database
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class ModelPotentialParameters:
+class ModelPotential:
     """Model potential parameters for an atomic species and angular momentum."""
 
     species: str
@@ -35,9 +36,25 @@ class ModelPotentialParameters:
     rc: float
     """Core radius parameter in atomic units."""
 
-    def __post_init__(self) -> None:
-        if isinstance(self.rc, str) and self.rc.lower() == "inf":
-            self.rc = np.inf
+    @classmethod
+    def from_database(
+        cls,
+        species: str,
+        l: int,
+        database: Optional["Database"] = None,
+    ) -> "ModelPotential":
+        """Create an instance by taking the parameters from the database.
+
+        Args:
+            species: Atomic species
+            l: Angular momentum quantum number
+            database: Database instance. If None, use the global database instance.
+
+        """
+        if database is None:
+            database = Database.get_global_instance()
+        ac, Z, a1, a2, a3, a4, rc = database.get_model_potential_parameters(species, l)  # noqa: N806
+        return cls(species, l, ac, Z, a1, a2, a3, a4, rc)
 
     @property
     def xc(self) -> float:

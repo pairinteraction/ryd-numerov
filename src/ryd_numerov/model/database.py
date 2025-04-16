@@ -9,7 +9,6 @@ import sqlite3
 from pathlib import Path
 from typing import ClassVar, Optional
 
-from ryd_numerov.model.model_potential import ModelPotentialParameters
 from ryd_numerov.model.rydberg_ritz import GroundState, RydbergRitzParameters
 
 logger = logging.getLogger(__name__)
@@ -47,7 +46,9 @@ class Database:
         """Set the global database instance."""
         cls._global_instance = instance
 
-    def get_model_potential(self, species: str, l: int) -> ModelPotentialParameters:
+    def get_model_potential_parameters(
+        self, species: str, l: int
+    ) -> tuple[float, int, float, float, float, float, float]:
         """Get model potential parameters.
 
         Args:
@@ -55,31 +56,25 @@ class Database:
             l: Angular momentum quantum number
 
         Returns:
-            ModelPotentialParameters containing the model potential parameters.
-            If no exact match is found for l, returns parameters for largest available l.
-
-        Raises:
-            ValueError: If no parameters found for species
+            The model potential parameters for the given species and l, i.e.:
+                ac, Z, a1, a2, a3, a4, rc
+                If no match is found for l, returns parameters for largest available l.
 
         """
         cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? AND l=?", (species, l))
         row = cursor.fetchone()
 
-        if row is not None:
-            return ModelPotentialParameters(
-                species=row[0], l=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
+        if row is None:
+            cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? ORDER BY l DESC", (species,))
+            row = cursor.fetchone()
+            if row is None:
+                raise ValueError(f"No model potential parameters found for {species}")
+            logger.debug(
+                "No model potential parameters found for %s with l=%d, using values for largest l=%d instead",
+                *(species, l, row[1]),
             )
 
-        logger.debug("No model potential parameters found for %s with l=%d, trying largest l", species, l)
-
-        cursor = self.conn.execute("SELECT * FROM model_potential WHERE species=? ORDER BY l DESC", (species,))
-        row = cursor.fetchone()
-        if row is None:
-            raise ValueError(f"No model potential parameters found for {species}")
-
-        return ModelPotentialParameters(
-            species=row[0], l=row[1], ac=row[2], Z=row[3], a1=row[4], a2=row[5], a3=row[6], a4=row[7], rc=row[8]
-        )
+        return float(row[2]), int(row[3]), float(row[4]), float(row[5]), float(row[6]), float(row[7]), float(row[8])
 
     def get_rydberg_ritz(self, species: str, l: int, j: float) -> RydbergRitzParameters:
         """Get Rydberg-Ritz parameters.
