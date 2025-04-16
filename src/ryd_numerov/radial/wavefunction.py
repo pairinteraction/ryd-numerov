@@ -6,7 +6,7 @@ import numpy as np
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from ryd_numerov.model import Model
+    from ryd_numerov.model import ModelPotential, QuantumDefect
     from ryd_numerov.radial.grid import Grid
     from ryd_numerov.units import NDArray
 
@@ -27,29 +27,22 @@ class Wavefunction:
     def __init__(
         self,
         grid: "Grid",
-        model: "Model",
+        model_potential: "ModelPotential",
+        quantum_defect: "QuantumDefect",
     ) -> None:
         """Create a Wavefunction object.
 
         Args:
-            grid: The grid object containing the radial grid information.
-            model: The model potential object containing the potential information.
+            grid: The grid object.
+            model_potential: The model potential object.
+            quantum_defect: The quantum defect object.
 
         """
-        self._grid = grid
-        self._model = model
+        self.grid = grid
+        self.model_potential = model_potential
+        self.quantum_defect = quantum_defect
 
         self._w_list: Optional[NDArray] = None
-
-    @property
-    def grid(self) -> "Grid":
-        """The grid object containing the radial grid information."""
-        return self._grid
-
-    @property
-    def model(self) -> "Model":
-        """The model potential object containing the potential information."""
-        return self._model
 
     @property
     def w_list(self) -> "NDArray":
@@ -112,29 +105,29 @@ class Wavefunction:
 
         glist = (
             8
-            * self.model.ritz_params.mu
+            * self.quantum_defect.mu
             * grid.z_list
             * grid.z_list
-            * (self.model.energy - self.model.calc_total_effective_potential(grid.x_list))
+            * (self.quantum_defect.energy - self.model_potential.calc_total_effective_potential(grid.x_list))
         )
 
         if run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
-            y0, y1 = 0, (-1) ** ((self.model.n - self.model.l - 1) % 2) * w0
+            y0, y1 = 0, (-1) ** ((self.model_potential.n - self.model_potential.l - 1) % 2) * w0
             x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
             # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
             # or it reaches a local minimum (thus goiing away from the x-axis)
-            x_min = self.model.calc_z_turning_point("classical", dz=grid.dz)
+            x_min = self.model_potential.calc_z_turning_point("classical", dz=grid.dz)
             x_min = max(x_min, 5 * abs(dx), self.get_x_min())
 
         else:  # forward
             y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
-            x_min = np.sqrt(self.model.n * (self.model.n + 15))
+            x_min = np.sqrt(self.model_potential.n * (self.model_potential.n + 15))
 
         if _use_njit:
             w_list_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
@@ -160,7 +153,7 @@ class Wavefunction:
 
     def get_x_min(self) -> float:
         """Implement a few special cases for the x_min point of the integration."""
-        species, n, l = self.model.species, self.model.n, self.model.l
+        species, n, l = self.model_potential.species, self.model_potential.n, self.model_potential.l
         if species in ["Rb", "Cs"] and n == 4 and l == 3:
             return 2
         if species == "Sr_singlet" and n == 5 and l == 0:
@@ -180,7 +173,12 @@ class Wavefunction:
         """
         grid = self.grid
         sanity_check = True
-        species, n, l, j = self.model.species, self.model.n, self.model.l, self.model.j
+        species, n, l, j = (
+            self.model_potential.species,
+            self.model_potential.n,
+            self.model_potential.l,
+            self.model_potential.j,
+        )
 
         # Check the maximum of the wavefunction
         idmax = np.argmax(np.abs(self.w_list))
@@ -288,7 +286,7 @@ class Wavefunction:
         if not sanity_check:
             logger.error(
                 "The wavefunction (species=%s n=%d, l=%d, j=%.1f) has some issues.",
-                self.model.species,
+                self.model_potential.species,
                 n,
                 l,
                 j,

@@ -1,9 +1,3 @@
-"""Interface to quantum defects SQL database containing model potential and Rydberg-Ritz parameters.
-
-This module provides classes to access and query the quantum defects SQLite database
-containing model potential parameters and Rydberg-Ritz coefficients for various atomic species.
-"""
-
 import logging
 from dataclasses import dataclass
 

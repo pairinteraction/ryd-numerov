@@ -36,7 +36,6 @@ classifiers = [
 requires-python = ">= 3.9"
 dependencies = [
     "numpy >= 2.0",
-    "numexpr >= 2.10",
     "numba >= 0.60",
     "pint >= 0.24",
     "scipy >= 1.13",
