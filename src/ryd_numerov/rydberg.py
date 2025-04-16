@@ -1,19 +1,21 @@
 import logging
 from dataclasses import dataclass
+from functools import cached_property
 from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
 
 import numpy as np
 from scipy.special import exprel
 
 from ryd_numerov.angular import calc_angular_matrix_element
-from ryd_numerov.model import Model
+from ryd_numerov.model import Database
+from ryd_numerov.model.model_potential import ModelPotential
+from ryd_numerov.model.quantum_defect import QuantumDefect
 from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ryd_numerov.model import Database
     from ryd_numerov.units import NDArray, PintArray, PintFloat
 
 
@@ -38,25 +40,57 @@ class RydbergState:
 
     using the Numerov method, see `integration.run_numerov_integration`.
 
-    Args:
-        species: The Rydberg atom species for which to solve the radial Schrödinger equation.
-        n: The principal quantum number of the desired electronic state.
-        l: The angular momentum quantum number of the desired electronic state.
-        j: The total angular momentum quantum number of the desired electronic state.
-        m: The magnetic quantum number of the desired electronic state.
-            Optional, only needed for concrete angular matrix elements.
-        s: The spin quantum number of the desired electronic state. Default tries to infer from the species.
-
     """
 
-    species: str
-    n: int
-    l: int
-    j: Union[int, float]
-    m: Union[int, float, None] = None
-    s: Union[int, float] = None  # type: ignore [assignment]  # will always be set to float or int in __post_init__
+    def __init__(
+        self,
+        species: str,
+        *,
+        n: int,
+        l: int,
+        s: Optional[float] = None,
+        j: Optional[float] = None,
+        m: Optional[float] = None,
+        database: Optional["Database"] = None,
+    ) -> None:
+        r"""Initialize the model potential.
 
-    def __post_init__(self) -> None:
+        Args:
+            species: Atomic species
+            n: Principal quantum number
+            l: Orbital angular momentum quantum number
+            s: Spin quantum number
+            j: Total angular momentum quantum number
+            m: Magnetic quantum number
+              Optional, only needed for concrete angular matrix elements.
+            database: Database instance, where the model potential parameters are stored
+              If None, use the global database instance.
+
+        """
+        self.species = species
+        self.n = n
+        self.l = l
+        if s is None:
+            s = get_spin_from_species(species)
+        self.s = s
+        if j is None:
+            if self.l == 0:
+                j = s
+            elif self.s == 0:
+                j = l
+            else:
+                raise ValueError("j must be given for non-zero s and non-zero l")
+            j = s
+        self.j = j
+        self.m = m
+
+        if database is None:
+            database = Database.get_global_instance()
+        self.database = database
+
+        self.sanity_check()
+
+    def sanity_check(self) -> None:
         if self.s is None:
             self.s = get_spin_from_species(self.species)
 
@@ -66,57 +100,59 @@ class RydbergState:
         assert abs(self.l - self.s) <= self.j <= self.l + self.s, "j must be between l - s and l + s"
         assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
 
-        self._model: Optional[Model] = None
-        self._grid: Optional[Grid] = None
-        self._wavefunction: Optional[Wavefunction] = None
+        self.ground_state = self.database.get_ground_state(self.species)
+        if not self.ground_state.is_allowed_shell(self.n, self.l):
+            raise InvalidStateError(
+                f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}."
+            )
+
+    @cached_property
+    def quantum_defect(self) -> QuantumDefect:
+        return QuantumDefect(self.species, self.n, self.l, self.j, self.database)
 
     @property
-    def is_alkali(self) -> bool:
-        return self.species.split("_")[0] in ALKALI_SPECIES
+    def model_potential(self) -> ModelPotential:
+        if not hasattr(self, "_model_potential"):
+            self._model_potential = self.create_model_potential()
+        return self._model_potential
 
-    @property
-    def is_alkaline_earth(self) -> bool:
-        return self.species.split("_")[0] in ALKALINE_EARTH_SPECIES
-
-    @property
-    def model(self) -> Model:
-        if self._model is None:
-            return self.create_model()
-        return self._model
-
-    def create_model(self, add_spin_orbit: bool = True, database: Optional["Database"] = None) -> Model:
+    def create_model_potential(
+        self, *, add_spin_orbit: bool = True, add_model_potentials: bool = True
+    ) -> ModelPotential:
         """Create the model potential for the Rydberg state.
 
         Args:
-            add_spin_orbit: Whether to include the spin-orbit interaction in the model potential.
-                Defaults to True.
-            database: Database object containing the quantum defects.
-                Default None, i.e. use the global database instance.
+            add_spin_orbit: Whether to include the spin-orbit coupling potential in the total physical potential.
+              Defaults to True.
+            add_model_potentials: Whether to include the model potentials
+              (see calc_potential_core and calc_potential_core_polarization)
+              Defaults to True.
+
+        Returns:
+            ModelPotential: The model potential for the Rydberg state.
 
         """
-        if self._model is not None:
-            raise ValueError("The model was already created, you should not create a different model.")
+        if hasattr(self, "_model_potential"):
+            raise RuntimeError("The model_potential was already created, you should not create it again.")
 
-        self._model = Model(
+        self._model_potential = ModelPotential(
             self.species,
             self.n,
             self.l,
             self.s,
             self.j,
+            self.quantum_defect,
+            self.database,
             add_spin_orbit=add_spin_orbit,
-            database=database,
+            add_model_potentials=add_model_potentials,
         )
-        return self._model
+        return self._model_potential
 
-    @property
-    def energy(self) -> float:
-        """The energy of the Rydberg state in atomic units."""
-        return self.model.ritz_params.get_energy(self.n)
-
-    @property
+    @cached_property
     def grid(self) -> Grid:
-        if self._grid is None:
-            return self.create_grid()
+        """The grid object for the integration of the radial Schrödinger equation."""
+        if not hasattr(self, "_grid"):
+            self._grid = self.create_grid()
         return self._grid
 
     def create_grid(
@@ -135,24 +171,24 @@ class RydbergState:
             dz (default 1e-2): The step size of the integration (z = r/a_0).
 
         """
-        if self._grid is not None:
-            raise ValueError("The grid was already created, you should not create a different grid.")
+        if hasattr(self, "_grid"):
+            raise RuntimeError("The grid was already created, you should not create it again.")
 
         if x_min is None:
             # we set x_min explicitly to small,
             # since the integration will automatically stop after the turning point,
             # and as soon as the wavefunction is close to zero
             if self.l <= 10:
-                x_min = 0
+                x_min = 0.0
             else:
-                z_i = self.model.calc_z_turning_point("hydrogen", dz=1e-2)
+                z_i = self.model_potential.calc_z_turning_point("hydrogen", dz=1e-2)
                 x_min = max(0, 0.5 * z_i**2 - 25)
+        z_min = np.sqrt(x_min)
+
         if x_max is None:
             # This is an empirical formula for the maximum value of the radial coordinate
             # it takes into account that for large n but small l the wavefunction is very extended
             x_max = 2 * self.n * (self.n + 15 + (self.n - self.l) / 4)
-
-        z_min = np.sqrt(x_min)
         z_max = np.sqrt(x_max)
 
         # put all grid points on a standard grid, i.e. [dz, 2*dz, 3*dz, ...]
@@ -162,24 +198,45 @@ class RydbergState:
         # Since the potential diverges at z=0 we set the minimum z_min to dz
         z_min = max(z_min, dz)
 
-        # set the grid object
         self._grid = Grid(z_min, z_max, dz)
         return self._grid
 
-    @property
+    @cached_property
     def wavefunction(self) -> Wavefunction:
-        if self._wavefunction is None:
-            return self.integrate_wavefunction()
+        if not hasattr(self, "_wavefunction"):
+            self._wavefunction = self.create_wavefunction()
         return self._wavefunction
 
-    def integrate_wavefunction(
-        self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True
-    ) -> Wavefunction:
-        if self._wavefunction is not None:
-            raise ValueError("The wavefunction was already integrated, you should not integrate it again.")
-        self._wavefunction = Wavefunction(self.grid, self.model)
+    def create_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> Wavefunction:
+        if hasattr(self, "_wavefunction"):
+            raise RuntimeError("The wavefunction was already created, you should not create it again.")
+
+        self._wavefunction = Wavefunction(self.grid, self.model_potential, self.quantum_defect)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
         return self._wavefunction
+
+    @property
+    def is_alkali(self) -> bool:
+        return self.species.split("_")[0] in ALKALI_SPECIES
+
+    @property
+    def is_alkaline_earth(self) -> bool:
+        return self.species.split("_")[0] in ALKALINE_EARTH_SPECIES
+
+    @overload
+    def get_energy(self, unit: None = None) -> "PintFloat": ...
+
+    @overload
+    def get_energy(self, unit: str) -> float: ...
+
+    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
+        energy_au = self.quantum_defect.energy
+        if unit == "a.u.":
+            return energy_au
+        energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
+        if unit is None:
+            return energy
+        return energy.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
     @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PintFloat": ...
@@ -274,71 +331,6 @@ class RydbergState:
         if unit is None:
             return matrix_element
         return matrix_element.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
-
-    def _get_list_of_dipole_coupled_states(
-        self, n_min: int, n_max: int, only_smaller_energy: bool = True
-    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
-        if self.m is None:
-            raise ValueError("m must be set to get the dipole coupled states.")
-
-        relevant_states = []
-        energy_differences = []
-        electric_dipole_moments = []
-        for n in range(n_min, n_max + 1):
-            for l in [self.l - 1, self.l + 1]:
-                for j in np.arange(self.j - 1, self.j + 2):
-                    for m in np.arange(self.m - 1, self.m + 2):
-                        if (
-                            not 0 <= l < n
-                            or not -j <= m <= j
-                            or not abs(l - self.s) <= j <= l + self.s
-                            or not self.model.ground_state.is_allowed_shell(n, l)
-                        ):
-                            continue
-                        other = self.__class__(self.species, n, l, float(j), m=float(m), s=self.s)
-                        assert other.m is not None
-                        other.create_model(database=self.model.database)
-                        if other.energy < self.energy or not only_smaller_energy:
-                            relevant_states.append(other)
-                            energy_differences.append(self.energy - other.energy)
-                            q = round(other.m - self.m)
-                            dipole_moment_au = self.calc_matrix_element(other, "ELECTRIC", 1, 1, q=q, unit="a.u.")
-                            electric_dipole_moments.append(dipole_moment_au)
-
-                            assert dipole_moment_au != 0, (
-                                f"Electric dipole moment between {self} and {other} is zero. This should not happen."
-                            )
-
-        return relevant_states, np.array(energy_differences), np.array(electric_dipole_moments)
-
-    def _get_list_of_radial_dipole_coupled_states(
-        self, n_min: int, n_max: int, only_smaller_energy: bool = True
-    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
-        relevant_states = []
-        energy_differences = []
-        radial_matrix_elements = []
-        for n in range(n_min, n_max + 1):
-            for l in [self.l - 1, self.l + 1]:
-                for j in np.arange(self.j - 1, self.j + 2):
-                    if (
-                        not 0 <= l < n
-                        or not abs(l - self.s) <= j <= l + self.s
-                        or not self.model.ground_state.is_allowed_shell(n, l)
-                    ):
-                        continue
-                    other = self.__class__(self.species, n, l, float(j), s=self.s)
-                    other.create_model(database=self.model.database)
-                    if other.energy < self.energy or not only_smaller_energy:
-                        relevant_states.append(other)
-                        energy_differences.append(self.energy - other.energy)
-                        radial_me_au = calc_radial_matrix_element(self, other, 1)
-                        radial_matrix_elements.append(radial_me_au)
-
-                        assert radial_me_au != 0, (
-                            f"Reduced electric dipole moment between {self} and {other} is zero. This should not happen"
-                        )
-
-        return relevant_states, np.array(energy_differences), np.array(radial_matrix_elements)
 
     @overload
     def get_spontaneous_transition_rates(
@@ -573,6 +565,71 @@ class RydbergState:
             return lifetime
         return lifetime.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
+    def _get_list_of_dipole_coupled_states(
+        self, n_min: int, n_max: int, only_smaller_energy: bool = True
+    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
+        if self.m is None:
+            raise ValueError("m must be set to get the dipole coupled states.")
+
+        relevant_states = []
+        energy_differences = []
+        electric_dipole_moments = []
+        for n in range(n_min, n_max + 1):
+            for l in [self.l - 1, self.l + 1]:
+                for j in np.arange(self.j - 1, self.j + 2):
+                    for m in np.arange(self.m - 1, self.m + 2):
+                        if (
+                            not 0 <= l < n
+                            or not -j <= m <= j
+                            or not abs(l - self.s) <= j <= l + self.s
+                            or not self.ground_state.is_allowed_shell(n, l)
+                        ):
+                            continue
+                        other = self.__class__(
+                            self.species, n=n, l=l, j=float(j), m=float(m), s=self.s, database=self.database
+                        )
+                        assert other.m is not None
+                        if other.get_energy("a.u.") < self.get_energy("a.u.") or not only_smaller_energy:
+                            relevant_states.append(other)
+                            energy_differences.append(self.get_energy("a.u.") - other.get_energy("a.u."))
+                            q = round(other.m - self.m)
+                            dipole_moment_au = self.calc_matrix_element(other, "ELECTRIC", 1, 1, q=q, unit="a.u.")
+                            electric_dipole_moments.append(dipole_moment_au)
+
+                            assert dipole_moment_au != 0, (
+                                f"Electric dipole moment between {self} and {other} is zero. This should not happen."
+                            )
+
+        return relevant_states, np.array(energy_differences), np.array(electric_dipole_moments)
+
+    def _get_list_of_radial_dipole_coupled_states(
+        self, n_min: int, n_max: int, only_smaller_energy: bool = True
+    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
+        relevant_states = []
+        energy_differences = []
+        radial_matrix_elements = []
+        for n in range(n_min, n_max + 1):
+            for l in [self.l - 1, self.l + 1]:
+                for j in np.arange(self.j - 1, self.j + 2):
+                    if (
+                        not 0 <= l < n
+                        or not abs(l - self.s) <= j <= l + self.s
+                        or not self.ground_state.is_allowed_shell(n, l)
+                    ):
+                        continue
+                    other = self.__class__(self.species, n=n, l=l, j=float(j), s=self.s, database=self.database)
+                    if other.get_energy("a.u.") < self.get_energy("a.u.") or not only_smaller_energy:
+                        relevant_states.append(other)
+                        energy_differences.append(self.get_energy("a.u.") - other.get_energy("a.u."))
+                        radial_me_au = calc_radial_matrix_element(self, other, 1)
+                        radial_matrix_elements.append(radial_me_au)
+
+                        assert radial_me_au != 0, (
+                            f"Reduced electric dipole moment between {self} and {other} is zero. This should not happen"
+                        )
+
+        return relevant_states, np.array(energy_differences), np.array(radial_matrix_elements)
+
 
 def get_spin_from_species(species: str) -> float:
     if species.endswith("singlet"):
@@ -580,3 +637,7 @@ def get_spin_from_species(species: str) -> float:
     if species.endswith("triplet"):
         return 1
     return 0.5
+
+
+class InvalidStateError(Exception):
+    """Exception raised when the specified state does not exist because it is below the ground state."""

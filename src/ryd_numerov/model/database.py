@@ -1,15 +1,9 @@
-"""Interface to quantum defects SQL database containing model potential and Rydberg-Ritz parameters.
-
-This module provides classes to access and query the quantum defects SQLite database
-containing model potential parameters and Rydberg-Ritz coefficients for various atomic species.
-"""
-
 import logging
 import sqlite3
 from pathlib import Path
 from typing import ClassVar, Optional
 
-from ryd_numerov.model.allowed_states import GroundState
+from ryd_numerov.model.ground_state import GroundState
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +70,7 @@ class Database:
 
         return float(row[2]), int(row[3]), float(row[4]), float(row[5]), float(row[6]), float(row[7]), float(row[8])
 
-    def get_quanten_defect_parameters(
+    def get_quantum_defect_parameters(
         self, species: str, l: int, j: float
     ) -> tuple[float, float, float, float, float, float]:
         """Get Rydberg-Ritz parameters.
@@ -87,7 +81,7 @@ class Database:
             j: Total angular momentum quantum number
 
         Returns:
-            The quanten defect parameters for the given species, l and j, i.e.:
+            The quantum defect parameters for the given species, l and j, i.e.:
                 d0, d2, d4, d6, d8, Ry
                 If no match is found for l and j, returns d_i = 0 and the normal Ry.
 

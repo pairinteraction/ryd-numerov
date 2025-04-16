@@ -25,13 +25,13 @@ def test_circular_matrix_element(n: int, dn: int, dl: int, dj: int) -> None:
 
     matrix_element = {}
     for species in ["Rb", "H"]:
-        state_i = RydbergState("Rb", n, l, j)  # circular state
-        state_i.create_model(add_spin_orbit=species != "H")
-        state_i.integrate_wavefunction()
+        state_i = RydbergState("Rb", n=n, l=l, j=j)  # circular state
+        state_i.create_model_potential(add_spin_orbit=species != "H")
+        state_i.create_wavefunction()
 
-        state_f = RydbergState("Rb", n + dn, l + dl, j + dj)  # almost circular state
-        state_f.create_model(add_spin_orbit=species != "H")
-        state_f.integrate_wavefunction()
+        state_f = RydbergState("Rb", n=n + dn, l=l + dl, j=j + dj)  # almost circular state
+        state_f.create_model_potential(add_spin_orbit=species != "H")
+        state_f.create_wavefunction()
 
         matrix_element[species] = calc_radial_matrix_element(state_i, state_f, 1)
 
@@ -61,9 +61,9 @@ def test_circular_expectation_value(species: str, n: int, l: int, j: float) -> N
         <r>_{nl} = 1/2 (3 n^2 - l(l+1))
         <r^2>_{nl} = n^2/2 (5 n^2 - 3 l(l+1) + 1)
     """
-    state = RydbergState(species, n, l, j)
-    state.create_model(add_spin_orbit=species != "H")
-    state.integrate_wavefunction()
+    state = RydbergState(species, n=n, l=l, j=j)
+    state.create_model_potential(add_spin_orbit=species != "H")
+    state.create_wavefunction()
 
     exp_value_numerov = {i: calc_radial_matrix_element(state, state, i) for i in range(3)}
     exp_value_analytic = {
