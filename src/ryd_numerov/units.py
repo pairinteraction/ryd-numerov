@@ -41,7 +41,7 @@ Dimension = Literal[
 ]
 DimensionLike = Union[Dimension, tuple[Dimension, Dimension]]
 
-# au_time = atomic_unit_of_time; au_current = atomic_unit_of_current; m_e = electron_mass
+# some abbreviations: au_time: atomic_unit_of_time; au_current: atomic_unit_of_current; m_e: electron_mass
 _CommonUnits: dict[Dimension, str] = {
     "ELECTRIC_FIELD": "V/cm",  # 1 V/cm = 1.9446903811524456e-10 bohr * m_e / au_current / au_time ** 3
     "MAGNETIC_FIELD": "T",  # 1 T = 4.254382157342044e-06 m_e / au_current / au_time ** 2

@@ -22,8 +22,6 @@ from ryd_numerov.rydberg import RydbergState
         ("H", 30, 2, True),
         ("H", 30, 28, True),
         ("H", 30, 29, True),
-        # ("H", 130, 0, True),  # TODO those take forever and do not yet work
-        # ("H", 130, 1, True),  # TODO those take forever and do not yet work
         ("H", 130, 128, True),
         ("H", 130, 129, True),
     ],
@@ -39,12 +37,12 @@ def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool
 
     # Get analytical solution from sympy
     if n <= 35:
-        R_nl_lambda = lambdify(sympy_r, sympy_hydrogen.R_nl(n, l, sympy_r, Z=1))
-        R_nl = R_nl_lambda(atom.grid.xlist)
+        r_nl_lambda = lambdify(sympy_r, sympy_hydrogen.R_nl(n, l, sympy_r, Z=1))
+        r_nl = r_nl_lambda(atom.grid.xlist)
     else:  # some weird sympy bug if trying to use lambdify R_nl for n > 35
-        R_nl = np.zeros_like(atom.grid.xlist)
+        r_nl = np.zeros_like(atom.grid.xlist)
         for i, x in enumerate(atom.grid.xlist):
-            R_nl[i] = sympy_hydrogen.R_nl(n, l, x, Z=1)
+            r_nl[i] = sympy_hydrogen.R_nl(n, l, x, Z=1)
 
     # Compare numerical and analytical solutions
-    np.testing.assert_allclose(atom.wavefunction.Rlist, R_nl, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(atom.wavefunction.r_list, r_nl, rtol=1e-2, atol=1e-2)

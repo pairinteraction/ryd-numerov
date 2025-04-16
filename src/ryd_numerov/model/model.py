@@ -96,7 +96,7 @@ class Model:
         params = self.ritz_params
         return -0.5 * params.mu / self.n_star**2
 
-    def calc_V_c(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_core(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the core potential V_c(x) in atomic units.
 
         The core potential is given as
@@ -126,10 +126,10 @@ class Model:
         else:
             exp_a1 = np.exp(-params.a1 * x)
             exp_a2 = np.exp(-params.a2 * x)
-        Z_nl = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
-        return -Z_nl / x
+        z_nl = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
+        return -z_nl / x
 
-    def calc_V_p(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_core_polarization(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the core polarization potential V_p(x) in atomic units.
 
         The core polarization potential is given as
@@ -159,7 +159,7 @@ class Model:
             exp_x6 = np.exp(-(x6 / params.xc**6))
         return -params.ac / (2 * x4) * (1 - exp_x6)
 
-    def calc_V_so(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_spin_orbit(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the spin-orbit coupling potential V_so(x) in atomic units.
 
         The spin-orbit coupling potential is given as
@@ -180,12 +180,12 @@ class Model:
         """
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
         x3 = x * x * x
-        V_so = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
+        v_so = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
         if x[0] < self.model_params.xc:
-            V_so *= x > self.model_params.xc
-        return V_so
+            v_so *= x > self.model_params.xc
+        return v_so
 
-    def calc_V_l(self, x: np.ndarray) -> np.ndarray:
+    def calc_potential_centrifugal(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the centrifugal potential V_l(x) in atomic units.
 
         The centrifugal potential is given as
@@ -205,7 +205,7 @@ class Model:
         x2 = x * x
         return (1 / self.ritz_params.mu) * self.l * (self.l + 1) / (2 * x2)
 
-    def calc_V_sqrt(self, x: np.ndarray) -> np.ndarray:
+    def calc_effective_potential_sqrt(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
 
         The sqrt transformation potential arises from the transformation from the wavefunction u(x) to w(z),
@@ -226,7 +226,7 @@ class Model:
         x2 = x * x
         return (1 / self.ritz_params.mu) * (3 / 32) / x2
 
-    def calc_V_phys(self, x: np.ndarray) -> np.ndarray:
+    def calc_total_physical_potential(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the total physical potential V_phys(x) in atomic units.
 
         The total physical potential is the sum of the core potential, polarization potential,
@@ -242,12 +242,14 @@ class Model:
             V_phys: The total physical potential V_phys(x) in atomic units.
 
         """
-        V_tot = self.calc_V_c(x) + self.calc_V_p(x) + self.calc_V_l(x)
+        v_tot = (
+            self.calc_potential_core(x) + self.calc_potential_core_polarization(x) + self.calc_potential_centrifugal(x)
+        )
         if self.add_spin_orbit:
-            V_tot += self.calc_V_so(x)
-        return V_tot
+            v_tot += self.calc_potential_spin_orbit(x)
+        return v_tot
 
-    def calc_V_tot(self, x: np.ndarray) -> np.ndarray:
+    def calc_total_effective_potential(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the total potential V_tot(x) in atomic units.
 
         The total effective potential includes all physical and non-physical potentials:
@@ -262,7 +264,7 @@ class Model:
             V_tot: The total potential V_tot(x) in atomic units.
 
         """
-        return self.calc_V_phys(x) + self.calc_V_sqrt(x)
+        return self.calc_total_physical_potential(x) + self.calc_effective_potential_sqrt(x)
 
     def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-3) -> float:
         r"""Calculate the inner turning point z_i for the model potential.
@@ -298,12 +300,12 @@ class Model:
 
         zlist = np.arange(max(dz, hydrogen_z_i - 10), max(hydrogen_z_i + 10, 10), dz)
         xlist = zlist * zlist
-        V_phys = self.calc_V_phys(xlist)
+        v_phys = self.calc_total_physical_potential(xlist)
 
         if which == "classical":
-            arg = np.argwhere(V_phys < self.energy)[0][0]
-        else:  # "zerocrossing"
-            arg = np.argwhere(V_phys < 0)[0][0]
+            arg = np.argwhere(v_phys < self.energy)[0][0]
+        elif which == "zerocrossing":
+            arg = np.argwhere(v_phys < 0)[0][0]
 
         if arg == 0:
             if self.l == 0:

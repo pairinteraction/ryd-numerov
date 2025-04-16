@@ -116,21 +116,8 @@ def calc_reduced_angular_matrix_element(
         f"Operator {operator} not supported, must be one of {get_args(OperatorType)}"
     )
 
-    should_be_zero = False
-    if not check_triangular(j2, j1, kappa):
-        should_be_zero = True
-    elif operator in ["SPHERICAL", "ELECTRIC", "MAGNETIC_L"] and not check_triangular(l2, l1, kappa):
-        should_be_zero = True
-    elif operator in ["MAGNETIC_S"] and not check_triangular(s2, s1, kappa):
-        should_be_zero = True
-    elif operator in ["SPHERICAL", "ELECTRIC"] and (l2 + l1 + kappa) % 2 != 0:
-        should_be_zero = True
-    elif operator in ["MAGNETIC_L", "MAGNETIC_S", "MAGNETIC"] and (l2 != l1 or s2 != s1):
-        should_be_zero = True
-    elif (operator == "MAGNETIC_S" and s2 == 0) or (operator == "MAGNETIC_L" and l2 == 0):
-        should_be_zero = True
-
-    if should_be_zero and _lazy_evaluation:
+    should_be_zero = check_reduced_angular_matrix_element_should_be_zero(s1, l1, j1, s2, l2, j2, operator, kappa)
+    if _lazy_evaluation and should_be_zero:
         return 0
 
     if operator == "MAGNETIC":
@@ -170,6 +157,25 @@ def calc_reduced_angular_matrix_element(
         )
 
     return value
+
+
+def check_reduced_angular_matrix_element_should_be_zero(
+    s1: float, l1: int, j1: float, s2: float, l2: int, j2: float, operator: OperatorType, kappa: int
+) -> bool:
+    should_be_zero = False
+    if not check_triangular(j2, j1, kappa):
+        should_be_zero = True
+    elif operator in ["SPHERICAL", "ELECTRIC", "MAGNETIC_L"] and not check_triangular(l2, l1, kappa):
+        should_be_zero = True
+    elif operator in ["MAGNETIC_S"] and not check_triangular(s2, s1, kappa):
+        should_be_zero = True
+    elif operator in ["SPHERICAL", "ELECTRIC"] and (l2 + l1 + kappa) % 2 != 0:
+        should_be_zero = True
+    elif operator in ["MAGNETIC_L", "MAGNETIC_S", "MAGNETIC"] and (l2 != l1 or s2 != s1):
+        should_be_zero = True
+    elif (operator == "MAGNETIC_S" and s2 == 0) or (operator == "MAGNETIC_L" and l2 == 0):
+        should_be_zero = True
+    return should_be_zero
 
 
 def spin_like_matrix_element(x1: float, x2: float, kappa: int) -> float:
