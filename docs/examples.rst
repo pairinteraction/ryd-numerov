@@ -22,7 +22,7 @@ Some comparisons to pairinteraction and ARC
    examples/comparisons/compare_dipole_matrix_element.ipynb
    examples/comparisons/compare_radial_matrix_element.ipynb
    examples/comparisons/compare_wavefunctions.ipynb
-   examples/comparisons/compare_zmin.ipynb
+   examples/comparisons/compare_z_min.ipynb
 
 
 .. rubric:: Benchmark

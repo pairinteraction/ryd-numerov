@@ -127,7 +127,7 @@ def calc_reduced_angular_matrix_element(
         value_l = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "MAGNETIC_L", kappa)
         return g_s * value_s + g_l * value_l
 
-    prefactor = np.sqrt(2 * j1 + 1) * np.sqrt(2 * j2 + 1)
+    prefactor: float = np.sqrt(2 * j1 + 1) * np.sqrt(2 * j2 + 1)
 
     reduced_matrix_element: float
     if operator == "MAGNETIC_S":
@@ -200,7 +200,8 @@ def spin_like_matrix_element(x1: float, x2: float, kappa: int) -> float:
 
     if x1 != x2 or x1 == 0:
         return 0
-    return np.sqrt(x1 * (x1 + 1) * (2 * x1 + 1))
+    value: float = np.sqrt(x1 * (x1 + 1) * (2 * x1 + 1))
+    return value
 
 
 def spherical_like_matrix_element(l1: int, l2: int, operator: OperatorType, kappa: int) -> float:

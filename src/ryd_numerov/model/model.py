@@ -126,7 +126,7 @@ class Model:
         else:
             exp_a1 = np.exp(-params.a1 * x)
             exp_a2 = np.exp(-params.a2 * x)
-        z_nl = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
+        z_nl: NDArray = 1 + (params.Z - 1) * exp_a1 - x * (params.a3 + params.a4 * x) * exp_a2
         return -z_nl / x
 
     def calc_potential_core_polarization(self, x: np.ndarray) -> np.ndarray:
@@ -149,15 +149,16 @@ class Model:
         params = self.model_params
         if params.ac == 0 or not self.add_model_potentials:
             return np.zeros_like(x)
-        x2 = x * x
-        x4 = x2 * x2
-        x6 = x4 * x2
+        x2: NDArray = x * x
+        x4: NDArray = x2 * x2
+        x6: NDArray = x4 * x2
         if self.use_numepr:
             xc = params.xc  # noqa: F841
             exp_x6 = ne.evaluate("exp(-(x6 / xc**6))")
         else:
             exp_x6 = np.exp(-(x6 / params.xc**6))
-        return -params.ac / (2 * x4) * (1 - exp_x6)
+        v_p: NDArray = -params.ac / (2 * x4) * (1 - exp_x6)
+        return v_p
 
     def calc_potential_spin_orbit(self, x: np.ndarray) -> np.ndarray:
         r"""Calculate the spin-orbit coupling potential V_so(x) in atomic units.
@@ -180,7 +181,7 @@ class Model:
         """
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
         x3 = x * x * x
-        v_so = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
+        v_so: NDArray = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
         if x[0] < self.model_params.xc:
             v_so *= x > self.model_params.xc
         return v_so
@@ -292,16 +293,17 @@ class Model:
 
         """
         assert which in ["hydrogen", "classical", "zerocrossing"], f"Invalid turning point method {which}."
-        hydrogen_r_i = self.n * self.n - self.n * np.sqrt(self.n * self.n - self.l * (self.l - 1))
-        hydrogen_z_i = np.sqrt(hydrogen_r_i)
+        hydrogen_r_i: float = self.n * self.n - self.n * np.sqrt(self.n * self.n - self.l * (self.l - 1))
+        hydrogen_z_i: float = np.sqrt(hydrogen_r_i)
 
         if which == "hydrogen":
             return hydrogen_z_i
 
-        zlist = np.arange(max(dz, hydrogen_z_i - 10), max(hydrogen_z_i + 10, 10), dz)
-        xlist = zlist * zlist
-        v_phys = self.calc_total_physical_potential(xlist)
+        z_list: NDArray = np.arange(max(dz, hydrogen_z_i - 10), max(hydrogen_z_i + 10, 10), dz)
+        x_list = z_list * z_list
+        v_phys = self.calc_total_physical_potential(x_list)
 
+        arg: int
         if which == "classical":
             arg = np.argwhere(v_phys < self.energy)[0][0]
         elif which == "zerocrossing":
@@ -311,7 +313,7 @@ class Model:
             if self.l == 0:
                 return 0
             logger.warning("Turning point is at arg=0, this shouldnt happen.")
-        elif arg == len(zlist) - 1:
+        elif arg == len(z_list) - 1:
             logger.warning("Turning point is at maixmal arg, this shouldnt happen.")
 
-        return zlist[arg]
+        return z_list[arg]  # type: ignore [no-any-return]  # FIXME: numpy indexing

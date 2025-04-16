@@ -156,7 +156,7 @@ class GroundState:
             Ionization energy in the desired unit.
 
         """
-        return ureg.Quantity(self.ionization_energy, "GHz").to(unit, "spectroscopy").magnitude
+        return ureg.Quantity(self.ionization_energy, "GHz").to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
     def is_allowed_shell(self, n: int, l: int) -> bool:
         """Check if the quantum numbers describe a allowed shell (i.e. are above the ground state).
@@ -164,7 +164,6 @@ class GroundState:
         Args:
             n: Principal quantum number
             l: Orbital angular momentum quantum number
-            s: Spin quantum number
 
         Returns:
             True if the quantum numbers specify a state above the ground state, False otherwise.

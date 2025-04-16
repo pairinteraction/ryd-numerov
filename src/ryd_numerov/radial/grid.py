@@ -13,33 +13,33 @@ class Grid:
 
     def __init__(
         self,
-        zmin: float,
-        zmax: float,
+        z_min: float,
+        z_max: float,
         dz: float,
     ) -> None:
         """Initialize the grid object.
 
         Args:
-            zmin: The minimum value of the scaled dimensionless coordinate z = sqrt{x}.
-            zmax: The maximum value of the scaled dimensionless coordinate z = sqrt{x}.
+            z_min: The minimum value of the scaled dimensionless coordinate z = sqrt{x}.
+            z_max: The maximum value of the scaled dimensionless coordinate z = sqrt{x}.
             dz: The step size of the grid in the scaled dimensionless coordinate z = sqrt{x}
             (exactly one of dz or steps must be provided).
             steps: The number of steps in the grid (exactly one of dz or steps must be provided).
 
         """
         self._dz = dz
-        self._zlist = np.arange(zmin, zmax + dz / 2, dz)
+        self._z_list: NDArray = np.arange(z_min, z_max + dz / 2, dz)
 
     def __len__(self) -> int:
         return self.steps
 
     def __repr__(self) -> str:
-        return f"Grid({self.zmin}, {self.zmax}, dz={self.dz}, steps={self.steps})"
+        return f"Grid({self.z_min}, {self.z_max}, dz={self.dz}, steps={self.steps})"
 
     @property
     def steps(self) -> int:
         """The number of steps in the grid."""
-        return len(self.zlist)
+        return len(self.z_list)
 
     @property
     def dz(self) -> float:
@@ -47,38 +47,38 @@ class Grid:
         return self._dz
 
     @property
-    def zmin(self) -> float:
+    def z_min(self) -> float:
         """The minimum value of the scaled dimensionless coordinate z = sqrt{x}."""
-        return self.zlist[0]
+        return self.z_list[0]  # type: ignore [no-any-return]  # FIXME: numpy indexing
 
     @property
-    def zmax(self) -> float:
+    def z_max(self) -> float:
         """The maximum value of the scaled dimensionless coordinate z = sqrt{x}."""
-        return self.zlist[-1]
+        return self.z_list[-1]  # type: ignore [no-any-return]  # FIXME: numpy indexing
 
     @property
-    def zlist(self) -> np.ndarray:
+    def z_list(self) -> np.ndarray:
         """The grid in the scaled dimensionless coordinate z = sqrt{x}.
 
         In this coordinate the grid points are chosen equidistant,
         because the nodes of the wavefunction are equally spaced in this coordinate.
         """
-        return self._zlist
+        return self._z_list
 
     @property
-    def xmin(self) -> float:
+    def x_min(self) -> float:
         """The minimum value of the dimensionless coordinate x = r/a_0."""
-        return self.zmin**2
+        return self.z_min**2
 
     @property
-    def xmax(self) -> float:
+    def x_max(self) -> float:
         """The maximum value of the dimensionless coordinate x = r/a_0."""
-        return self.zmax**2
+        return self.z_max**2
 
     @property
-    def xlist(self) -> np.ndarray:
+    def x_list(self) -> np.ndarray:
         """The grid in the dimensionless coordinate x = r/a_0."""
-        return self.zlist**2
+        return self.z_list**2
 
     def set_grid_range(self, step_start: Optional[int] = None, step_stop: Optional[int] = None) -> None:
         """Restrict the grid to the range [step_start, step_stop]."""
@@ -86,4 +86,4 @@ class Grid:
             step_start = 0
         if step_stop is None:
             step_stop = self.steps
-        self._zlist = self._zlist[step_start:step_stop]
+        self._z_list = self._z_list[step_start:step_stop]

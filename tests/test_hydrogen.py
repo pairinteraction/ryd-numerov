@@ -38,10 +38,10 @@ def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool
     # Get analytical solution from sympy
     if n <= 35:
         r_nl_lambda = lambdify(sympy_r, sympy_hydrogen.R_nl(n, l, sympy_r, Z=1))
-        r_nl = r_nl_lambda(atom.grid.xlist)
+        r_nl = r_nl_lambda(atom.grid.x_list)
     else:  # some weird sympy bug if trying to use lambdify R_nl for n > 35
-        r_nl = np.zeros_like(atom.grid.xlist)
-        for i, x in enumerate(atom.grid.xlist):
+        r_nl = np.zeros_like(atom.grid.x_list)
+        for i, x in enumerate(atom.grid.x_list):
             r_nl[i] = sympy_hydrogen.R_nl(n, l, x, Z=1)
 
     # Compare numerical and analytical solutions

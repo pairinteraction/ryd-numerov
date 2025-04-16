@@ -77,4 +77,4 @@ def _run_numerov_integration_python(
     return y_list
 
 
-run_numerov_integration: Callable = njit(cache=True)(_run_numerov_integration_python)
+run_numerov_integration: Callable[..., list[float]] = njit(cache=True)(_run_numerov_integration_python)
