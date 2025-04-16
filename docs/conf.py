@@ -65,4 +65,3 @@ autosummary_ignore_module_all = False
 # -- Options for autodoc -------------------------------------------
 autodoc_class_signature = "mixed"  # combine class and __init__ doc
 autodoc_typehints = "both"
-autodoc_type_aliases = {}  # make type aliases nicer

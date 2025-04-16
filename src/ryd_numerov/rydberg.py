@@ -53,8 +53,8 @@ class RydbergState:
     n: int
     l: int
     j: Union[int, float]
-    m: Union[int, float] = None
-    s: Union[int, float] = None
+    m: Union[int, float, None] = None
+    s: Union[int, float] = None  # type: ignore [assignment]  # will always be set to float or int in __post_init__
 
     def __post_init__(self) -> None:
         if self.s is None:
@@ -66,9 +66,9 @@ class RydbergState:
         assert abs(self.l - self.s) <= self.j <= self.l + self.s, "j must be between l - s and l + s"
         assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
 
-        self._model: Model = None
-        self._grid: Grid = None
-        self._wavefunction: Wavefunction = None
+        self._model: Optional[Model] = None
+        self._grid: Optional[Grid] = None
+        self._wavefunction: Optional[Wavefunction] = None
 
     @property
     def is_alkali(self) -> bool:
@@ -81,12 +81,12 @@ class RydbergState:
     @property
     def model(self) -> Model:
         if self._model is None:
-            self.create_model()
+            return self.create_model()
         return self._model
 
     def create_model(
         self, add_spin_orbit: bool = True, database: Optional["Database"] = None, db_path: Optional[str] = None
-    ) -> None:
+    ) -> Model:
         """Create the model potential for the Rydberg state.
 
         Args:
@@ -100,6 +100,7 @@ class RydbergState:
         """
         if self._model is not None:
             raise ValueError("The model was already created, you should not create a different model.")
+
         self._model = Model(
             self.species,
             self.n,
@@ -110,6 +111,7 @@ class RydbergState:
             db_path=db_path,
             database=database,
         )
+        return self._model
 
     @property
     def energy(self) -> float:
@@ -119,21 +121,21 @@ class RydbergState:
     @property
     def grid(self) -> Grid:
         if self._grid is None:
-            self.create_grid()
+            return self.create_grid()
         return self._grid
 
     def create_grid(
         self,
-        xmin: Optional[float] = None,
-        xmax: Optional[float] = None,
+        x_min: Optional[float] = None,
+        x_max: Optional[float] = None,
         dz: float = 1e-2,
-    ) -> None:
+    ) -> Grid:
         """Create the grid object for the integration of the radial Schrödinger equation.
 
         Args:
-            xmin (default TODO): The minimum value of the radial coordinate
+            x_min (default TODO): The minimum value of the radial coordinate
             in dimensionless units (x = r/a_0).
-            xmax (default TODO): The maximum value of the radial coordinate
+            x_max (default TODO): The maximum value of the radial coordinate
             in dimensionless units (x = r/a_0).
             dz (default 1e-2): The step size of the integration (z = r/a_0).
 
@@ -141,44 +143,48 @@ class RydbergState:
         if self._grid is not None:
             raise ValueError("The grid was already created, you should not create a different grid.")
 
-        if xmin is None:
-            # we set xmin explicitly to small,
+        if x_min is None:
+            # we set x_min explicitly to small,
             # since the integration will automatically stop after the turning point,
             # and as soon as the wavefunction is close to zero
             if self.l <= 10:
-                xmin = 0
+                x_min = 0
             else:
                 z_i = self.model.calc_z_turning_point("hydrogen", dz=1e-2)
-                xmin = max(0, 0.5 * z_i**2 - 25)
-        if xmax is None:
+                x_min = max(0, 0.5 * z_i**2 - 25)
+        if x_max is None:
             # This is an empirical formula for the maximum value of the radial coordinate
             # it takes into account that for large n but small l the wavefunction is very extended
-            xmax = 2 * self.n * (self.n + 15 + (self.n - self.l) / 4)
+            x_max = 2 * self.n * (self.n + 15 + (self.n - self.l) / 4)
 
-        zmin = np.sqrt(xmin)
-        zmax = np.sqrt(xmax)
+        z_min = np.sqrt(x_min)
+        z_max = np.sqrt(x_max)
 
         # put all grid points on a standard grid, i.e. [dz, 2*dz, 3*dz, ...]
         # this is necessary to allow integration of two different wavefunctions
-        zmin = (zmin // dz) * dz
+        z_min = (z_min // dz) * dz
 
-        # Since the potential diverges at z=0 we set the minimum zmin to dz
-        zmin = max(zmin, dz)
+        # Since the potential diverges at z=0 we set the minimum z_min to dz
+        z_min = max(z_min, dz)
 
         # set the grid object
-        self._grid = Grid(zmin, zmax, dz)
+        self._grid = Grid(z_min, z_max, dz)
+        return self._grid
 
     @property
     def wavefunction(self) -> Wavefunction:
         if self._wavefunction is None:
-            self.integrate_wavefunction()
+            return self.integrate_wavefunction()
         return self._wavefunction
 
-    def integrate_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
+    def integrate_wavefunction(
+        self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True
+    ) -> Wavefunction:
         if self._wavefunction is not None:
             raise ValueError("The wavefunction was already integrated, you should not integrate it again.")
         self._wavefunction = Wavefunction(self.grid, self.model)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
+        return self._wavefunction
 
     @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PlainQuantity[float]": ...
@@ -186,20 +192,25 @@ class RydbergState:
     @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int, unit: str) -> float: ...
 
-    def calc_radial_matrix_element(self, other: "Self", k_radial: int, unit: Optional[str] = None):
+    def calc_radial_matrix_element(
+        self, other: "Self", k_radial: int, unit: Optional[str] = None
+    ) -> Union["PlainQuantity[float]", float]:
         radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
         if unit == "a.u.":
             return radial_matrix_element_au
-        radial_matrix_element = radial_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
+        radial_matrix_element: PintFloat = radial_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
         if unit is None:
             return radial_matrix_element
-        return radial_matrix_element.to(unit).magnitude
+        return radial_matrix_element.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
     def calc_angular_matrix_element(self, other: "Self", operator: "OperatorType", k_angular: int, q: int) -> float:
         """Calculate the dimensionless angular matrix element."""
-        self_qns = (self.s, self.l, self.j, self.m)
-        other_qns = (other.s, other.l, other.j, other.m)
-        return calc_angular_matrix_element(*self_qns, *other_qns, operator, k_angular, q)
+        if self.m is None or other.m is None:
+            raise ValueError("m must be set to calculate the angular matrix element.")
+
+        return calc_angular_matrix_element(
+            self.s, self.l, self.j, self.m, other.s, other.l, other.j, other.m, operator, k_angular, q
+        )
 
     @overload
     def calc_matrix_element(
@@ -213,7 +224,7 @@ class RydbergState:
 
     def calc_matrix_element(
         self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int, unit: Optional[str] = None
-    ):
+    ) -> Union["PlainQuantity[float]", float]:
         r"""Calculate the matrix element.
 
         Calculate the matrix element between two Rydberg states
@@ -255,7 +266,7 @@ class RydbergState:
         if unit == "a.u.":
             return matrix_element_au
 
-        matrix_element = matrix_element_au * (ureg.Quantity(1, "a0") ** k_radial)
+        matrix_element: PintFloat = matrix_element_au * (ureg.Quantity(1, "a0") ** k_radial)
         if operator == "ELECTRIC":
             matrix_element *= ureg.Quantity(1, "e")
         elif operator == "MAGNETIC":
@@ -267,11 +278,14 @@ class RydbergState:
 
         if unit is None:
             return matrix_element
-        return matrix_element.to(unit).magnitude
+        return matrix_element.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
     def _get_list_of_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
     ) -> tuple[list["Self"], np.ndarray, np.ndarray]:
+        if self.m is None:
+            raise ValueError("m must be set to get the dipole coupled states.")
+
         relevant_states = []
         energy_differences = []
         electric_dipole_moments = []
@@ -286,7 +300,8 @@ class RydbergState:
                             or not self.model.ground_state.is_allowed_shell(n, l)
                         ):
                             continue
-                        other = self.__class__(self.species, n, l, j, m, self.s)
+                        other = self.__class__(self.species, n, l, float(j), m=float(m), s=self.s)
+                        assert other.m is not None
                         other.create_model(database=self.model.database)
                         if other.energy < self.energy or not only_smaller_energy:
                             relevant_states.append(other)
@@ -316,7 +331,7 @@ class RydbergState:
                         or not self.model.ground_state.is_allowed_shell(n, l)
                     ):
                         continue
-                    other = self.__class__(self.species, n, l, j, s=self.s)
+                    other = self.__class__(self.species, n, l, float(j), s=self.s)
                     other.create_model(database=self.model.database)
                     if other.energy < self.energy or not only_smaller_energy:
                         relevant_states.append(other)
@@ -344,7 +359,7 @@ class RydbergState:
         self,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ):
+    ) -> tuple[list["Self"], Union["PlainQuantity[np.ndarray]", np.ndarray]]:
         """Calculate the spontaneous transition rates for the Rydberg state.
 
         The spontaneous transition rates are given by the Einstein A coefficients.
@@ -396,7 +411,7 @@ class RydbergState:
         temperature_unit: Optional[str] = None,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ):
+    ) -> tuple[list["Self"], Union["PlainQuantity[np.ndarray]", np.ndarray]]:
         """Calculate the black body transition rates for the Rydberg state.
 
         The black body transitions rates are given by the Einstein B coefficients,
@@ -419,7 +434,7 @@ class RydbergState:
         """
         if temperature_unit is not None:
             temperature = ureg.Quantity(temperature, temperature_unit)
-        temperature_au = (temperature * ureg.boltzmann_constant).to_base_units().magnitude
+        temperature_au = (temperature * ureg.Quantity(1, "boltzmann_constant")).to_base_units().magnitude
         return self._get_transition_rates("black_body", temperature_au, unit=unit, method=method)
 
     def _get_transition_rates(
@@ -517,22 +532,50 @@ class RydbergState:
         temperature_unit: Optional[str] = None,
         unit: Optional[str] = None,
         method: TransitionRateMethod = "exact",
-    ):
+    ) -> Union["PlainQuantity[float]", float]:
+        r"""Calculate the lifetime of the Rydberg state.
+
+        The lifetime is given by the inverse of the sum of the transition rates:
+        .. math::
+            \tau = \frac{1}{\\sum_i A_i}
+
+        where :math:`A_i` are the transition rates
+        (see `get_spontaneous_transition_rates` and `get_black_body_transition_rates`).
+
+        Args:
+            temperature: The temperature, for which to calculate the lifetime.
+                Default None will only consider the spontaneous transition rates for the lifetime.
+            temperature_unit: The unit of the temperature.
+                Default None will assume the temperature is given as pint quantity.
+            unit: The unit to which to convert the result to.
+                Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
+                Default None will return a pint quantity.
+            method: How to calculate the transition rates.
+                Can be "exact" or "approximation".
+                Defaults to "exact".
+
+        Returns:
+            The lifetime of the Rydberg state in the given unit.
+
+        """
         _, transition_rates = self.get_spontaneous_transition_rates(unit="a.u.", method=method)
         if temperature is not None:
             _, black_body_transition_rates = self.get_black_body_transition_rates(
-                temperature, temperature_unit, unit="a.u.", method=method
+                temperature,  # type: ignore [arg-type]
+                temperature_unit,  # type: ignore [arg-type]
+                unit="a.u.",
+                method=method,
             )
             transition_rates = np.append(transition_rates, black_body_transition_rates)
 
-        lifetime_au = 1 / np.sum(transition_rates)
+        lifetime_au: float = 1 / np.sum(transition_rates)
 
         if unit == "a.u.":
             return lifetime_au
-        lifetime = lifetime_au * BaseQuantities["TIME"]
+        lifetime: PintFloat = lifetime_au * BaseQuantities["TIME"]
         if unit is None:
             return lifetime
-        return lifetime.to(unit).magnitude
+        return lifetime.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
 
 def get_spin_from_species(species: str) -> float:

@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -17,7 +17,7 @@ class Wavefunction:
 
     Attributes:
         w_list: The dimensionless and scaled wavefunction
-            w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \\sqrt(a_0) r R(r) evaluated at the zlist values.
+            w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \\sqrt(a_0) r R(r) evaluated at the z_list values.
         u_list: The corresponding dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r).
         r_list: The corresponding dimensionless radial wavefunction \tilde{R}(r) = a_0^{-3/2} R(r).
 
@@ -38,7 +38,7 @@ class Wavefunction:
         self._grid = grid
         self._model = model
 
-        self._w_list: np.ndarray = None
+        self._w_list: Optional[np.ndarray] = None
 
     @property
     def grid(self) -> "Grid":
@@ -54,20 +54,20 @@ class Wavefunction:
     def w_list(self) -> np.ndarray:
         r"""The dimensionless scaled wavefunction w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r)."""
         if self._w_list is None:
-            self.integrate()
+            return self.integrate()
         return self._w_list
 
     @property
     def u_list(self) -> np.ndarray:
         r"""The dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r)."""
-        return np.sqrt(self.grid.zlist) * self.w_list
+        return np.sqrt(self.grid.z_list) * self.w_list
 
     @property
     def r_list(self) -> np.ndarray:
         r"""The radial wavefunction R(r) in atomic units."""
-        return self.u_list / self.grid.xlist
+        return self.u_list / self.grid.x_list
 
-    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
+    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> "NDArray":
         r"""Run the Numerov integration of the radial Schrödinger equation.
 
         The resulting radial wavefunctions are then stored as attributes, where
@@ -112,36 +112,36 @@ class Wavefunction:
         glist = (
             8
             * self.model.ritz_params.mu
-            * grid.zlist
-            * grid.zlist
-            * (self.model.energy - self.model.calc_total_effective_potential(grid.xlist))
+            * grid.z_list
+            * grid.z_list
+            * (self.model.energy - self.model.calc_total_effective_potential(grid.x_list))
         )
 
         if run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
             y0, y1 = 0, (-1) ** ((self.model.n - self.model.l - 1) % 2) * w0
-            x_start, x_stop, dx = grid.zmax, grid.zmin, -grid.dz
+            x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
             # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
             # or it reaches a local minimum (thus goiing away from the x-axis)
             x_min = self.model.calc_z_turning_point("classical", dz=grid.dz)
-            x_min = max(x_min, 5 * abs(dx), self.get_xmin())
+            x_min = max(x_min, 5 * abs(dx), self.get_x_min())
 
         else:  # forward
             y0, y1 = 0, w0
-            x_start, x_stop, dx = grid.zmin, grid.zmax, grid.dz
+            x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
             x_min = np.sqrt(self.model.n * (self.model.n + 15))
 
         if _use_njit:
-            w_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
+            w_list_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
         else:
             logger.warning("Using python implementation of Numerov integration, this is much slower!")
-            w_list = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
+            w_list_list = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
 
-        w_list = np.array(w_list)
+        w_list = np.array(w_list_list)
         if run_backward:
             w_list = w_list[::-1]
             grid.set_grid_range(step_start=grid.steps - len(w_list))
@@ -149,15 +149,16 @@ class Wavefunction:
             grid.set_grid_range(step_stop=len(w_list))
 
         # normalize the wavefunction, see docstring
-        norm = np.sqrt(2 * np.sum(w_list * w_list * grid.zlist * grid.zlist) * grid.dz)
+        norm = np.sqrt(2 * np.sum(w_list * w_list * grid.z_list * grid.z_list) * grid.dz)
         w_list /= norm
 
         self._w_list = w_list
 
         self.sanity_check(x_stop, run_backward)
+        return w_list
 
-    def get_xmin(self) -> float:
-        """Implement a few special cases for the xmin point of the integration."""
+    def get_x_min(self) -> float:
+        """Implement a few special cases for the x_min point of the integration."""
         species, n, l = self.model.species, self.model.n, self.model.l
         if species in ["Rb", "Cs"] and n == 4 and l == 3:
             return 2
@@ -194,7 +195,7 @@ class Wavefunction:
             wmin = np.min(self.w_list[int(0.1 * grid.steps) :])
             tol = 1e-2 * max(abs(wmax), abs(wmin))
             self._w_list *= (self.w_list <= wmax + tol) * (self.w_list >= wmin - tol)
-            norm = np.sqrt(2 * np.sum(self.w_list * self.w_list * grid.zlist * grid.zlist) * grid.dz)
+            norm = np.sqrt(2 * np.sum(self.w_list * self.w_list * grid.z_list * grid.z_list) * grid.dz)
             self._w_list /= norm
 
         # Check the wavefunction at the inner boundary
@@ -206,7 +207,7 @@ class Wavefunction:
         inner_weight = (
             2
             * np.sum(
-                self.w_list[:inner_ind] * self.w_list[:inner_ind] * grid.zlist[:inner_ind] * grid.zlist[:inner_ind]
+                self.w_list[:inner_ind] * self.w_list[:inner_ind] * grid.z_list[:inner_ind] * grid.z_list[:inner_ind]
             )
             * grid.dz
         )
@@ -248,7 +249,7 @@ class Wavefunction:
                 np.mean(outer_wf),
             )
 
-        outer_weight = 2 * np.sum(outer_wf * outer_wf * grid.zlist[outer_ind:] * grid.zlist[outer_ind:]) * grid.dz
+        outer_weight = 2 * np.sum(outer_wf * outer_wf * grid.z_list[outer_ind:] * grid.z_list[outer_ind:]) * grid.dz
         outer_weight_scaled_to_whole_grid = outer_weight * grid.steps / len(outer_wf)
         if outer_weight_scaled_to_whole_grid > 1e-10:
             sanity_check = False
@@ -265,22 +266,22 @@ class Wavefunction:
 
         # Check that numerov stopped and did not run until x_stop
         if l > 0:
-            if run_backward and z_stop > grid.zlist[0] - grid.dz / 2:
+            if run_backward and z_stop > grid.z_list[0] - grid.dz / 2:
                 sanity_check = False
-                logger.warning("The integration did not stop at the zmin boundary, z=%s, %s", grid.zlist[0], z_stop)
-            if not run_backward and z_stop < grid.zlist[-1] + grid.dz / 2:
+                logger.warning("The integration did not stop at the z_min boundary, z=%s, %s", grid.z_list[0], z_stop)
+            if not run_backward and z_stop < grid.z_list[-1] + grid.dz / 2:
                 sanity_check = False
-                logger.warning("The integration did not stop at the zmax boundary, z=%s", grid.zlist[-1])
+                logger.warning("The integration did not stop at the z_max boundary, z=%s", grid.z_list[-1])
         elif l == 0 and run_backward:
             if z_stop > 1.5 * grid.dz:
                 sanity_check = False
                 logger.warning("The integration for l=0 should go until z=dz, but a z_stop=%s was used.", z_stop)
-            elif grid.zlist[0] > 2.5 * grid.dz:
-                # zlist[0] should be dz, but if it is 2 * dz this is also fine
+            elif grid.z_list[0] > 2.5 * grid.dz:
+                # z_list[0] should be dz, but if it is 2 * dz this is also fine
                 # e.g. this might happen if the integration just stopped at the last step due to a negative y value
                 sanity_check = False
                 logger.warning(
-                    "The integration for l=0 did stop before the zmin boundary, z=%s, %s", grid.zlist[0], grid.dz
+                    "The integration for l=0 did stop before the z_min boundary, z=%s, %s", grid.z_list[0], grid.dz
                 )
 
         if not sanity_check:

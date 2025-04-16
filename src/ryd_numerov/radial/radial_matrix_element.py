@@ -52,7 +52,7 @@ def calc_radial_matrix_element(
     wf1 = state1.wavefunction
     wf2 = state2.wavefunction
     return _calc_radial_matrix_element_from_w_z(
-        wf1.grid.zlist, wf1.w_list, wf2.grid.zlist, wf2.w_list, k_radial, integration_method
+        wf1.grid.z_list, wf1.w_list, wf2.grid.z_list, wf2.w_list, k_radial, integration_method
     )
 
 
@@ -91,29 +91,29 @@ def _calc_radial_matrix_element_from_w_z(
 
     """
     # Find overlapping grid range
-    zmin = max(z1[0], z2[0])
-    zmax = min(z1[-1], z2[-1])
-    if zmax <= zmin:
+    z_min = max(z1[0], z2[0])
+    z_max = min(z1[-1], z2[-1])
+    if z_max <= z_min:
         logger.debug("No overlapping grid points between states, returning 0")
         return 0
 
     # Select overlapping points
     dz = z1[1] - z1[0]
-    if z1[0] < zmin - dz / 2:
-        ind = int((zmin - z1[0]) / dz + 0.5)
+    if z1[0] < z_min - dz / 2:
+        ind = int((z_min - z1[0]) / dz + 0.5)
         z1 = z1[ind:]
         w1 = w1[ind:]
-    elif z2[0] < zmin - dz / 2:
-        ind = int((zmin - z2[0]) / dz + 0.5)
+    elif z2[0] < z_min - dz / 2:
+        ind = int((z_min - z2[0]) / dz + 0.5)
         z2 = z2[ind:]
         w2 = w2[ind:]
 
-    if z1[-1] > zmax + dz / 2:
-        ind = int((z1[-1] - zmax) / dz + 0.5)
+    if z1[-1] > z_max + dz / 2:
+        ind = int((z1[-1] - z_max) / dz + 0.5)
         z1 = z1[:-ind]
         w1 = w1[:-ind]
-    elif z2[-1] > zmax + dz / 2:
-        ind = int((z2[-1] - zmax) / dz + 0.5)
+    elif z2[-1] > z_max + dz / 2:
+        ind = int((z2[-1] - z_max) / dz + 0.5)
         z2 = z2[:-ind]
         w2 = w2[:-ind]
 
