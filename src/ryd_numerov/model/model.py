@@ -32,20 +32,16 @@ class Model:
     j: Union[int, float]
     add_spin_orbit: bool = True
     add_model_potentials: bool = True
-    db_path: Optional[str] = None
     database: Optional[Database] = None
-    use_numepr: bool = False
+    use_numexpr: bool = False
 
     def __post_init__(self) -> None:
         """Load the model potential and Rydberg-Ritz parameters from the Database.
 
         For more details see `database.Database`.
         """
-        if self.database is not None and self.db_path is not None:
-            raise ValueError("You cannot specify both a database and a database path.")
-
         if self.database is None:
-            self.database = Database(self.db_path)
+            self.database = Database.get_global_instance()
 
         self.model_params = self.database.get_model_potential(self.species, self.l)
         self.ritz_params = self.database.get_rydberg_ritz(self.species, self.l, self.j)
@@ -122,7 +118,7 @@ class Model:
         if not self.add_model_potentials:
             return -1 / x
         params = self.model_params
-        if self.use_numepr:
+        if self.use_numexpr:
             a1, a2 = params.a1, params.a2  # noqa: F841
             exp_a1 = ne.evaluate("exp(-a1 * x)")
             exp_a2 = ne.evaluate("exp(-a2 * x)")
@@ -155,7 +151,7 @@ class Model:
         x2: NDArray = x * x
         x4: NDArray = x2 * x2
         x6: NDArray = x4 * x2
-        if self.use_numepr:
+        if self.use_numexpr:
             xc = params.xc  # noqa: F841
             exp_x6 = ne.evaluate("exp(-(x6 / xc**6))")
         else:

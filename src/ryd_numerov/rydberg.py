@@ -84,18 +84,14 @@ class RydbergState:
             return self.create_model()
         return self._model
 
-    def create_model(
-        self, add_spin_orbit: bool = True, database: Optional["Database"] = None, db_path: Optional[str] = None
-    ) -> Model:
+    def create_model(self, add_spin_orbit: bool = True, database: Optional["Database"] = None) -> Model:
         """Create the model potential for the Rydberg state.
 
         Args:
             add_spin_orbit: Whether to include the spin-orbit interaction in the model potential.
                 Defaults to True.
-            database: Optional database object containing the quantum defects.
-                Default None, i.e. use the db_path or the default database.
-            db_path: Optional path to a SQLite database file containing the quantum defects.
-                Default None, i.e. use the default quantum_defects.sql.
+            database: Database object containing the quantum defects.
+                Default None, i.e. use the global database instance.
 
         """
         if self._model is not None:
@@ -108,7 +104,6 @@ class RydbergState:
             self.s,
             self.j,
             add_spin_orbit=add_spin_orbit,
-            db_path=db_path,
             database=database,
         )
         return self._model

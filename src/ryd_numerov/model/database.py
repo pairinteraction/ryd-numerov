@@ -8,7 +8,7 @@ import logging
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import ClassVar, Optional
 
 import numpy as np
 
@@ -171,20 +171,34 @@ class GroundState:
 class Database:
     """Interface to quantum defects SQL database."""
 
-    def __init__(self, db_path: Optional[str] = None) -> None:
+    _global_instance: ClassVar[Optional["Database"]] = None
+
+    def __init__(self, database_file: Optional[str] = None) -> None:
         """Initialize database connection.
 
         Args:
-            db_path: Optional path to SQLite database file. If None, use the default
+            database_file: Optional path to SQLite database file. If None, use the default
                 database.sql in the same directory as this file.
 
         """
-        if db_path is None:
-            db_path = str(Path(__file__).parent / "database.sql")
+        if database_file is None:
+            database_file = str(Path(__file__).parent / "database.sql")
 
         self.conn = sqlite3.connect(":memory:")
-        with Path(db_path).open() as f:
+        with Path(database_file).open() as f:
             self.conn.executescript(f.read())
+
+    @classmethod
+    def get_global_instance(cls) -> "Database":
+        """Return the global database instance."""
+        if cls._global_instance is None:
+            cls._global_instance = cls()
+        return cls._global_instance
+
+    @classmethod
+    def set_global_instance(cls, instance: "Database") -> None:
+        """Set the global database instance."""
+        cls._global_instance = instance
 
     def get_model_potential(self, species: str, l: int) -> ModelPotentialParameters:
         """Get model potential parameters.
