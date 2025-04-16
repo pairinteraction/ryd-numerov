@@ -2,14 +2,29 @@
 
 [![License: LGPL v3][license-lgpl-svg]][license-lgpl-link]
 [![CI Workflow][gh-workflow-svg]][gh-workflow-link]
+[![Documentation][docs-svg]][docs-link]
 
 [license-lgpl-svg]: https://img.shields.io/badge/License-LGPL_v3-blue.svg?style=flat
 [license-lgpl-link]: https://www.gnu.org/licenses/lgpl-3.0.html
-[gh-workflow-svg]: https://github.com/pairinteraction/ryd-numerov/actions/workflows/python-wheel.yml/badge.svg
-[gh-workflow-link]: https://github.com/pairinteraction/ryd-numerov/actions/workflows/python-wheel.yml
+[gh-workflow-svg]: https://github.com/pairinteraction/ryd-numerov/actions/workflows/python_wheel.yml/badge.svg
+[gh-workflow-link]: https://github.com/pairinteraction/ryd-numerov/actions/workflows/python_wheel.yml
+[docs-svg]: https://img.shields.io/badge/Documentation-rydnumerov-blue.svg?style=flat
+[docs-link]: https://www.pairinteraction.org/ryd-numerov/sphinx/html/
 
 The *Rydberg Numerov* software calculates properties of Rydberg states.
 We especially focus on the calculation of the radial wavefunction of Rydberg states via the Numerov method.
+The software can be installed via pip (requires Python >= 3.9):
+
+```bash
+pip install pairinteraction
+```
+
+To install the latest development version from github, use:
+
+```bash
+pip install git+https://github.com/pairinteraction/ryd-numerov
+```
+
 
 ## How to Cite
 
@@ -55,9 +70,11 @@ This package relies on quantum defects provided by the community. Consider citin
 
 - [Tutorials] - Examples of how to use the Rydberg Numerov library.
 
-<!-- - [API Reference] - Documentation of classes and functions of the Rydberg Numerov Python library. -->
+- [API Reference] - Documentation of classes and functions of the Rydberg Numerov Python library.
 
-[Tutorials]: https://github.com/pairinteraction/ryd-numerov/blob/master/docs/examples/
+
+[Tutorials]: https://www.pairinteraction.org/ryd-numerov/sphinx/html/examples.html
+[API Reference]: https://www.pairinteraction.org/ryd-numerov/sphinx/html/modules.html
 
 
 ## License
