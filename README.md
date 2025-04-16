@@ -19,7 +19,7 @@ We especially focus on the calculation of the radial wavefunction of Rydberg sta
 The software can be installed via pip (requires Python >= 3.9):
 
 ```bash
-pip install pairinteraction
+pip install ryd-numerov
 ```
 
 To install the latest development version from github, use:
