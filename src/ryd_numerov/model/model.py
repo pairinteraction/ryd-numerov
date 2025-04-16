@@ -7,6 +7,7 @@ import numpy as np
 
 from ryd_numerov.model.database import Database
 from ryd_numerov.model.model_potential import ModelPotential
+from ryd_numerov.model.quantum_defect import QuantenDefect
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
@@ -45,7 +46,7 @@ class Model:
             self.database = Database.get_global_instance()
 
         self.model_params = ModelPotential.from_database(self.species, self.l)
-        self.ritz_params = self.database.get_rydberg_ritz(self.species, self.l, self.j)
+        self.ritz_params = QuantenDefect.from_database(self.species, self.l, self.j)
 
         self.ground_state = self.database.get_ground_state(self.species)
         if not self.ground_state.is_allowed_shell(self.n, self.l):

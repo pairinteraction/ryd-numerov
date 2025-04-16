@@ -9,7 +9,7 @@ import sqlite3
 from pathlib import Path
 from typing import ClassVar, Optional
 
-from ryd_numerov.model.rydberg_ritz import GroundState, RydbergRitzParameters
+from ryd_numerov.model.allowed_states import GroundState
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,9 @@ class Database:
 
         return float(row[2]), int(row[3]), float(row[4]), float(row[5]), float(row[6]), float(row[7]), float(row[8])
 
-    def get_rydberg_ritz(self, species: str, l: int, j: float) -> RydbergRitzParameters:
+    def get_quanten_defect_parameters(
+        self, species: str, l: int, j: float
+    ) -> tuple[float, float, float, float, float, float]:
         """Get Rydberg-Ritz parameters.
 
         Args:
@@ -85,30 +87,24 @@ class Database:
             j: Total angular momentum quantum number
 
         Returns:
-            RydbergRitzParameters containing the Rydberg-Ritz coefficients.
-            If no exact match is found, returns parameters for largest available l and j.
-
-        Raises:
-            ValueError: If no parameters found for species
+            The quanten defect parameters for the given species, l and j, i.e.:
+                d0, d2, d4, d6, d8, Ry
+                If no match is found for l and j, returns d_i = 0 and the normal Ry.
 
         """
         cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? AND l=? AND j=?", (species, l, j))
         row = cursor.fetchone()
-        if row is not None:
-            return RydbergRitzParameters(
-                species=row[0], l=row[1], j=row[2], d0=row[3], d2=row[4], d4=row[5], d6=row[6], d8=row[7], Ry=row[8]
-            )
-
-        logger.debug(
-            "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, returning parameters with d_i=0", species, l, j
-        )
-
-        cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? ORDER BY l DESC, j DESC", (species,))
-        row = cursor.fetchone()
         if row is None:
-            raise ValueError(f"No Rydberg-Ritz parameters found for {species}")
-
-        return RydbergRitzParameters(species=species, l=l, j=j, d0=0, d2=0, d4=0, d6=0, d8=0, Ry=row[8])
+            cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? ORDER BY l DESC, j DESC", (species,))
+            row = cursor.fetchone()
+            if row is None:
+                raise ValueError(f"No Rydberg-Ritz parameters found for {species}")
+            row = (row[0], row[1], row[2], 0.0, 0.0, 0.0, 0.0, 0.0, row[8])
+            logger.debug(
+                "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, returning parameters with d_i=0",
+                *(species, l, j),
+            )
+        return row[3], row[4], row[5], row[6], row[7], row[8]
 
     def get_ground_state(self, species: str) -> GroundState:
         """Get ground state parameters.
