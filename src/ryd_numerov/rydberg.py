@@ -111,7 +111,7 @@ class RydbergState:
     @property
     def energy(self) -> float:
         """The energy of the Rydberg state in atomic units."""
-        return self.model.energy
+        return self.model.ritz_params.get_energy(self.n)
 
     @property
     def grid(self) -> Grid:

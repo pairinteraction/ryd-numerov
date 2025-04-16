@@ -53,47 +53,8 @@ class Model:
             )
 
     @property
-    def n_star(self) -> float:
-        params = self.ritz_params
-        delta_nlj = (
-            params.d0
-            + params.d2 / (self.n - params.d0) ** 2
-            + params.d4 / (self.n - params.d0) ** 4
-            + params.d6 / (self.n - params.d0) ** 6
-        )
-        return self.n - delta_nlj
-
-    @property
     def energy(self) -> float:
-        r"""Return the energy of a Rydberg state with principal quantum number n in atomic units.
-
-        The effective principal quantum number in quantum defect theory is defined as series expansion
-
-        .. math::
-            n^* = n - \\delta_{nlj}
-
-        where
-
-        .. math::
-            \\delta_{nlj} = d_{0} + \frac{d_{2}}{(n - d_{0})^2}
-            + \frac{d_{4}}{(n - d_{0})^4} + \frac{d_{6}}{(n - d_{0})^6}
-
-        is the quantum defect. The energy of the Rydberg state is then given by
-
-        .. math::
-            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}
-
-        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
-
-        Args:
-            n: Principal quantum number of the state to calculate the energy for.
-
-        Returns:
-            Energy of the Rydberg state in atomic units.
-
-        """
-        params = self.ritz_params
-        return -0.5 * params.mu / self.n_star**2
+        return self.ritz_params.get_energy(self.n)
 
     def calc_potential_core(self, x: "NDArray") -> "NDArray":
         r"""Calculate the core potential V_c(x) in atomic units.
