@@ -63,7 +63,7 @@ class RydbergState:
         assert isinstance(self.s, (float, int)), "s must be a float or int"
         assert self.n >= 1, "n must be larger than 0"
         assert 0 <= self.l <= self.n - 1, "l must be between 0 and n - 1"
-        assert self.j >= abs(self.l - self.s) and self.j <= self.l + self.s, "j must be between l - s and l + s"
+        assert abs(self.l - self.s) <= self.j <= self.l + self.s, "j must be between l - s and l + s"
         assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
 
         self._model: Model = None

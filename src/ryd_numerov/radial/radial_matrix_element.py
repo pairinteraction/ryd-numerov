@@ -52,7 +52,7 @@ def calc_radial_matrix_element(
     wf1 = state1.wavefunction
     wf2 = state2.wavefunction
     return _calc_radial_matrix_element_from_w_z(
-        wf1.grid.zlist, wf1.wlist, wf2.grid.zlist, wf2.wlist, k_radial, integration_method
+        wf1.grid.zlist, wf1.w_list, wf2.grid.zlist, wf2.w_list, k_radial, integration_method
     )
 
 
@@ -117,6 +117,16 @@ def _calc_radial_matrix_element_from_w_z(
         z2 = z2[:-ind]
         w2 = w2[:-ind]
 
+    _sanity_check_integration(z1, z2)
+
+    integrand = 2 * w1 * w2
+    for _ in range(2 * k_radial + 2):
+        integrand *= z1
+
+    return _integrate(integrand, dz, integration_method)
+
+
+def _sanity_check_integration(z1: np.ndarray, z2: np.ndarray) -> None:
     tol = 1e-10
     assert len(z1) == len(z2), f"Length mismatch: {len(z1)=} != {len(z2)=}"
     assert z1[0] - z2[0] < tol, f"First point mismatch: {z1[0]=} != {z2[0]=}"
@@ -124,17 +134,18 @@ def _calc_radial_matrix_element_from_w_z(
     assert z1[2] - z2[2] < tol, f"Third point mismatch: {z1[2]=} != {z2[2]=}"
     assert z1[-1] - z2[-1] < tol, f"Last point mismatch: {z1[-1]=} != {z2[-1]=}"
 
-    integrand = 2 * w1 * w2
-    for _ in range(2 * k_radial + 2):
-        integrand *= z1
 
-    if integration_method == "sum":
-        return np.sum(integrand) * dz
-    if integration_method == "trapezoid":
-        return float(np.trapezoid(integrand, dx=dz))
-    if integration_method == "scipy_trapezoid":
-        return float(scipy.integrate.trapezoid(integrand, dx=dz))
-    if integration_method == "scipy_simpson":
-        return float(scipy.integrate.simpson(integrand, dx=dz))
+def _integrate(integrand: np.ndarray, dz: float, method: INTEGRATION_METHODS) -> float:
+    """Integrate the given integrand using the specified method."""
+    if method == "sum":
+        value = np.sum(integrand) * dz
+    elif method == "trapezoid":
+        value = np.trapezoid(integrand, dx=dz)
+    elif method == "scipy_trapezoid":
+        value = scipy.integrate.trapezoid(integrand, dx=dz)
+    elif method == "scipy_simpson":
+        value = scipy.integrate.simpson(integrand, dx=dz)
+    else:
+        raise ValueError(f"Invalid integration method: {method}")
 
-    raise ValueError(f"Invalid integration method: {integration_method}")
+    return float(value)

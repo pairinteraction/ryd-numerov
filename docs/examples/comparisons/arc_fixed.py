@@ -1,14 +1,16 @@
+# ruff: noqa: INP001
+
 import arc
 import numpy as np
 import scipy.integrate
 
 
-def radialWavefunction(
+def radialWavefunction(  # noqa: N802
     atom: arc.AlkaliAtom, n: int, l: int, j: float, step: float = 1e-2, use_fixed_arc: bool = False
 ) -> tuple[np.ndarray, np.ndarray]:
     n, l, j = int(n), int(l), float(j)
-    E_H = 27.211 if not use_fixed_arc else 27.211_386_245_988
-    energy = atom.getEnergy(int(n), int(l), float(j)) / E_H
+    hartree_energy = 27.211 if not use_fixed_arc else 27.211_386_245_988
+    energy = atom.getEnergy(int(n), int(l), float(j)) / hartree_energy
     r_list, psi_r_list = atom.radialWavefunction(
         int(l),
         0.5,
@@ -27,7 +29,7 @@ def radialWavefunction(
     return r, psi_r
 
 
-def getRadialMatrixElement(
+def getRadialMatrixElement(  # noqa: N802
     atom: arc.AlkaliAtom,
     n1: int,
     l1: int,
@@ -41,8 +43,8 @@ def getRadialMatrixElement(
     r1, psi1_r1 = radialWavefunction(atom, n1, l1, j1, step, use_fixed_arc)
     r2, psi2_r2 = radialWavefunction(atom, n2, l2, j2, step, use_fixed_arc)
 
-    upTo = min(len(r1), len(r2))
+    upto = min(len(r1), len(r2))
     return scipy.integrate.trapezoid(
-        np.multiply(np.multiply(psi1_r1[0:upTo], psi2_r2[0:upTo]), r1[0:upTo]),
-        x=r1[0:upTo],
+        np.multiply(np.multiply(psi1_r1[0:upto], psi2_r2[0:upto]), r1[0:upto]),
+        x=r1[0:upto],
     )

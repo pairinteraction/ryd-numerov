@@ -1,12 +1,11 @@
-# Configuration file for the Sphinx documentation builder.
-
+# ruff: noqa: INP001
 
 import ryd_numerov
 
 # -- Project information -----------------------------------------------------
 
 project = "ryd-numerov"
-copyright = "2025, Rydberg Numerov Developers"
+copyright = "2025, Rydberg Numerov Developers"  # noqa: A001
 author = "Rydberg Numerov Developers"
 
 version = ryd_numerov.__version__  # The short X.Y version, use via |version|

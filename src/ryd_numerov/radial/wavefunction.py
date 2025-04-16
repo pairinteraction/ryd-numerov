@@ -16,10 +16,10 @@ class Wavefunction:
     r"""An object containing all the relevant information about the radial wavefunction.
 
     Attributes:
-        wlist: The dimensionless and scaled wavefunction
+        w_list: The dimensionless and scaled wavefunction
             w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \\sqrt(a_0) r R(r) evaluated at the zlist values.
-        ulist: The corresponding dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r).
-        Rlist: The corresponding dimensionless radial wavefunction \tilde{R}(r) = a_0^{-3/2} R(r).
+        u_list: The corresponding dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r).
+        r_list: The corresponding dimensionless radial wavefunction \tilde{R}(r) = a_0^{-3/2} R(r).
 
     """
 
@@ -38,7 +38,7 @@ class Wavefunction:
         self._grid = grid
         self._model = model
 
-        self._wlist: np.ndarray = None
+        self._w_list: np.ndarray = None
 
     @property
     def grid(self) -> "Grid":
@@ -51,29 +51,29 @@ class Wavefunction:
         return self._model
 
     @property
-    def wlist(self) -> np.ndarray:
+    def w_list(self) -> np.ndarray:
         r"""The dimensionless scaled wavefunction w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r)."""
-        if self._wlist is None:
+        if self._w_list is None:
             self.integrate()
-        return self._wlist
+        return self._w_list
 
     @property
-    def ulist(self) -> np.ndarray:
+    def u_list(self) -> np.ndarray:
         r"""The dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r)."""
-        return np.sqrt(self.grid.zlist) * self.wlist
+        return np.sqrt(self.grid.zlist) * self.w_list
 
     @property
-    def Rlist(self) -> np.ndarray:
+    def r_list(self) -> np.ndarray:
         r"""The radial wavefunction R(r) in atomic units."""
-        return self.ulist / self.grid.xlist
+        return self.u_list / self.grid.xlist
 
     def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation.
 
         The resulting radial wavefunctions are then stored as attributes, where
-        - wlist is the dimensionless and scaled wavefunction w(z)
-        - ulist is the dimensionless wavefunction \tilde{u}(x)
-        - Rlist is the radial wavefunction R(r) in atomic units
+        - w_list is the dimensionless and scaled wavefunction w(z)
+        - u_list is the dimensionless wavefunction \tilde{u}(x)
+        - r_list is the radial wavefunction R(r) in atomic units
 
         The radial wavefunction are related as follows:
 
@@ -102,7 +102,7 @@ class Wavefunction:
             _use_njit (default: True): Whether to use the fast njit version of the Numerov integration.
 
         """
-        if self._wlist is not None:
+        if self._w_list is not None:
             raise ValueError("The wavefunction was already integrated, you should not integrate it again.")
 
         # Note: Inside this method we use y and x like it is used in the numerov function
@@ -114,7 +114,7 @@ class Wavefunction:
             * self.model.ritz_params.mu
             * grid.zlist
             * grid.zlist
-            * (self.model.energy - self.model.calc_V_tot(grid.xlist))
+            * (self.model.energy - self.model.calc_total_effective_potential(grid.xlist))
         )
 
         if run_backward:
@@ -136,23 +136,23 @@ class Wavefunction:
             x_min = np.sqrt(self.model.n * (self.model.n + 15))
 
         if _use_njit:
-            wlist = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
+            w_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
         else:
             logger.warning("Using python implementation of Numerov integration, this is much slower!")
-            wlist = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
+            w_list = _run_numerov_integration_python(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
 
-        wlist = np.array(wlist)
+        w_list = np.array(w_list)
         if run_backward:
-            wlist = wlist[::-1]
-            grid.set_grid_range(step_start=grid.steps - len(wlist))
+            w_list = w_list[::-1]
+            grid.set_grid_range(step_start=grid.steps - len(w_list))
         else:
-            grid.set_grid_range(step_stop=len(wlist))
+            grid.set_grid_range(step_stop=len(w_list))
 
         # normalize the wavefunction, see docstring
-        norm = np.sqrt(2 * np.sum(wlist * wlist * grid.zlist * grid.zlist) * grid.dz)
-        wlist /= norm
+        norm = np.sqrt(2 * np.sum(w_list * w_list * grid.zlist * grid.zlist) * grid.dz)
+        w_list /= norm
 
-        self._wlist = wlist
+        self._w_list = w_list
 
         self.sanity_check(x_stop, run_backward)
 
@@ -166,7 +166,7 @@ class Wavefunction:
 
         return 0
 
-    def sanity_check(self, z_stop: float, run_backward: bool) -> bool:
+    def sanity_check(self, z_stop: float, run_backward: bool) -> bool:  # noqa: C901, PLR0915, PLR0912
         """Do some sanity checks on the wavefunction.
 
         Check if the wavefuntion fulfills the following conditions:
@@ -181,31 +181,33 @@ class Wavefunction:
         species, n, l, j = self.model.species, self.model.n, self.model.l, self.model.j
 
         # Check the maximum of the wavefunction
-        idmax = np.argmax(np.abs(self.wlist))
+        idmax = np.argmax(np.abs(self.w_list))
         if run_backward and idmax < 0.05 * grid.steps:
             sanity_check = False
             logger.warning(
                 "The maximum of the wavefunction is close to the inner boundary (idmax=%s) "
-                + "probably due to inner divergence of the wavefunction. "
-                + "Trying to fix this, but the result might still be incorrect or at least inprecise.",
+                "probably due to inner divergence of the wavefunction. "
+                "Trying to fix this, but the result might still be incorrect or at least inprecise.",
                 idmax,
             )
-            wmax = np.max(self.wlist[int(0.1 * grid.steps) :])
-            wmin = np.min(self.wlist[int(0.1 * grid.steps) :])
+            wmax = np.max(self.w_list[int(0.1 * grid.steps) :])
+            wmin = np.min(self.w_list[int(0.1 * grid.steps) :])
             tol = 1e-2 * max(abs(wmax), abs(wmin))
-            self._wlist *= (self.wlist <= wmax + tol) * (self.wlist >= wmin - tol)
-            norm = np.sqrt(2 * np.sum(self.wlist * self.wlist * grid.zlist * grid.zlist) * grid.dz)
-            self._wlist /= norm
+            self._w_list *= (self.w_list <= wmax + tol) * (self.w_list >= wmin - tol)
+            norm = np.sqrt(2 * np.sum(self.w_list * self.w_list * grid.zlist * grid.zlist) * grid.dz)
+            self._w_list /= norm
 
         # Check the wavefunction at the inner boundary
-        if self.wlist[0] < 0:
+        if self.w_list[0] < 0:
             sanity_check = False
-            logger.warning("The wavefunction is negative at the inner boundary, %s", self.wlist[0])
+            logger.warning("The wavefunction is negative at the inner boundary, %s", self.w_list[0])
 
         inner_ind = {0: 5, 1: 5}.get(l, 10)
         inner_weight = (
             2
-            * np.sum(self.wlist[:inner_ind] * self.wlist[:inner_ind] * grid.zlist[:inner_ind] * grid.zlist[:inner_ind])
+            * np.sum(
+                self.w_list[:inner_ind] * self.w_list[:inner_ind] * grid.zlist[:inner_ind] * grid.zlist[:inner_ind]
+            )
             * grid.dz
         )
         inner_weight_scaled_to_whole_grid = inner_weight * grid.steps / inner_ind
@@ -238,7 +240,7 @@ class Wavefunction:
 
         # Check the wavefunction at the outer boundary
         outer_ind = int(0.95 * grid.steps)
-        outer_wf = self.wlist[outer_ind:]
+        outer_wf = self.w_list[outer_ind:]
         if np.mean(outer_wf) > 1e-7:
             sanity_check = False
             logger.warning(
@@ -256,10 +258,10 @@ class Wavefunction:
             )
 
         # Check the number of nodes
-        nodes = np.sum(np.abs(np.diff(np.sign(self.wlist)))) // 2
+        nodes = np.sum(np.abs(np.diff(np.sign(self.w_list)))) // 2
         if nodes != n - l - 1:
             sanity_check = False
-            logger.warning(f"The wavefunction has {nodes} nodes, but should have {n - l - 1} nodes.")
+            logger.warning("The wavefunction has %s nodes, but should have {n - l - 1} nodes.", nodes)
 
         # Check that numerov stopped and did not run until x_stop
         if l > 0:

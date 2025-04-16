@@ -61,11 +61,11 @@ def _run_numerov_integration_python(
         if (run_forward and x > x_min) or (run_backward and x < x_min):
             if y_list[-2] > y_list[-1] > 0 and (y < 0 or y > y_list[-1]):
                 if verbose:
-                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
+                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)  # noqa: T201
                 break
             if run_forward and y_list[-2] < y_list[-1] < 0 and (y > 0 or y < y_list[-1]):
                 if verbose:
-                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)
+                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)  # noqa: T201
                 break
 
         y_list.append(y)

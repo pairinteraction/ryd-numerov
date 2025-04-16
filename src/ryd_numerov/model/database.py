@@ -177,8 +177,8 @@ class GroundState:
         if self.species in ["Sr_triplet"] and (n, l) == (4, 2):  # Sr_triplet has a special case
             return True
         gs_id = SORTED_SHELLS.index((self.n, self.l))
-        id = SORTED_SHELLS.index((n, l))
-        return id >= gs_id
+        state_id = SORTED_SHELLS.index((n, l))
+        return state_id >= gs_id
 
 
 class Database:
@@ -196,7 +196,7 @@ class Database:
             db_path = str(Path(__file__).parent / "database.sql")
 
         self.conn = sqlite3.connect(":memory:")
-        with open(db_path) as f:
+        with Path(db_path).open() as f:
             self.conn.executescript(f.read())
 
     def get_model_potential(self, species: str, l: int) -> ModelPotentialParameters:
