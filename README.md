@@ -1,9 +1,12 @@
 # Rydberg Numerov
 
+[![PyPI Package][pypi-svg]][pypi-link]
 [![License: LGPL v3][license-lgpl-svg]][license-lgpl-link]
 [![CI Workflow][gh-workflow-svg]][gh-workflow-link]
 [![Documentation][docs-svg]][docs-link]
 
+[pypi-svg]: https://img.shields.io/pypi/v/ryd-numerov.svg?style=flat
+[pypi-link]: https://pypi.org/project/ryd-numerov/
 [license-lgpl-svg]: https://img.shields.io/badge/License-LGPL_v3-blue.svg?style=flat
 [license-lgpl-link]: https://www.gnu.org/licenses/lgpl-3.0.html
 [gh-workflow-svg]: https://github.com/pairinteraction/ryd-numerov/actions/workflows/python_wheel.yml/badge.svg
