@@ -42,7 +42,6 @@ class QuantumDefect:
             n: Principal quantum number
             l: Orbital angular momentum quantum number
             j: Total angular momentum quantum number
-            mu: Reduced mass \(\mu = \frac{m_{\text{Core}}}{m_{\text{Core}} + m_e} = R_{m_\text{Core}} / R_{\infty}\)
             database: Database instance, where the model potential parameters are stored
               If None, use the global database instance.
 

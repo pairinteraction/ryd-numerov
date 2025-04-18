@@ -281,15 +281,16 @@ class ModelPotential:
         if which == "hydrogen":
             return hydrogen_z_i
 
-        z_list: NDArray = np.arange(max(dz, hydrogen_z_i - 10), max(hydrogen_z_i + 10, 10), dz)
+        if which == "classical":
+            z_list = np.arange(max(dz, hydrogen_z_i - 10), hydrogen_z_i + 10, dz)
+            energy = self.quantum_defect.energy
+        elif which == "zerocrossing":
+            z_list = np.arange(max(dz, hydrogen_z_i / 2 - 5), hydrogen_z_i, dz)
+            energy = 0
+
         x_list = z_list * z_list
         v_phys = self.calc_total_physical_potential(x_list)
-
-        arg: int
-        if which == "classical":
-            arg = np.argwhere(v_phys < self.quantum_defect.energy)[0][0]
-        elif which == "zerocrossing":
-            arg = np.argwhere(v_phys < 0)[0][0]
+        arg: int = np.argwhere(v_phys < energy)[0][0]
 
         if arg == 0:
             if self.l == 0:

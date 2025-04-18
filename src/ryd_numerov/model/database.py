@@ -95,7 +95,7 @@ class Database:
                 raise ValueError(f"No Rydberg-Ritz parameters found for {species}")
             row = (row[0], row[1], row[2], 0.0, 0.0, 0.0, 0.0, 0.0, row[8])
             logger.debug(
-                "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, returning parameters with d_i=0",
+                "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, returning zero quantum defects.",
                 *(species, l, j),
             )
         return row[3], row[4], row[5], row[6], row[7], row[8]
