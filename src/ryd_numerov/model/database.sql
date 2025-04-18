@@ -199,27 +199,3 @@ INSERT INTO `rydberg_ritz` VALUES ('Sr_triplet', 3, '4', '0.120', '-2.4', '120',
 INSERT INTO `rydberg_ritz` VALUES ('Sr_triplet', 3, '3', '0.119', '-2.0', '100', '0.0', '0.0', '109736.631');
 INSERT INTO `rydberg_ritz` VALUES ('Sr_triplet', 3, '2', '0.120', '-2.2', '100', '0.0', '0.0', '109736.631');
 INSERT INTO `rydberg_ritz` VALUES ('Sr_triplet', 4, '3', '0.0', '0.0', '0.0', '0.0', '0.0', '109736.631');
-
-
-
--------------------------------------------------
----------- Table for the ground states ----------
--------------------------------------------------
-DROP TABLE IF EXISTS `ground_state`;
-CREATE TABLE `ground_state` (`species` TEXT, `configuration` TEXT, `n` INT, `l` INT, `s` REAL, `j` REAL, `m` REAL, `ionization_energy` REAL);
-
--- Ground state configurations with quantum numbers for outermost electron(s)
--- see e.g. https://www.webelements.com/atoms.html
--- ionization energies in GHz from:
--- -- Rb for F=1 from https://journals.aps.org/pra/pdf/10.1103/PhysRevA.83.052515 (see also https://webbook.nist.gov/cgi/inchi?ID=C7440177&Mask=20)
--- -- Sr_triplet from https://journals.aps.org/pra/pdf/10.1103/PhysRevA.99.022503 (see also https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440246&Mask=20#Ion-Energetics)
-INSERT INTO `ground_state` VALUES ('H', '1s', 1, 0, 0.5, 0.5, 0.5, '0');
-INSERT INTO `ground_state` VALUES ('Li', '[He]2s', 2, 0, 0.5, 0.5, 0.5, '0');
-INSERT INTO `ground_state` VALUES ('Na', '[Ne]3s', 3, 0, 0.5, 0.5, 0.5, '0');
-INSERT INTO `ground_state` VALUES ('K', '[Ar]4s', 4, 0, 0.5, 0.5, 0.5, '0');
-INSERT INTO `ground_state` VALUES ('Rb', '[Kr]5s', 5, 0, 0.5, 0.5, 0.5, '1010029.1646');
-INSERT INTO `ground_state` VALUES ('Cs', '[Xe]6s', 6, 0, 0.5, 0.5, 0.5, '0');
-INSERT INTO `ground_state` VALUES ('Sr_singlet', '[Kr]5s2', 5, 0, 0.0, 0.0, 0.0, '1377012.721');  -- TODO FIXME
-INSERT INTO `ground_state` VALUES ('Sr_triplet', '[Kr]5s5p', 5, 1, 1.0, 0.0, 0.0, '1377012.721');
-
-COMMIT;

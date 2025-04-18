@@ -6,6 +6,7 @@ import numpy as np
 from scipy.special import exprel
 
 from ryd_numerov.angular import calc_angular_matrix_element
+from ryd_numerov.elements.element import Element
 from ryd_numerov.model import Database
 from ryd_numerov.model.model_potential import ModelPotential
 from ryd_numerov.model.quantum_defect import QuantumDefect
@@ -21,9 +22,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 TransitionRateMethod = Literal["exact", "approximation"]
-
-ALKALI_SPECIES = ["H", "Li", "Na", "K", "Rb", "Cs", "Fr"]
-ALKALINE_EARTH_SPECIES = ["Be", "Mg", "Ca", "Sr", "Ba", "Ra"]
 
 
 class RydbergState:
@@ -45,7 +43,6 @@ class RydbergState:
         species: str,
         n: int,
         l: int,
-        s: Optional[float] = None,
         j: Optional[float] = None,
         m: Optional[float] = None,
         database: Optional["Database"] = None,
@@ -56,7 +53,6 @@ class RydbergState:
             species: Atomic species
             n: Principal quantum number
             l: Orbital angular momentum quantum number
-            s: Spin quantum number
             j: Total angular momentum quantum number
             m: Magnetic quantum number
               Optional, only needed for concrete angular matrix elements.
@@ -65,19 +61,14 @@ class RydbergState:
 
         """
         self.species = species
+        self.element = Element.from_species(species)
+
         self.n = n
         self.l = l
-        if s is None:
-            s = get_spin_from_species(species)
-        self.s = s
         if j is None:
-            if self.l == 0:
-                j = s
-            elif self.s == 0:
-                j = l
-            else:
+            if self.l != 0 and self.s != 0:
                 raise ValueError("j must be given for non-zero s and non-zero l")
-            j = s
+            j = self.l + self.s
         self.j = j
         self.m = m
 
@@ -88,7 +79,7 @@ class RydbergState:
         self.sanity_check()
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.species}, n={self.n}, l={self.l}, s={self.s}, j={self.j}, m={self.m})"
+        return f"{self.__class__.__name__}({self.species}, n={self.n}, l={self.l}, j={self.j}, m={self.m})"
 
     def __str__(self) -> str:
         return self.get_label("ket")
@@ -115,16 +106,13 @@ class RydbergState:
             return f"⟨{raw}|"
         raise ValueError(f"Unknown fmt {fmt}")
 
-    def sanity_check(self) -> None:  # noqa: PLR0912, C901
+    def sanity_check(self) -> None:  # noqa: C901
         good = True
         if not isinstance(self.n, int):
             logger.warning("n must be an integer, but is %s", self.n)
             good = False
         if not isinstance(self.l, int):
             logger.warning("l must be an integer, but is %s", self.l)
-            good = False
-        if not isinstance(self.s, (int, float)):
-            logger.warning("s must be an integer or float, but is %s", self.s)
             good = False
         if not isinstance(self.j, (int, float)):
             logger.warning("j must be an integer or float, but is %s", self.j)
@@ -142,18 +130,19 @@ class RydbergState:
         if not abs(self.l - self.s) <= self.j <= self.l + self.s:
             logger.warning("j must be between l - s and l + s, but is %s", self.j)
             good = False
-        if (self.j + self.s) % 1 != 0:
-            logger.warning("j and s must be booth integer or half-integer, but are %s and %s", self.j, self.s)
+        if (self.s + self.j) % 1 != 0:
+            type_ = "integer" if self.s % 1 == 0 else "half-integer"
+            logger.warning("j must be %s for %s, but is %s", type_, self.species, self.j)
             good = False
         if self.m is not None and not -self.j <= self.m <= self.j:
             logger.warning("m must be between -j and j, but is %s", self.m)
             good = False
-        if self.m is not None and (self.j + self.m) % 1 != 0:
-            logger.warning("j and m must be booth integer or half-integer, but are %s and %s", self.j, self.m)
+        if self.m is not None and (self.s + self.m) % 1 != 0:
+            type_ = "integer" if self.s % 1 == 0 else "half-integer"
+            logger.warning("m must be %s for %s, but is %s", type_, self.species, self.m)
             good = False
 
-        self.ground_state = self.database.get_ground_state(self.species)
-        if not self.ground_state.is_allowed_shell(self.n, self.l):
+        if not self.element.is_allowed_shell(self.n, self.l):
             logger.warning(
                 "The shell (n=%s, l=%s) is not allowed for the species %s.",
                 *(self.n, self.l, self.species),
@@ -162,6 +151,11 @@ class RydbergState:
 
         if not good:
             raise ValueError(f"Invalid Rydberg state {self!r}")
+
+    @property
+    def s(self) -> float:
+        """The total spin quantum number."""
+        return self.element.s
 
     @cached_property
     def quantum_defect(self) -> QuantumDefect:
@@ -264,14 +258,6 @@ class RydbergState:
         self._wavefunction = Wavefunction(self.grid, self.model_potential, self.quantum_defect)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
         self._grid = self._wavefunction.grid
-
-    @property
-    def is_alkali(self) -> bool:
-        return self.species.split("_")[0] in ALKALI_SPECIES
-
-    @property
-    def is_alkaline_earth(self) -> bool:
-        return self.species.split("_")[0] in ALKALINE_EARTH_SPECIES
 
     @overload
     def get_energy(self, unit: None = None) -> "PintFloat": ...
@@ -632,12 +618,10 @@ class RydbergState:
                             not 0 <= l < n
                             or not -j <= m <= j
                             or not abs(l - self.s) <= j <= l + self.s
-                            or not self.ground_state.is_allowed_shell(n, l)
+                            or not self.element.is_allowed_shell(n, l)
                         ):
                             continue
-                        other = self.__class__(
-                            self.species, n=n, l=l, j=float(j), m=float(m), s=self.s, database=self.database
-                        )
+                        other = self.__class__(self.species, n=n, l=l, j=float(j), m=float(m), database=self.database)
                         assert other.m is not None
                         if other.get_energy("a.u.") < self.get_energy("a.u.") or not only_smaller_energy:
                             relevant_states.append(other)
@@ -664,10 +648,10 @@ class RydbergState:
                     if (
                         not 0 <= l < n
                         or not abs(l - self.s) <= j <= l + self.s
-                        or not self.ground_state.is_allowed_shell(n, l)
+                        or not self.element.is_allowed_shell(n, l)
                     ):
                         continue
-                    other = self.__class__(self.species, n=n, l=l, j=float(j), s=self.s, database=self.database)
+                    other = self.__class__(self.species, n=n, l=l, j=float(j), database=self.database)
                     if other.get_energy("a.u.") < self.get_energy("a.u.") or not only_smaller_energy:
                         relevant_states.append(other)
                         energy_differences.append(self.get_energy("a.u.") - other.get_energy("a.u."))
@@ -679,11 +663,3 @@ class RydbergState:
                         )
 
         return relevant_states, np.array(energy_differences), np.array(radial_matrix_elements)
-
-
-def get_spin_from_species(species: str) -> float:
-    if species.endswith("singlet"):
-        return 0
-    if species.endswith("triplet"):
-        return 1
-    return 0.5
