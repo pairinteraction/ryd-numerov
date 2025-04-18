@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import get_args
 
 import numpy as np
@@ -61,6 +62,7 @@ def calc_angular_matrix_element(
     return prefactor * reduced_matrix_element * wigner_3j
 
 
+@lru_cache(maxsize=10_000)
 def calc_reduced_angular_matrix_element(
     s1: float,
     l1: int,
@@ -204,6 +206,7 @@ def spin_like_matrix_element(x1: float, x2: float, kappa: int) -> float:
     return value
 
 
+@lru_cache(maxsize=1_000)
 def spherical_like_matrix_element(l1: int, l2: int, operator: OperatorType, kappa: int) -> float:
     r"""Calculate the reduced spherical-like matrix element $(l2||\hat{Y}_{k0}||l1)$.
 
