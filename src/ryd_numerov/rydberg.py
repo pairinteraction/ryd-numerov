@@ -1,5 +1,4 @@
 import logging
-from dataclasses import dataclass
 from functools import cached_property
 from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
 
@@ -27,7 +26,6 @@ ALKALI_SPECIES = ["H", "Li", "Na", "K", "Rb", "Cs", "Fr"]
 ALKALINE_EARTH_SPECIES = ["Be", "Mg", "Ca", "Sr", "Ba", "Ra"]
 
 
-@dataclass
 class RydbergState:
     r"""Create a Rydberg state, for which the radial Schrödinger equation is solved using the Numerov method.
 
@@ -45,7 +43,6 @@ class RydbergState:
     def __init__(
         self,
         species: str,
-        *,
         n: int,
         l: int,
         s: Optional[float] = None,
@@ -90,21 +87,81 @@ class RydbergState:
 
         self.sanity_check()
 
-    def sanity_check(self) -> None:
-        if self.s is None:
-            self.s = get_spin_from_species(self.species)
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.species}, n={self.n}, l={self.l}, s={self.s}, j={self.j}, m={self.m})"
 
-        assert isinstance(self.s, (float, int)), "s must be a float or int"
-        assert self.n >= 1, "n must be larger than 0"
-        assert 0 <= self.l <= self.n - 1, "l must be between 0 and n - 1"
-        assert abs(self.l - self.s) <= self.j <= self.l + self.s, "j must be between l - s and l + s"
-        assert (self.j + self.s) % 1 == 0, "j and s both must be integer or half-integer"
+    def __str__(self) -> str:
+        return self.get_label("ket")
+
+    def get_label(self, fmt: Literal["raw", "ket", "bra"]) -> str:
+        """Label representing the ket.
+
+        Args:
+            fmt: The format of the label, i.e. whether to return the raw label, or the label in ket or bra notation.
+
+        Returns:
+            The label of the ket in the given format.
+
+        """
+        l_dict = {0: "S", 1: "P", 2: "D", 3: "F", 4: "G", 5: "H"}
+        raw = f"{self.species}:{self.n},{l_dict.get(self.l, self.l)}_{self.j}"
+        if self.m is not None:
+            raw += f",{self.m}"
+        if fmt == "raw":
+            return raw
+        if fmt == "ket":
+            return f"|{raw}⟩"
+        if fmt == "bra":
+            return f"⟨{raw}|"
+        raise ValueError(f"Unknown fmt {fmt}")
+
+    def sanity_check(self) -> None:  # noqa: PLR0912, C901
+        good = True
+        if not isinstance(self.n, int):
+            logger.warning("n must be an integer, but is %s", self.n)
+            good = False
+        if not isinstance(self.l, int):
+            logger.warning("l must be an integer, but is %s", self.l)
+            good = False
+        if not isinstance(self.s, (int, float)):
+            logger.warning("s must be an integer or float, but is %s", self.s)
+            good = False
+        if not isinstance(self.j, (int, float)):
+            logger.warning("j must be an integer or float, but is %s", self.j)
+            good = False
+        if self.m is not None and not isinstance(self.m, (int, float)):
+            logger.warning("m must be an integer, float or None, but is %s", self.m)
+            good = False
+
+        if not self.n >= 1:
+            logger.warning("n must be larger than 0, but is %s", self.n)
+            good = False
+        if not 0 <= self.l <= self.n - 1:
+            logger.warning("l must be between 0 and n - 1, but is %s", self.l)
+            good = False
+        if not abs(self.l - self.s) <= self.j <= self.l + self.s:
+            logger.warning("j must be between l - s and l + s, but is %s", self.j)
+            good = False
+        if (self.j + self.s) % 1 != 0:
+            logger.warning("j and s must be booth integer or half-integer, but are %s and %s", self.j, self.s)
+            good = False
+        if self.m is not None and not -self.j <= self.m <= self.j:
+            logger.warning("m must be between -j and j, but is %s", self.m)
+            good = False
+        if self.m is not None and (self.j + self.m) % 1 != 0:
+            logger.warning("j and m must be booth integer or half-integer, but are %s and %s", self.j, self.m)
+            good = False
 
         self.ground_state = self.database.get_ground_state(self.species)
         if not self.ground_state.is_allowed_shell(self.n, self.l):
-            raise InvalidStateError(
-                f"The shell (n={self.n=}, l={self.l}) is not allowed for the species {self.species}."
+            logger.warning(
+                "The shell (n=%s, l=%s) is not allowed for the species %s.",
+                *(self.n, self.l, self.species),
             )
+            good = False
+
+        if not good:
+            raise ValueError(f"Invalid Rydberg state {self!r}")
 
     @cached_property
     def quantum_defect(self) -> QuantumDefect:
@@ -113,12 +170,10 @@ class RydbergState:
     @property
     def model_potential(self) -> ModelPotential:
         if not hasattr(self, "_model_potential"):
-            self._model_potential = self.create_model_potential()
+            self.create_model_potential()
         return self._model_potential
 
-    def create_model_potential(
-        self, *, add_spin_orbit: bool = True, add_model_potentials: bool = True
-    ) -> ModelPotential:
+    def create_model_potential(self, *, add_spin_orbit: bool = True, add_model_potentials: bool = True) -> None:
         """Create the model potential for the Rydberg state.
 
         Args:
@@ -127,9 +182,6 @@ class RydbergState:
             add_model_potentials: Whether to include the model potentials
               (see calc_potential_core and calc_potential_core_polarization)
               Defaults to True.
-
-        Returns:
-            ModelPotential: The model potential for the Rydberg state.
 
         """
         if hasattr(self, "_model_potential"):
@@ -146,13 +198,12 @@ class RydbergState:
             add_spin_orbit=add_spin_orbit,
             add_model_potentials=add_model_potentials,
         )
-        return self._model_potential
 
-    @cached_property
+    @property
     def grid(self) -> Grid:
         """The grid object for the integration of the radial Schrödinger equation."""
         if not hasattr(self, "_grid"):
-            self._grid = self.create_grid()
+            self.create_grid()
         return self._grid
 
     def create_grid(
@@ -160,7 +211,7 @@ class RydbergState:
         x_min: Optional[float] = None,
         x_max: Optional[float] = None,
         dz: float = 1e-2,
-    ) -> Grid:
+    ) -> None:
         """Create the grid object for the integration of the radial Schrödinger equation.
 
         Args:
@@ -199,21 +250,20 @@ class RydbergState:
         z_min = max(z_min, dz)
 
         self._grid = Grid(z_min, z_max, dz)
-        return self._grid
 
-    @cached_property
+    @property
     def wavefunction(self) -> Wavefunction:
         if not hasattr(self, "_wavefunction"):
-            self._wavefunction = self.create_wavefunction()
+            self.create_wavefunction()
         return self._wavefunction
 
-    def create_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> Wavefunction:
+    def create_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
         if hasattr(self, "_wavefunction"):
             raise RuntimeError("The wavefunction was already created, you should not create it again.")
 
         self._wavefunction = Wavefunction(self.grid, self.model_potential, self.quantum_defect)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
-        return self._wavefunction
+        self._grid = self._wavefunction.grid
 
     @property
     def is_alkali(self) -> bool:
@@ -637,7 +687,3 @@ def get_spin_from_species(species: str) -> float:
     if species.endswith("triplet"):
         return 1
     return 0.5
-
-
-class InvalidStateError(Exception):
-    """Exception raised when the specified state does not exist because it is below the ground state."""
