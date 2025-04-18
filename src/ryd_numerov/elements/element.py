@@ -1,4 +1,5 @@
 from abc import ABC
+from functools import cache
 from typing import ClassVar, Union
 
 from ryd_numerov.units import ureg
@@ -46,6 +47,7 @@ class Element(ABC):
     """Ionization energy in GHz."""
 
     @classmethod
+    @cache
     def from_species(cls, species: str) -> "Element":
         """Create an instance of the element class from the species string.
 
