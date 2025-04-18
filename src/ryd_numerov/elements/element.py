@@ -1,5 +1,6 @@
 import inspect
 from abc import ABC
+from functools import cache
 from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
 
 from ryd_numerov.units import ureg
@@ -50,6 +51,7 @@ class Element(ABC):
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
     @classmethod
+    @cache
     def from_species(cls, species: str) -> "Element":
         """Create an instance of the element class from the species string.
 
