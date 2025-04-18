@@ -3,8 +3,6 @@ import sqlite3
 from pathlib import Path
 from typing import ClassVar, Optional
 
-from ryd_numerov.model.ground_state import GroundState
-
 logger = logging.getLogger(__name__)
 
 
@@ -99,36 +97,6 @@ class Database:
                 *(species, l, j),
             )
         return row[3], row[4], row[5], row[6], row[7], row[8]
-
-    def get_ground_state(self, species: str) -> GroundState:
-        """Get ground state parameters.
-
-        Args:
-            species: Atomic species
-
-        Returns:
-            GroundState containing the ground state quantum numbers.
-
-        Raises:
-            ValueError: If no parameters found for species
-
-        """
-        cursor = self.conn.execute("SELECT * FROM ground_state WHERE species=?", (species,))
-        row = cursor.fetchone()
-
-        if row is None:
-            raise ValueError(f"No ground state parameters found for {species}")
-
-        return GroundState(
-            species=row[0],
-            configuration=row[1],
-            n=row[2],
-            l=row[3],
-            s=row[4],
-            j=row[5],
-            m=row[6],
-            ionization_energy=row[7],
-        )
 
     def __del__(self) -> None:
         """Close database connection on object deletion."""
