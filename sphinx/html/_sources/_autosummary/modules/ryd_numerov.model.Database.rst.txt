@@ -1,0 +1,27 @@
+Database
+========
+
+.. currentmodule:: ryd_numerov.model
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Database.__init__
+      ~Database.get_global_instance
+      ~Database.get_ground_state
+      ~Database.get_model_potential_parameters
+      ~Database.get_quantum_defect_parameters
+      ~Database.set_global_instance
+
+
+
+
+
+.. autoclass:: ryd_numerov.model.Database
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

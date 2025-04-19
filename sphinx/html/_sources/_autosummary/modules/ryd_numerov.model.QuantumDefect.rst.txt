@@ -1,0 +1,31 @@
+QuantumDefect
+=============
+
+.. currentmodule:: ryd_numerov.model
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~QuantumDefect.__init__
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~QuantumDefect.Ry_inf
+   ~QuantumDefect.energy
+   ~QuantumDefect.mu
+   ~QuantumDefect.n_star
+
+
+
+.. autoclass:: ryd_numerov.model.QuantumDefect
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

@@ -1,0 +1,415 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ModelPotential &mdash; ryd-numerov 0.5.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8e576371"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="QuantumDefect" href="ryd_numerov.model.QuantumDefect.html" />
+    <link rel="prev" title="GroundState" href="ryd_numerov.model.GroundState.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ryd_numerov.html">ryd_numerov</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergState.html">RydbergState</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.angular.html">angular</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="ryd_numerov.model.html">model</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.model.Database.html">Database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.model.GroundState.html">GroundState</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ModelPotential</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.model.QuantumDefect.html">QuantumDefect</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.radial.html">radial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.html">ryd_numerov</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.model.html">model</a></li>
+      <li class="breadcrumb-item active">ModelPotential</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/_autosummary/modules/ryd_numerov.model.ModelPotential.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="modelpotential">
+<h1>ModelPotential<a class="headerlink" href="#modelpotential" title="Link to this heading"></a></h1>
+<p class="rubric">Class Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code>(species, n, l, s, j, quantum_defect)</p></td>
+<td><p>Initialize the model potential.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_effective_potential_sqrt" title="ryd_numerov.model.ModelPotential.calc_effective_potential_sqrt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_effective_potential_sqrt</span></code></a>(x)</p></td>
+<td><p>Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_potential_centrifugal" title="ryd_numerov.model.ModelPotential.calc_potential_centrifugal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_potential_centrifugal</span></code></a>(x)</p></td>
+<td><p>Calculate the centrifugal potential V_l(x) in atomic units.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_potential_core" title="ryd_numerov.model.ModelPotential.calc_potential_core"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_potential_core</span></code></a>(x)</p></td>
+<td><p>Calculate the core potential V_c(x) in atomic units.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_potential_core_polarization" title="ryd_numerov.model.ModelPotential.calc_potential_core_polarization"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_potential_core_polarization</span></code></a>(x)</p></td>
+<td><p>Calculate the core polarization potential V_p(x) in atomic units.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_potential_spin_orbit" title="ryd_numerov.model.ModelPotential.calc_potential_spin_orbit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_potential_spin_orbit</span></code></a>(x)</p></td>
+<td><p>Calculate the spin-orbit coupling potential V_so(x) in atomic units.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_total_effective_potential" title="ryd_numerov.model.ModelPotential.calc_total_effective_potential"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_total_effective_potential</span></code></a>(x)</p></td>
+<td><p>Calculate the total potential V_tot(x) in atomic units.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_total_physical_potential" title="ryd_numerov.model.ModelPotential.calc_total_physical_potential"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_total_physical_potential</span></code></a>(x)</p></td>
+<td><p>Calculate the total physical potential V_phys(x) in atomic units.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.calc_z_turning_point" title="ryd_numerov.model.ModelPotential.calc_z_turning_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_z_turning_point</span></code></a>(which[, dz])</p></td>
+<td><p>Calculate the inner turning point z_i for the model potential.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Class Attributes and Properties</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.model.ModelPotential.xc" title="ryd_numerov.model.ModelPotential.xc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">xc</span></code></a></p></td>
+<td><p>Core radius parameter in dimensionless units.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ryd_numerov.model.</span></span><span class="sig-name descname"><span class="pre">ModelPotential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantum_defect</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_spin_orbit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_model_potentials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential" title="Link to this definition"></a></dt>
+<dd><p>Initialize the model potential.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Atomic species</p></li>
+<li><p><strong>n</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Principal quantum number</p></li>
+<li><p><strong>l</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Orbital angular momentum quantum number</p></li>
+<li><p><strong>s</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Spin quantum number</p></li>
+<li><p><strong>j</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Total angular momentum quantum number</p></li>
+<li><p><strong>quantum_defect</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="ryd_numerov.model.QuantumDefect.html#ryd_numerov.model.QuantumDefect" title="ryd_numerov.model.quantum_defect.QuantumDefect"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumDefect</span></code></a></span>) – QuantumDefect object for the atomic species and quantum numbers.</p></li>
+<li><p><strong>database</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="ryd_numerov.model.Database.html#ryd_numerov.model.Database" title="ryd_numerov.model.database.Database"><code class="xref py py-class docutils literal notranslate"><span class="pre">Database</span></code></a>]</span>) – Database instance, where the model potential parameters are stored
+If None, use the global database instance.</p></li>
+<li><p><strong>add_spin_orbit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to include the spin-orbit coupling potential in the total physical potential.</p></li>
+<li><p><strong>add_model_potentials</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to include the model potentials
+(see calc_potential_core and calc_potential_core_polarization)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.xc">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">xc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#ryd_numerov.model.ModelPotential.xc" title="Link to this definition"></a></dt>
+<dd><p>Core radius parameter in dimensionless units.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_potential_core">
+<span class="sig-name descname"><span class="pre">calc_potential_core</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_potential_core"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_potential_core" title="Link to this definition"></a></dt>
+<dd><p>Calculate the core potential V_c(x) in atomic units.</p>
+<p>The core potential is given as</p>
+<div class="math notranslate nohighlight">
+\[V_c(x) = -Z_{nl} / x\]</div>
+<p>where x = r / a_0 and Z_{nl} is the effective nuclear charge</p>
+<div class="math notranslate nohighlight">
+\[Z_{nl} = 1 + (Z - 1) \exp(-a_1 x) - x (a_3 + a_4 x) \exp(-a_2 x)\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The core potential V_c(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_c</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_potential_core_polarization">
+<span class="sig-name descname"><span class="pre">calc_potential_core_polarization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_potential_core_polarization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_potential_core_polarization" title="Link to this definition"></a></dt>
+<dd><p>Calculate the core polarization potential V_p(x) in atomic units.</p>
+<p>The core polarization potential is given as</p>
+<div class="math notranslate nohighlight">
+\[V_p(x) = -\frac{a_c}{2x^4} (1 - e^{-x^6/x_c**6})\]</div>
+<p>where x = r / a_0, a_c is the static core dipole polarizability and x_c is the effective core size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The polarization potential V_p(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_p</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_potential_spin_orbit">
+<span class="sig-name descname"><span class="pre">calc_potential_spin_orbit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_potential_spin_orbit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_potential_spin_orbit" title="Link to this definition"></a></dt>
+<dd><p>Calculate the spin-orbit coupling potential V_so(x) in atomic units.</p>
+<p>The spin-orbit coupling potential is given as</p>
+<div class="math notranslate nohighlight">
+\[V_{so}(x &gt; x_c) = \frac{\alpha^2}{4x^3} [j(j+1) - l(l+1) - s(s+1)]\]</div>
+<p>where x = r / a_0, alpha is the fine structure constant,
+j is the total angular momentum quantum number, l is the orbital angular momentum
+quantum number, and s is the spin quantum number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The spin-orbit coupling potential V_so(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_so</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_potential_centrifugal">
+<span class="sig-name descname"><span class="pre">calc_potential_centrifugal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_potential_centrifugal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_potential_centrifugal" title="Link to this definition"></a></dt>
+<dd><p>Calculate the centrifugal potential V_l(x) in atomic units.</p>
+<p>The centrifugal potential is given as</p>
+<div class="math notranslate nohighlight">
+\[V_l(x) = \frac{l(l+1)}{2x^2}\]</div>
+<p>where x = r / a_0 and l is the orbital angular momentum quantum number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The centrifugal potential V_l(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_l</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_effective_potential_sqrt">
+<span class="sig-name descname"><span class="pre">calc_effective_potential_sqrt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_effective_potential_sqrt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_effective_potential_sqrt" title="Link to this definition"></a></dt>
+<dd><p>Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.</p>
+<p>The sqrt transformation potential arises from the transformation from the wavefunction u(x) to w(z),
+where x = r / a_0 and w(z) = z^{-1/2} u(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r).
+Due to the transformation, an additional term is added to the radial Schrödinger equation,
+which can be written as effective potential V_{sqrt}(x) and is given by</p>
+<div class="math notranslate nohighlight">
+\[V_{sqrt}(x) = \frac{3}{32x^2}\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The sqrt transformation potential V_sqrt(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_sqrt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_total_physical_potential">
+<span class="sig-name descname"><span class="pre">calc_total_physical_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_total_physical_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_total_physical_potential" title="Link to this definition"></a></dt>
+<dd><p>Calculate the total physical potential V_phys(x) in atomic units.</p>
+<p>The total physical potential is the sum of the core potential, polarization potential,
+centrifugal potential, and optionally the spin-orbit coupling:</p>
+<div class="math notranslate nohighlight">
+\[V_{phys}(x) = V_c(x) + V_p(x) + V_l(x) + V_{so}(x)\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The total physical potential V_phys(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_phys</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_total_effective_potential">
+<span class="sig-name descname"><span class="pre">calc_total_effective_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_total_effective_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_total_effective_potential" title="Link to this definition"></a></dt>
+<dd><p>Calculate the total potential V_tot(x) in atomic units.</p>
+<p>The total effective potential includes all physical and non-physical potentials:</p>
+<div class="math notranslate nohighlight">
+\[V_{tot}(x) = V_c(x) + V_p(x) + V_l(x) + V_{so}(x) + V_{sqrt}(x)\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]</span>) – The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The total potential V_tot(x) in atomic units.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>V_tot</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.model.ModelPotential.calc_z_turning_point">
+<span class="sig-name descname"><span class="pre">calc_z_turning_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">which</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/model/model_potential.html#ModelPotential.calc_z_turning_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.model.ModelPotential.calc_z_turning_point" title="Link to this definition"></a></dt>
+<dd><p>Calculate the inner turning point z_i for the model potential.</p>
+<p>There are three different turning points we consider:</p>
+<ul>
+<li><p>The hydrogen turning point, where for the idealized hydrogen atom the potential equals the energy,
+i.e. V_c(r_i) + V_l(r_i) = E.
+This is exactly the case at</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[r_i = n^2 - n \sqrt{n^2 - l(l + 1)}\]</div>
+</div></blockquote>
+</li>
+<li><p>The classical turning point, where the physical potential of the Rydberg model potential equals the energy,
+i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = E.</p></li>
+<li><p>The zero-crossing turning point, where the physical potential of the Rydberg model potential equals zero,
+i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = 0.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>which</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'hydrogen'</span></code>, <code class="docutils literal notranslate"><span class="pre">'classical'</span></code>, <code class="docutils literal notranslate"><span class="pre">'zerocrossing'</span></code>]</span>) – Which turning point to calculate, one of “hydrogen”, “classical”, “zerocrossing”.</p></li>
+<li><p><strong>dz</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – The precision of the turning point calculation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The inner turning point z_i in the scaled dimensionless coordinate z_i = sqrt{r_i / a_0}.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>z_i</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ryd_numerov.model.GroundState.html" class="btn btn-neutral float-left" title="GroundState" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ryd_numerov.model.QuantumDefect.html" class="btn btn-neutral float-right" title="QuantumDefect" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

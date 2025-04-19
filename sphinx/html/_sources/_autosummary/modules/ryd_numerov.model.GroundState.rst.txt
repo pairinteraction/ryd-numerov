@@ -1,0 +1,37 @@
+GroundState
+===========
+
+.. currentmodule:: ryd_numerov.model
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~GroundState.__init__
+      ~GroundState.get_ionization_energy
+      ~GroundState.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~GroundState.species
+   ~GroundState.configuration
+   ~GroundState.n
+   ~GroundState.l
+   ~GroundState.s
+   ~GroundState.j
+   ~GroundState.m
+   ~GroundState.ionization_energy
+
+
+
+.. autoclass:: ryd_numerov.model.GroundState
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

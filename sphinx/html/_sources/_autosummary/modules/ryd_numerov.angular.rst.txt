@@ -1,0 +1,38 @@
+angular
+=======
+Full module path: ryd\_numerov.angular
+
+.. workaround to ignore generic classes like AtomSQDT[int]
+
+
+
+
+.. currentmodule:: ryd_numerov.angular
+
+
+
+
+.. rubric:: Functions
+
+.. autosummary::
+   :toctree: .
+   
+      calc_angular_matrix_element
+      calc_reduced_angular_matrix_element
+      calc_wigner_3j
+      calc_wigner_6j
+      check_triangular
+      minus_one_pow
+      spherical_like_matrix_element
+      spin_like_matrix_element
+
+
+
+
+
+
+
+
+.. rubric:: Module description
+
+.. automodule:: ryd_numerov.angular
