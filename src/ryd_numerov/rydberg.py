@@ -272,7 +272,7 @@ class RydbergState:
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
         if unit is None:
             return energy
-        return energy.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
     @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PintFloat": ...
