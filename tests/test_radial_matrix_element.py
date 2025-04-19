@@ -6,16 +6,18 @@ from ryd_numerov.rydberg import RydbergState
 
 
 @pytest.mark.parametrize(
-    ("n", "dn", "dl", "dj"),
+    ("species", "n", "dn", "dl", "dj"),
     [
-        (100, 3, 1, 0),
-        (60, 2, 0, 0),
-        (81, 2, 2, 2),
-        (130, 5, 1, 0),
-        (111, 5, 2, 1),
+        ("Rb", 100, 3, 1, 0),
+        ("Rb", 60, 2, 0, 0),
+        ("Rb", 81, 2, 2, 2),
+        ("Rb", 130, 5, 1, 0),
+        ("Rb", 111, 5, 2, 1),
+        ("Cs", 60, 2, 0, 0),
+        ("K", 81, 2, 2, 2),
     ],
 )
-def test_circular_matrix_element(n: int, dn: int, dl: int, dj: int) -> None:
+def test_circular_matrix_element(species: str, n: int, dn: int, dl: int, dj: int) -> None:
     """Test radial matrix elements of ((almost) circular states, i.e. with large l (l = n-1 for circular states).
 
      Circular matrix elements should be very close to the perfect hydrogen case, so we can check if the matrix elements
@@ -24,18 +26,18 @@ def test_circular_matrix_element(n: int, dn: int, dl: int, dj: int) -> None:
     l, j = n - 1, n - 0.5
 
     matrix_element = {}
-    for species in ["Rb", "H"]:
-        state_i = RydbergState("Rb", n=n, l=l, j=j)  # circular state
-        state_i.create_model_potential(add_spin_orbit=species != "H")
+    for _species in [species, "H"]:
+        state_i = RydbergState(_species, n=n, l=l, j=j)  # circular state
+        state_i.create_model_potential(add_spin_orbit=_species != "H")
         state_i.create_wavefunction()
 
-        state_f = RydbergState("Rb", n=n + dn, l=l + dl, j=j + dj)  # almost circular state
-        state_f.create_model_potential(add_spin_orbit=species != "H")
+        state_f = RydbergState(_species, n=n + dn, l=l + dl, j=j + dj)  # almost circular state
+        state_f.create_model_potential(add_spin_orbit=_species != "H")
         state_f.create_wavefunction()
 
-        matrix_element[species] = calc_radial_matrix_element(state_i, state_f, 1)
+        matrix_element[_species] = calc_radial_matrix_element(state_i, state_f, 1)
 
-    assert np.isclose(matrix_element["Rb"], matrix_element["H"], rtol=1e-4)
+    assert np.isclose(matrix_element[species], matrix_element["H"], rtol=1e-4)
 
 
 @pytest.mark.parametrize(
