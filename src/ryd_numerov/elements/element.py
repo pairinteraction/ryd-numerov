@@ -1,8 +1,12 @@
+import inspect
 from abc import ABC
 from functools import cache
-from typing import ClassVar, Union
+from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
 
 from ryd_numerov.units import ureg
+
+if TYPE_CHECKING:
+    from ryd_numerov.units import PintFloat
 
 # List of energetically sorted shells
 SORTED_SHELLS = [  # (n, l)
@@ -43,8 +47,8 @@ class Element(ABC):
     """Total spin quantum number."""
     ground_state_shell: ClassVar[tuple[int, int]]  # (n, l)
     """Shell (n, l) describing the electronic ground state configuration."""
-    ionization_energy_ghz: float
-    """Ionization energy in GHz."""
+    _ionization_energy: tuple[float, Optional[float], str]
+    """Ionization energy with uncertainty and unit."""
 
     @classmethod
     @cache
@@ -58,11 +62,16 @@ class Element(ABC):
             An instance of the corresponding element class.
 
         """
-        for subclass in cls.__subclasses__():
+        concrete_subclasses = [
+            subclass
+            for subclass in cls.__subclasses__()
+            if not inspect.isabstract(subclass) and hasattr(subclass, "species")
+        ]
+        for subclass in concrete_subclasses:
             if subclass.species == species:
                 return subclass()
         raise ValueError(
-            f"Unknown species: {species}. Available species: {[subclass.species for subclass in cls.__subclasses__()]}"
+            f"Unknown species: {species}. Available species: {[subclass.species for subclass in concrete_subclasses]}"
         )
 
     @property
@@ -91,7 +100,13 @@ class Element(ABC):
         state_id = SORTED_SHELLS.index((n, l))
         return state_id >= gs_id
 
-    def get_ionization_energy(self, unit: str = "hartree") -> float:
+    @overload
+    def get_ionization_energy(self, unit: None = None) -> "PintFloat": ...
+
+    @overload
+    def get_ionization_energy(self, unit: str) -> float: ...
+
+    def get_ionization_energy(self, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
         """Return the ionization energy in the desired unit.
 
         Args:
@@ -101,4 +116,10 @@ class Element(ABC):
             Ionization energy in the desired unit.
 
         """
-        return ureg.Quantity(self.ionization_energy_ghz, "GHz").to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        ionization_energy: PintFloat = ureg.Quantity(self._ionization_energy[0], self._ionization_energy[2])
+        ionization_energy = ionization_energy.to("hartree", "spectroscopy")
+        if unit is None:
+            return ionization_energy
+        if unit == "a.u.":
+            return ionization_energy.magnitude
+        return ionization_energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
