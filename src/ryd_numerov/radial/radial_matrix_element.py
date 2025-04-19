@@ -121,10 +121,22 @@ def _calc_radial_matrix_element_from_w_z(
     _sanity_check_integration(z1, z2)
 
     integrand = 2 * w1 * w2
-    for _ in range(2 * k_radial + 2):
-        integrand *= z1
+    integrand = _multiply_by_powers(integrand, z1, 2 * k_radial + 2)
 
     return _integrate(integrand, dz, integration_method)
+
+
+def _multiply_by_powers(result: "NDArray", base: "NDArray", exponent: int) -> "NDArray":
+    """Calculate result * base**(exponent) in an optimized way."""
+    base_powers = {0: base}
+    for i in range(exponent):
+        if (exponent // 2**i) % 2 == 1:
+            result *= base_powers[i]
+            exponent -= 2**i
+        if exponent == 0:
+            break
+        base_powers[i + 1] = np.square(base_powers[i])
+    return result
 
 
 def _sanity_check_integration(z1: "NDArray", z2: "NDArray") -> None:

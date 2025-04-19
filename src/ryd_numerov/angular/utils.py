@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+import numpy as np
 from sympy import Integer
 from sympy.physics.wigner import (
     wigner_3j as sympy_wigner_3j,
@@ -33,6 +34,30 @@ def calc_wigner_6j(j_1: float, j_2: float, j_3: float, j_4: float, j_5: float, j
         else:
             raise ValueError(f"Invalid input {arg}.")
     return float(sympy_wigner_6j(*args).evalf())
+
+
+def clebsch_gordan_6j(s1: float, s2: float, s_tot: int, l: int, j1: float, j_tot: int) -> float:
+    """Calculate the overlap between <(l,(s1,s2)S)J|(s2,(s1,l)j1)J>.
+
+    See Also:
+    - https://en.wikipedia.org/wiki/Racah_W-coefficient
+    - https://en.wikipedia.org/wiki/6-j_symbol
+
+    Args:
+        s1: Spin of the Rydberg electron.
+        s2: Spin of the core electron.
+        s_tot: Total spin.
+        l: Orbital angular of the Rydberg electron.
+        j1: Total angular momentum of the Rydberg electron.
+        j_tot: Total angular momentum.
+
+    Returns:
+        The Clebsch-Gordan coefficient <(l,(s1,s2)S)J|(s2,(s1,l)j1)J>.
+
+    """
+    racah_w = minus_one_pow(j_tot + l + s1 + s2) * calc_wigner_6j(j_tot, l, s_tot, s1, s2, j1)
+    prefactor: float = np.sqrt((2 * s_tot + 1) * (2 * j1 + 1))
+    return prefactor * racah_w
 
 
 def minus_one_pow(n: float) -> int:
