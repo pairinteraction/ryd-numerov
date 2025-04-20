@@ -31,7 +31,12 @@ class Grid:
 
         """
         self._dz = dz
-        self._z_list: NDArray = np.arange(z_min, z_max + dz / 2, dz)
+        # put all grid points on a standard grid, i.e. [dz, 2*dz, 3*dz, ...]
+        # this is necessary to allow integration of two different wavefunctions
+        # Note: using np.arange((z_min // dz) * dz, z_max + dz / 2, dz)
+        # would lead to 'quite big' inprecisions (1e-10) between grid points of different grids,
+        # because of floating point errors
+        self._z_list: NDArray = np.arange(0, z_max + dz / 2, dz)[round(z_min / dz) :]
 
     def __len__(self) -> int:
         return self.steps
