@@ -228,20 +228,14 @@ class RydbergState:
             else:
                 z_i = self.model_potential.calc_z_turning_point("hydrogen", dz=1e-2)
                 x_min = max(0, 0.5 * z_i**2 - 25)
-        z_min = np.sqrt(x_min)
+        # Since the potential diverges at z=0 we set the minimum z_min to dz
+        z_min = max(np.sqrt(x_min), dz)
 
         if x_max is None:
             # This is an empirical formula for the maximum value of the radial coordinate
             # it takes into account that for large n but small l the wavefunction is very extended
             x_max = 2 * self.n * (self.n + 15 + (self.n - self.l) / 4)
         z_max = np.sqrt(x_max)
-
-        # put all grid points on a standard grid, i.e. [dz, 2*dz, 3*dz, ...]
-        # this is necessary to allow integration of two different wavefunctions
-        z_min = (z_min // dz) * dz
-
-        # Since the potential diverges at z=0 we set the minimum z_min to dz
-        z_min = max(z_min, dz)
 
         self._grid = Grid(z_min, z_max, dz)
 
