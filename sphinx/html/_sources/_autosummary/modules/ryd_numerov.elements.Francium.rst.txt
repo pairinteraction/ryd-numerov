@@ -1,0 +1,35 @@
+Francium
+========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Francium.__init__
+      ~Francium.from_species
+      ~Francium.get_ionization_energy
+      ~Francium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Francium.add_spin_orbit
+   ~Francium.ground_state_shell
+   ~Francium.is_alkali
+   ~Francium.s
+   ~Francium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Francium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

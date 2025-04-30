@@ -1,0 +1,35 @@
+Rubidium
+========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Rubidium.__init__
+      ~Rubidium.from_species
+      ~Rubidium.get_ionization_energy
+      ~Rubidium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Rubidium.add_spin_orbit
+   ~Rubidium.ground_state_shell
+   ~Rubidium.is_alkali
+   ~Rubidium.s
+   ~Rubidium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Rubidium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

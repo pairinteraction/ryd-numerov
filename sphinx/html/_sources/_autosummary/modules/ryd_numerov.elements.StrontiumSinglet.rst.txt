@@ -1,0 +1,35 @@
+StrontiumSinglet
+================
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~StrontiumSinglet.__init__
+      ~StrontiumSinglet.from_species
+      ~StrontiumSinglet.get_ionization_energy
+      ~StrontiumSinglet.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~StrontiumSinglet.add_spin_orbit
+   ~StrontiumSinglet.ground_state_shell
+   ~StrontiumSinglet.is_alkali
+   ~StrontiumSinglet.s
+   ~StrontiumSinglet.species
+
+
+
+.. autoclass:: ryd_numerov.elements.StrontiumSinglet
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

@@ -1,0 +1,36 @@
+ModelPotential
+==============
+
+.. currentmodule:: ryd_numerov.model
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~ModelPotential.__init__
+      ~ModelPotential.calc_effective_potential_sqrt
+      ~ModelPotential.calc_potential_centrifugal
+      ~ModelPotential.calc_potential_core
+      ~ModelPotential.calc_potential_core_polarization
+      ~ModelPotential.calc_potential_spin_orbit
+      ~ModelPotential.calc_total_effective_potential
+      ~ModelPotential.calc_total_physical_potential
+      ~ModelPotential.calc_z_turning_point
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~ModelPotential.xc
+
+
+
+.. autoclass:: ryd_numerov.model.ModelPotential
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

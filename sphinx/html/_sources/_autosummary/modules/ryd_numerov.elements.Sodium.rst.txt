@@ -1,0 +1,35 @@
+Sodium
+======
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Sodium.__init__
+      ~Sodium.from_species
+      ~Sodium.get_ionization_energy
+      ~Sodium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Sodium.add_spin_orbit
+   ~Sodium.ground_state_shell
+   ~Sodium.is_alkali
+   ~Sodium.s
+   ~Sodium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Sodium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

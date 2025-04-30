@@ -1,0 +1,35 @@
+HeliumIon
+=========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~HeliumIon.__init__
+      ~HeliumIon.from_species
+      ~HeliumIon.get_ionization_energy
+      ~HeliumIon.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~HeliumIon.add_spin_orbit
+   ~HeliumIon.ground_state_shell
+   ~HeliumIon.is_alkali
+   ~HeliumIon.s
+   ~HeliumIon.species
+
+
+
+.. autoclass:: ryd_numerov.elements.HeliumIon
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

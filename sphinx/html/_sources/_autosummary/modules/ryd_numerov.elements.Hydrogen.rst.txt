@@ -1,0 +1,35 @@
+Hydrogen
+========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Hydrogen.__init__
+      ~Hydrogen.from_species
+      ~Hydrogen.get_ionization_energy
+      ~Hydrogen.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Hydrogen.add_spin_orbit
+   ~Hydrogen.ground_state_shell
+   ~Hydrogen.is_alkali
+   ~Hydrogen.s
+   ~Hydrogen.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Hydrogen
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

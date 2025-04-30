@@ -1,0 +1,35 @@
+StrontiumTriplet
+================
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~StrontiumTriplet.__init__
+      ~StrontiumTriplet.from_species
+      ~StrontiumTriplet.get_ionization_energy
+      ~StrontiumTriplet.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~StrontiumTriplet.add_spin_orbit
+   ~StrontiumTriplet.ground_state_shell
+   ~StrontiumTriplet.is_alkali
+   ~StrontiumTriplet.s
+   ~StrontiumTriplet.species
+
+
+
+.. autoclass:: ryd_numerov.elements.StrontiumTriplet
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

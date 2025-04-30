@@ -1,0 +1,35 @@
+Lithium
+=======
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Lithium.__init__
+      ~Lithium.from_species
+      ~Lithium.get_ionization_energy
+      ~Lithium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Lithium.add_spin_orbit
+   ~Lithium.ground_state_shell
+   ~Lithium.is_alkali
+   ~Lithium.s
+   ~Lithium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Lithium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init
