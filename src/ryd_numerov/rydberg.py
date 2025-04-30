@@ -220,16 +220,18 @@ class RydbergState:
             raise RuntimeError("The grid was already created, you should not create it again.")
 
         if x_min is None:
-            # we set x_min explicitly to small,
+            # we set z_min explicitly too small,
             # since the integration will automatically stop after the turning point,
             # and as soon as the wavefunction is close to zero
             if self.l <= 10:
-                x_min = 0.0
+                z_min = 0.0
             else:
-                z_i = self.model_potential.calc_z_turning_point("hydrogen", dz=1e-2)
-                x_min = max(0, 0.5 * z_i**2 - 25)
+                z_min = self.model_potential.calc_z_turning_point("hydrogen", dz=1e-2)
+                z_min = np.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
+        else:
+            z_min = np.sqrt(x_min)
         # Since the potential diverges at z=0 we set the minimum z_min to dz
-        z_min = max(np.sqrt(x_min), dz)
+        z_min = max(z_min, dz)
 
         if x_max is None:
             # This is an empirical formula for the maximum value of the radial coordinate
