@@ -167,7 +167,9 @@ class RydbergState:
             self.create_model_potential()
         return self._model_potential
 
-    def create_model_potential(self, *, add_spin_orbit: bool = True, add_model_potentials: bool = True) -> None:
+    def create_model_potential(
+        self, *, add_spin_orbit: Optional[bool] = None, add_model_potentials: bool = True
+    ) -> None:
         """Create the model potential for the Rydberg state.
 
         Args:
@@ -181,6 +183,7 @@ class RydbergState:
         if hasattr(self, "_model_potential"):
             raise RuntimeError("The model_potential was already created, you should not create it again.")
 
+        add_spin_orbit = add_spin_orbit if add_spin_orbit is not None else self.element.add_spin_orbit
         self._model_potential = ModelPotential(
             self.species,
             self.n,

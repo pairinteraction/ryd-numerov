@@ -10,27 +10,26 @@ from ryd_numerov.rydberg import RydbergState
 @pytest.mark.parametrize(
     ("species", "n", "l", "run_backward"),
     [
-        ("H", 1, 0, True),
-        ("H", 2, 0, True),
-        ("H", 2, 1, True),
-        ("H", 2, 1, False),
-        ("H", 3, 0, True),
-        ("H", 3, 2, True),
-        ("H", 3, 2, False),
-        ("H", 30, 0, True),
-        ("H", 30, 1, True),
-        ("H", 30, 2, True),
-        ("H", 30, 28, True),
-        ("H", 30, 29, True),
-        ("H", 130, 128, True),
-        ("H", 130, 129, True),
+        ("H_textbook", 1, 0, True),
+        ("H_textbook", 2, 0, True),
+        ("H_textbook", 2, 1, True),
+        ("H_textbook", 2, 1, False),
+        ("H_textbook", 3, 0, True),
+        ("H_textbook", 3, 2, True),
+        ("H_textbook", 3, 2, False),
+        ("H_textbook", 30, 0, True),
+        ("H_textbook", 30, 1, True),
+        ("H_textbook", 30, 2, True),
+        ("H_textbook", 30, 28, True),
+        ("H_textbook", 30, 29, True),
+        ("H_textbook", 130, 128, True),
+        ("H_textbook", 130, 129, True),
     ],
 )
 def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool) -> None:
     """Test that numerov integration matches sympy's analytical hydrogen wavefunctions."""
     # Setup atom
     atom = RydbergState(species, n=n, l=l, j=l + 0.5)
-    atom.create_model_potential(add_spin_orbit=False)
 
     # Run the numerov integration
     atom.create_wavefunction(run_backward=run_backward)

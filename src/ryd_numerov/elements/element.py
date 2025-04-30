@@ -49,6 +49,9 @@ class Element(ABC):
     """Shell (n, l) describing the electronic ground state configuration."""
     _ionization_energy: tuple[float, Optional[float], str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
+    add_spin_orbit: ClassVar[bool] = True
+    """Whether the default for this element is to add spin-orbit coupling to the Hamiltonian
+    (mainly used for H_textbook)."""
 
     @classmethod
     @cache

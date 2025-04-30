@@ -26,18 +26,12 @@ def test_circular_matrix_element(species: str, n: int, dn: int, dl: int, dj: int
     l, j = n - 1, n - 0.5
 
     matrix_element = {}
-    for _species in [species, "H"]:
+    for _species in [species, "H_textbook"]:
         state_i = RydbergState(_species, n=n, l=l, j=j)  # circular state
-        state_i.create_model_potential(add_spin_orbit=_species != "H")
-        state_i.create_wavefunction()
-
         state_f = RydbergState(_species, n=n + dn, l=l + dl, j=j + dj)  # almost circular state
-        state_f.create_model_potential(add_spin_orbit=_species != "H")
-        state_f.create_wavefunction()
-
         matrix_element[_species] = calc_radial_matrix_element(state_i, state_f, 1)
 
-    assert np.isclose(matrix_element[species], matrix_element["H"], rtol=1e-4)
+    assert np.isclose(matrix_element[species], matrix_element["H_textbook"], rtol=1e-4)
 
 
 @pytest.mark.parametrize(
@@ -64,7 +58,6 @@ def test_circular_expectation_value(species: str, n: int, l: int, j: float) -> N
         <r^2>_{nl} = n^2/2 (5 n^2 - 3 l(l+1) + 1)
     """
     state = RydbergState(species, n=n, l=l, j=j)
-    state.create_model_potential(add_spin_orbit=species != "H")
     state.create_wavefunction()
 
     exp_value_numerov = {i: calc_radial_matrix_element(state, state, i) for i in range(3)}
