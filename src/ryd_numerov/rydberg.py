@@ -209,11 +209,11 @@ class RydbergState:
         """Create the grid object for the integration of the radial Schrödinger equation.
 
         Args:
-            x_min (default TODO): The minimum value of the radial coordinate
-            in dimensionless units (x = r/a_0).
-            x_max (default TODO): The maximum value of the radial coordinate
-            in dimensionless units (x = r/a_0).
-            dz (default 1e-2): The step size of the integration (z = r/a_0).
+            x_min: The minimum value of the radial coordinate in dimensionless units (x = r/a_0).
+                Default: Automatically calculate sensible value.
+            x_max: The maximum value of the radial coordinate in dimensionless units (x = r/a_0).
+                Default: Automatically calculate sensible value.
+            dz: The step size of the integration (z = r/a_0). Default: 1e-2.
 
         """
         if hasattr(self, "_grid"):
