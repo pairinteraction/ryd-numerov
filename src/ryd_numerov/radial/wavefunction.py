@@ -119,7 +119,7 @@ class Wavefunction:
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
             # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
-            # or it reaches a local minimum (thus goiing away from the x-axis)
+            # or it reaches a local minimum (thus going away from the x-axis)
             x_min = self.model_potential.calc_z_turning_point("classical", dz=grid.dz)
             x_min = max(x_min, 5 * abs(dx), self.get_x_min())
 
@@ -267,10 +267,10 @@ class Wavefunction:
         if l > 0:
             if run_backward and z_stop > grid.z_list[0] - grid.dz / 2:
                 sanity_check = False
-                logger.warning("The integration did not stop at the z_min boundary, z=%s, %s", grid.z_list[0], z_stop)
+                logger.warning("The integration did not stop before z_stop, z=%s, %s", grid.z_list[0], z_stop)
             if not run_backward and z_stop < grid.z_list[-1] + grid.dz / 2:
                 sanity_check = False
-                logger.warning("The integration did not stop at the z_max boundary, z=%s", grid.z_list[-1])
+                logger.warning("The integration did not stop before z_stop, z=%s", grid.z_list[-1])
         elif l == 0 and run_backward:
             if z_stop > 1.5 * grid.dz:
                 sanity_check = False

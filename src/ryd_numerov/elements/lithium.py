@@ -6,5 +6,5 @@ class Lithium(Element):
     s = 1 / 2
     ground_state_shell = (2, 0)
 
-    _ionization_energy = (5.391_72, None, "eV")
     # https://webbook.nist.gov/cgi/inchi?ID=C7439932&Mask=20
+    _ionization_energy = (5.391_72, None, "eV")

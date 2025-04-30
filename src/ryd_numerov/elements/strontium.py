@@ -5,8 +5,8 @@ from ryd_numerov.elements.element import Element
 
 
 class Strontium(ABC):  # noqa: B024
-    _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
+    _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
 
 
 class StrontiumSinglet(Strontium, Element):
