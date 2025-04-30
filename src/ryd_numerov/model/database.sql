@@ -8,6 +8,10 @@ CREATE TABLE `model_potential` (`species` TEXT, `l` INT, `ac` REAL, `Z` INT, `a1
 
 -- Hydrogen atom
 INSERT INTO `model_potential` VALUES ('H', 0, '0', 1, '0', '0', '0', '0', '0');
+INSERT INTO `model_potential` VALUES ('H_textbook', 0, '0', 1, '0', '0', '0', '0', '0');
+
+-- Helium ion
+INSERT INTO `model_potential` VALUES ('He+', 0, '0', 1, '0', '0', '0', '0', '0');
 
 -- Phys. Rev. A 49, 982 (1994)
 INSERT INTO `model_potential` VALUES ('Li', 0, '0.1923', 3, '2.47718079', '1.84150932', '-0.02169712', '-0.11988362', '0.61340824');
@@ -61,12 +65,16 @@ INSERT INTO `model_potential` VALUES ('Sr_triplet', 3, '7.5', 38, '2.1547', '1.1
 DROP TABLE IF EXISTS `rydberg_ritz`;
 CREATE TABLE `rydberg_ritz` (`species` TEXT, `l` INT, `j` REAL, `d0` REAL, `d2` REAL, `d4` REAL, `d6` REAL, `d8` REAL, `Ry` REAL);
 
--- Hydrogen atom (ignoring the proton mass)
-INSERT INTO `rydberg_ritz` VALUES ('H', 0, '0.5', '0', '0', '0', '0', '0', '109737.3156816');
+-- Hydrogen atom
+-- (including the proton mass)
+INSERT INTO `rydberg_ritz` VALUES ('H',0,'0.5','0','0','0','0','0','109677.58340280356');  -- Ry_H = Ry_inf / (1 + m_e/m_p)
+-- (ignoring the proton mass)
+INSERT INTO `rydberg_ritz` VALUES ('H_textbook', 0, '0.5', '0', '0', '0', '0', '0', '109737.31568160003');  -- Ry_H_textbook = Ry_inf
 
--- Use Ry_inf
--- Hydrogen atom (including the proton mass)
--- INSERT INTO rydberg_ritz` VALUES H_exact',0,'0.5','0','0','0','0','0','109677.5834028035');  -- Ry_H = m_p / (m_e + m_p) * Ry_inf
+
+-- Helium ion
+INSERT INTO `rydberg_ritz` VALUES ('He+',0,'0.5','0','0','0','0','0','109722.38680085634');  -- Ry_He+ = Ry_inf / (1 + m_e/m_core); where m_core = 2 * (m_p + m_n)
+
 -- [1] Phys. Rev. A 34, 2889 (1986) (Li 7)
 -- [2] T. F. Gallagher, ``Rydberg Atoms'', Cambridge University Press (2005), ISBN: 978-0-52-102166-1
 -- [3] Johansson I 1958 Ark. Fysik 15 169
