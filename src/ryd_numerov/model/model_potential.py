@@ -285,7 +285,7 @@ class ModelPotential:
             z_list = np.arange(max(dz, hydrogen_z_i - 10), hydrogen_z_i + 10, dz)
             energy = self.quantum_defect.energy
         elif which == "zerocrossing":
-            z_list = np.arange(max(dz, hydrogen_z_i / 2 - 5), hydrogen_z_i, dz)
+            z_list = np.arange(max(dz, hydrogen_z_i / 2 - 5), hydrogen_z_i + 10, dz)
             energy = 0
 
         x_list = z_list * z_list

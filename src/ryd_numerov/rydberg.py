@@ -109,41 +109,41 @@ class RydbergState:
     def sanity_check(self) -> None:  # noqa: C901
         good = True
         if not isinstance(self.n, int):
-            logger.warning("n must be an integer, but is %s", self.n)
+            logger.error("n must be an integer, but is %s", self.n)
             good = False
         if not isinstance(self.l, int):
-            logger.warning("l must be an integer, but is %s", self.l)
+            logger.error("l must be an integer, but is %s", self.l)
             good = False
         if not isinstance(self.j, (int, float)):
-            logger.warning("j must be an integer or float, but is %s", self.j)
+            logger.error("j must be an integer or float, but is %s", self.j)
             good = False
         if self.m is not None and not isinstance(self.m, (int, float)):
-            logger.warning("m must be an integer, float or None, but is %s", self.m)
+            logger.error("m must be an integer, float or None, but is %s", self.m)
             good = False
 
         if not self.n >= 1:
-            logger.warning("n must be larger than 0, but is %s", self.n)
+            logger.error("n must be larger than 0, but is %s", self.n)
             good = False
         if not 0 <= self.l <= self.n - 1:
-            logger.warning("l must be between 0 and n - 1, but is %s", self.l)
+            logger.error("l must be between 0 and n - 1, but is %s", self.l)
             good = False
         if not abs(self.l - self.s) <= self.j <= self.l + self.s:
-            logger.warning("j must be between l - s and l + s, but is %s", self.j)
+            logger.error("j must be between l - s and l + s, but is %s", self.j)
             good = False
         if (self.s + self.j) % 1 != 0:
             type_ = "integer" if self.s % 1 == 0 else "half-integer"
-            logger.warning("j must be %s for %s, but is %s", type_, self.species, self.j)
+            logger.error("j must be %s for %s, but is %s", type_, self.species, self.j)
             good = False
         if self.m is not None and not -self.j <= self.m <= self.j:
-            logger.warning("m must be between -j and j, but is %s", self.m)
+            logger.error("m must be between -j and j, but is %s", self.m)
             good = False
         if self.m is not None and (self.s + self.m) % 1 != 0:
             type_ = "integer" if self.s % 1 == 0 else "half-integer"
-            logger.warning("m must be %s for %s, but is %s", type_, self.species, self.m)
+            logger.error("m must be %s for %s, but is %s", type_, self.species, self.m)
             good = False
 
         if not self.element.is_allowed_shell(self.n, self.l):
-            logger.warning(
+            logger.error(
                 "The shell (n=%s, l=%s) is not allowed for the species %s.",
                 *(self.n, self.l, self.species),
             )
