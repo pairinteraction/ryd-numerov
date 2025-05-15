@@ -171,38 +171,42 @@ class Wavefunction:
         - The wavefunction has exactly (n - l - 1) nodes.
         - The integration stopped before z_stop (for l>0)
         """
-        grid = self.grid
-        sanity_check = True
-        species, n, l, j = (
-            self.model_potential.species,
-            self.model_potential.n,
-            self.model_potential.l,
-            self.model_potential.j,
-        )
+        warning_msgs = []
 
-        # Check the maximum of the wavefunction
-        idmax = np.argmax(np.abs(self.w_list))
-        if run_backward and idmax < 0.05 * grid.steps:
-            sanity_check = False
-            logger.warning(
-                "The maximum of the wavefunction is close to the inner boundary (idmax=%s) "
-                "probably due to inner divergence of the wavefunction. "
-                "Trying to fix this, but the result might still be incorrect or at least inprecise.",
-                idmax,
+        grid = self.grid
+        n = self.model_potential.n
+        l = self.model_potential.l
+
+        # Check and Correct if divergence of the wavefunction
+        w_list_abs = np.abs(self.w_list)
+        idmax = np.argmax(w_list_abs)
+        w_abs_max = w_list_abs[idmax]
+        outer_max = np.max(w_list_abs[int(0.1 * grid.steps) :])
+        if idmax <= 5 and w_abs_max / outer_max > 10:
+            warning_msgs.append(
+                f"Wavefunction diverges at the inner boundary, w_abs_max / outer_max={w_abs_max / outer_max:.2e}",
             )
-            wmax = np.max(self.w_list[int(0.1 * grid.steps) :])
-            wmin = np.min(self.w_list[int(0.1 * grid.steps) :])
-            tol = 1e-2 * max(abs(wmax), abs(wmin))
-            self._w_list *= (self.w_list <= wmax + tol) * (self.w_list >= wmin - tol)
+            warning_msgs.append("Trying to correct the wavefunction.")
+            first_ind = np.argwhere(w_list_abs < outer_max)[0][0]
+            self._w_list = self._w_list[first_ind:]  # type: ignore [index]
+            grid.set_grid_range(step_start=first_ind)
             norm = np.sqrt(2 * np.sum(self.w_list * self.w_list * grid.z_list * grid.z_list) * grid.dz)
             self._w_list /= norm
 
+        # Check the maximum of the wavefunction
+        idmax = np.argmax(np.abs(self.w_list))
+        if idmax < 0.05 * grid.steps:
+            warning_msgs.append(
+                f"The maximum of the wavefunction is close to the inner boundary (idmax={idmax}) "
+                "probably due to inner divergence of the wavefunction. "
+            )
+
         # Check the wavefunction at the inner boundary
         if self.w_list[0] < 0:
-            sanity_check = False
-            logger.warning("The wavefunction is negative at the inner boundary, %s", self.w_list[0])
+            warning_msgs.append(f"The wavefunction is negative at the inner boundary ({self.w_list[0]}).")
 
-        inner_ind = {0: 5, 1: 5}.get(l, 10)
+        # Check the weight of the wavefunction at the inner boundary
+        inner_ind = 10
         inner_weight = (
             2
             * np.sum(
@@ -212,84 +216,59 @@ class Wavefunction:
         )
         inner_weight_scaled_to_whole_grid = inner_weight * grid.steps / inner_ind
 
-        tol = 1e-5
-        if l in [4, 5, 6]:
-            # apparently the wavefunction converges worse for those l values
-            # maybe this has something to do with the model potential parameters, which are only given for l <= 3
-            tol = 1e-4
-        # for low n the wavefunction also converges bad
-        if n <= 15:
-            tol = 2e-4
-        if n < 10:
-            tol = 1e-3
-        if n <= 6:
+        tol = 1e-4
+        if n <= 11:
+            # for low n the wavefunction converges not as good and still has more weight at the inner boundary
             tol = 5e-3
 
-        # special cases of bad convergence:
-        if species == "K" and l == 3:
-            tol = max(tol, 5e-5)
-        if (species, n, l, j) == ("Cs", 5, 2, 1.5):
-            tol = max(tol, 2e-2)
-
         if inner_weight_scaled_to_whole_grid > tol:
-            sanity_check = False
-            logger.warning(
-                "The wavefunction is not close to zero at the inner boundary, (inner_weight_scaled_to_whole_grid=%.2e)",
-                inner_weight_scaled_to_whole_grid,
+            warning_msgs.append(
+                f"The wavefunction is not close to zero at the inner boundary"
+                f" (inner_weight_scaled_to_whole_grid={inner_weight_scaled_to_whole_grid:.2e})"
             )
 
         # Check the wavefunction at the outer boundary
         outer_ind = int(0.95 * grid.steps)
         outer_wf = self.w_list[outer_ind:]
         if np.mean(outer_wf) > 1e-7:
-            sanity_check = False
-            logger.warning(
-                "The wavefunction is not close to zero at the outer boundary, mean=%.2e",
-                np.mean(outer_wf),
+            warning_msgs.append(
+                f"The wavefunction is not close to zero at the outer boundary, mean={np.mean(outer_wf):.2e}"
             )
 
         outer_weight = 2 * np.sum(outer_wf * outer_wf * grid.z_list[outer_ind:] * grid.z_list[outer_ind:]) * grid.dz
         outer_weight_scaled_to_whole_grid = outer_weight * grid.steps / len(outer_wf)
         if outer_weight_scaled_to_whole_grid > 1e-10:
-            sanity_check = False
-            logger.warning(
-                "The wavefunction is not close to zero at the outer boundary, (outer_weight_scaled_to_whole_grid=%.2e)",
-                outer_weight_scaled_to_whole_grid,
+            warning_msgs.append(
+                f"The wavefunction is not close to zero at the outer boundary,"
+                f" (outer_weight_scaled_to_whole_grid={outer_weight_scaled_to_whole_grid:.2e})"
             )
 
         # Check the number of nodes
         nodes = np.sum(np.abs(np.diff(np.sign(self.w_list)))) // 2
         if nodes != n - l - 1:
-            sanity_check = False
-            logger.warning("The wavefunction has %s nodes, but should have {n - l - 1} nodes.", nodes)
+            warning_msgs.append(f"The wavefunction has {nodes} nodes, but should have {n - l - 1} nodes.")
 
         # Check that numerov stopped and did not run until x_stop
         if l > 0:
             if run_backward and z_stop > grid.z_list[0] - grid.dz / 2:
-                sanity_check = False
-                logger.warning("The integration did not stop before z_stop, z=%s, %s", grid.z_list[0], z_stop)
+                warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[0]}, z_stop={z_stop}")
             if not run_backward and z_stop < grid.z_list[-1] + grid.dz / 2:
-                sanity_check = False
-                logger.warning("The integration did not stop before z_stop, z=%s", grid.z_list[-1])
+                warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[-1]}")
         elif l == 0 and run_backward:
             if z_stop > 1.5 * grid.dz:
-                sanity_check = False
-                logger.warning("The integration for l=0 should go until z=dz, but a z_stop=%s was used.", z_stop)
+                warning_msgs.append(f"The integration for l=0 should go until z=dz, but a z_stop={z_stop} was used.")
             elif grid.z_list[0] > 2.5 * grid.dz:
                 # z_list[0] should be dz, but if it is 2 * dz this is also fine
                 # e.g. this might happen if the integration just stopped at the last step due to a negative y value
-                sanity_check = False
-                logger.warning(
-                    "The integration for l=0 did stop before the z_min boundary, z=%s, %s", grid.z_list[0], grid.dz
+                warning_msgs.append(
+                    f"The integration for l=0 did stop before the z_min boundary, z={grid.z_list[0]}, {grid.dz}"
                 )
 
-        if not sanity_check:
-            logger.error(
-                "The wavefunction (species=%s n=%d, l=%d, j=%.1f) has some issues.",
-                self.model_potential.species,
-                n,
-                l,
-                j,
-            )
+        if warning_msgs:
+            species, j = self.model_potential.species, self.model_potential.j
+            msg = f"The wavefunction (species={species} n={n}, l={l}, j={j:.1f}) has some issues:"
+            msg += "\n      ".join(["", *warning_msgs])
+            logger.warning(msg)
+            return False
 
-        return sanity_check
+        return True
