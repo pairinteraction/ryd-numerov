@@ -7,7 +7,7 @@ from ryd_numerov.elements.lithium import Lithium
 from ryd_numerov.elements.potassium import Potassium
 from ryd_numerov.elements.rubidium import Rubidium
 from ryd_numerov.elements.sodium import Sodium
-from ryd_numerov.elements.strontium import StrontiumSinglet, StrontiumTriplet
+from ryd_numerov.elements.strontium import Strontium88Singlet, Strontium88Triplet
 
 __all__ = [  # noqa: RUF022
     "Element",
@@ -20,6 +20,6 @@ __all__ = [  # noqa: RUF022
     "Rubidium",
     "Cesium",
     "Francium",
-    "StrontiumSinglet",
-    "StrontiumTriplet",
+    "Strontium88Singlet",
+    "Strontium88Triplet",
 ]
