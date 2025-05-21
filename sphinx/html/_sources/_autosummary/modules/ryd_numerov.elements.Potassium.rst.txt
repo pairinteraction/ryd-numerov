@@ -1,0 +1,35 @@
+Potassium
+=========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Potassium.__init__
+      ~Potassium.from_species
+      ~Potassium.get_ionization_energy
+      ~Potassium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Potassium.add_spin_orbit
+   ~Potassium.ground_state_shell
+   ~Potassium.is_alkali
+   ~Potassium.s
+   ~Potassium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Potassium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

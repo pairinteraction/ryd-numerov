@@ -1,0 +1,35 @@
+Cesium
+======
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Cesium.__init__
+      ~Cesium.from_species
+      ~Cesium.get_ionization_energy
+      ~Cesium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Cesium.add_spin_orbit
+   ~Cesium.ground_state_shell
+   ~Cesium.is_alkali
+   ~Cesium.s
+   ~Cesium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Cesium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

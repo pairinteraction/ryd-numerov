@@ -1,0 +1,35 @@
+Element
+=======
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Element.__init__
+      ~Element.from_species
+      ~Element.get_ionization_energy
+      ~Element.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Element.add_spin_orbit
+   ~Element.is_alkali
+   ~Element.species
+   ~Element.s
+   ~Element.ground_state_shell
+
+
+
+.. autoclass:: ryd_numerov.elements.Element
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

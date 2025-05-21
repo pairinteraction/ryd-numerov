@@ -1,0 +1,35 @@
+HydrogenTextBook
+================
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~HydrogenTextBook.__init__
+      ~HydrogenTextBook.from_species
+      ~HydrogenTextBook.get_ionization_energy
+      ~HydrogenTextBook.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~HydrogenTextBook.add_spin_orbit
+   ~HydrogenTextBook.ground_state_shell
+   ~HydrogenTextBook.is_alkali
+   ~HydrogenTextBook.s
+   ~HydrogenTextBook.species
+
+
+
+.. autoclass:: ryd_numerov.elements.HydrogenTextBook
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

@@ -1,0 +1,35 @@
+Strontium88Triplet
+==================
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Strontium88Triplet.__init__
+      ~Strontium88Triplet.from_species
+      ~Strontium88Triplet.get_ionization_energy
+      ~Strontium88Triplet.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Strontium88Triplet.add_spin_orbit
+   ~Strontium88Triplet.ground_state_shell
+   ~Strontium88Triplet.is_alkali
+   ~Strontium88Triplet.s
+   ~Strontium88Triplet.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Strontium88Triplet
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init
