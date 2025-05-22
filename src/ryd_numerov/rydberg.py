@@ -7,7 +7,13 @@ from scipy.special import exprel
 from ryd_numerov.angular import calc_angular_matrix_element
 from ryd_numerov.elements import BaseElement
 from ryd_numerov.model import Model
-from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
+from ryd_numerov.radial import (
+    Grid,
+    Wavefunction,
+    WavefunctionNumerov,
+    WavefunctionWhittaker,
+    calc_radial_matrix_element,
+)
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
@@ -246,6 +252,7 @@ class RydbergState:
     @property
     def wavefunction(self) -> Wavefunction:
         if not hasattr(self, "_wavefunction"):
+            self._wavefunction: Wavefunction
             self.create_wavefunction()
         return self._wavefunction
 
@@ -254,12 +261,39 @@ class RydbergState:
         """The list of w values for the wavefunction."""
         return self.wavefunction.w_list
 
-    def create_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
+    @overload
+    def create_wavefunction(self) -> None: ...
+
+    @overload
+    def create_wavefunction(
+        self,
+        method: Literal["numerov"],
+        *,
+        run_backward: bool = True,
+        w0: float = 1e-10,
+        _use_njit: bool = True,
+    ) -> None: ...
+
+    @overload
+    def create_wavefunction(self, method: Literal["whittaker"]) -> None: ...
+
+    def create_wavefunction(
+        self,
+        method: Literal["numerov", "whittaker"] = "numerov",
+        *,
+        run_backward: bool = True,
+        w0: float = 1e-10,
+        _use_njit: bool = True,
+    ) -> None:
         if hasattr(self, "_wavefunction"):
             raise RuntimeError("The wavefunction was already created, you should not create it again.")
 
-        self._wavefunction = Wavefunction(self, self.grid, self.model)
-        self._wavefunction.integrate(run_backward, w0, _use_njit)
+        if method == "numerov":
+            self._wavefunction = WavefunctionNumerov(self, self.grid, self.model)
+            self._wavefunction.integrate(run_backward, w0, _use_njit=_use_njit)
+        elif method == "whittaker":
+            self._wavefunction = WavefunctionWhittaker(self, self.grid)
+            self._wavefunction.integrate()
         self._grid = self._wavefunction.grid
 
     @overload
