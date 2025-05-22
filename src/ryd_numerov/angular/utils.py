@@ -12,6 +12,17 @@ HALF = 1 / Integer(2)
 
 @lru_cache(maxsize=10_000)
 def calc_wigner_3j(j_1: float, j_2: float, j_3: float, m_1: float, m_2: float, m_3: float) -> float:
+    if not j_1 <= j_2 <= j_3:  # better use of caching
+        args_nd = np.array([j_1, j_2, j_3, m_1, m_2, m_3])
+        inds = np.argsort(args_nd[:3])
+        wigner = calc_wigner_3j(*args_nd[:3][inds], *args_nd[3:][inds])
+        if (inds[1] - inds[0]) in [1, -2]:
+            return wigner
+        return minus_one_pow(j_1 + j_2 + j_3) * wigner
+
+    if m_3 < 0 or (m_3 == 0 and m_2 < 0):  # better use of caching
+        return minus_one_pow(j_1 + j_2 + j_3) * calc_wigner_3j(j_1, j_2, j_3, -m_1, -m_2, -m_3)
+
     args = [j_1, j_2, j_3, m_1, m_2, m_3]
     for i, arg in enumerate(args):
         if arg % 1 == 0:
