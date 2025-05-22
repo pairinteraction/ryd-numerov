@@ -32,7 +32,7 @@ def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool
     atom = RydbergState(species, n=n, l=l, j=l + 0.5)
 
     # Run the numerov integration
-    atom.create_wavefunction(run_backward=run_backward)
+    atom.create_wavefunction("numerov", run_backward=run_backward)
 
     # Get analytical solution from sympy
     if n <= 35:

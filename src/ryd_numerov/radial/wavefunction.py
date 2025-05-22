@@ -2,6 +2,8 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
+from mpmath import whitw
+from scipy.special import gamma
 
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
@@ -15,33 +17,22 @@ logger = logging.getLogger(__name__)
 
 
 class Wavefunction:
-    r"""An object containing all the relevant information about the radial wavefunction.
-
-    Attributes:
-        w_list: The dimensionless and scaled wavefunction
-            w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \\sqrt(a_0) r R(r) evaluated at the z_list values.
-        u_list: The corresponding dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r).
-        r_list: The corresponding dimensionless radial wavefunction \tilde{R}(r) = a_0^{-3/2} R(r).
-
-    """
+    r"""An object containing all the relevant information about the radial wavefunction."""
 
     def __init__(
         self,
         state: "RydbergState",
         grid: "Grid",
-        model: "Model",
     ) -> None:
         """Create a Wavefunction object.
 
         Args:
             state: The RydbergState object.
             grid: The grid object.
-            model: The model object.
 
         """
         self.state = state
         self.grid = grid
-        self.model = model
 
         self._w_list: Optional[NDArray] = None
 
@@ -59,8 +50,30 @@ class Wavefunction:
 
     @property
     def r_list(self) -> "NDArray":
-        r"""The radial wavefunction R(r) in atomic units."""
+        r"""The radial wavefunction \tilde{R}(r) in atomic units \tilde{R}(r) = a_0^{-3/2} R(r)."""
         return self.u_list / self.grid.x_list
+
+    def integrate(self) -> "NDArray":
+        raise NotImplementedError("This method should be implemented by the subclass.")
+
+
+class WavefunctionNumerov(Wavefunction):
+    def __init__(
+        self,
+        state: "RydbergState",
+        grid: "Grid",
+        model: "Model",
+    ) -> None:
+        """Create a Wavefunction object.
+
+        Args:
+            state: The RydbergState object.
+            grid: The grid object.
+            model: The model object.
+
+        """
+        super().__init__(state, grid)
+        self.model = model
 
     def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> "NDArray":
         r"""Run the Numerov integration of the radial Schrödinger equation.
@@ -268,3 +281,19 @@ class Wavefunction:
             return False
 
         return True
+
+
+class WavefunctionWhittaker(Wavefunction):
+    def integrate(self) -> "NDArray":
+        logger.warning("Using Whittaker to get the wavefunction is not recommended! Use this only for comparison.")
+        n, l, j = self.state.n, self.state.l, self.state.j
+        nu = self.state.element.calc_n_star(n, l, j)
+
+        whitw_vectorized = np.vectorize(whitw, otypes=[float])
+        whitw_list = whitw_vectorized(nu, l + 0.5, 2 * self.grid.x_list / nu)
+
+        u_list: NDArray = whitw_list / np.sqrt(nu**2 * gamma(nu + l + 1) * gamma(nu - l))
+        w_list: NDArray = u_list / np.sqrt(self.grid.z_list)
+
+        self._w_list = w_list
+        return w_list
