@@ -65,11 +65,15 @@ class Element(ABC):
             An instance of the corresponding element class.
 
         """
-        concrete_subclasses = [
-            subclass
-            for subclass in cls.__subclasses__()
-            if not inspect.isabstract(subclass) and hasattr(subclass, "species")
-        ]
+        def get_concrete_subclasses(_cls: type[Element]) -> list[type[Element]]:
+            subclasses = []
+            for subclass in _cls.__subclasses__():
+                if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
+                    subclasses.append(subclass)
+                subclasses.extend(get_concrete_subclasses(subclass))
+            return subclasses
+
+        concrete_subclasses = get_concrete_subclasses(cls)
         for subclass in concrete_subclasses:
             if subclass.species == species:
                 return subclass()
