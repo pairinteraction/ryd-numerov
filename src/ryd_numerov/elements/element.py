@@ -74,6 +74,7 @@ class Element(ABC):
             An instance of the corresponding element class.
 
         """
+
         def get_concrete_subclasses(_cls: type[Element]) -> list[type[Element]]:
             subclasses = []
             for subclass in _cls.__subclasses__():

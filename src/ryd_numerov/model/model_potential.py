@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Literal, Optional
 import numpy as np
 
 from ryd_numerov.model.database import Database
-from ryd_numerov.model.quantum_defect import QuantumDefect
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
+    from ryd_numerov.elements.element import Element
     from ryd_numerov.units import NDArray
 
 
@@ -23,7 +23,6 @@ class ModelPotential:
         l: Orbital angular momentum quantum number
         s: Spin quantum number
         j: Total angular momentum quantum number
-        quantum_defect: QuantumDefect object for the atomic species and quantum numbers.
         ac: Polarizability parameter in atomic units.
         Z: Nuclear charge.
         a1: Model potential parameter a1 in atomic units.
@@ -38,12 +37,11 @@ class ModelPotential:
 
     def __init__(
         self,
-        species: str,
+        element: "Element",
         n: int,
         l: int,
         s: float,
         j: float,
-        quantum_defect: QuantumDefect,
         database: Optional["Database"] = None,
         *,
         add_spin_orbit: bool = True,
@@ -52,12 +50,11 @@ class ModelPotential:
         r"""Initialize the model potential.
 
         Args:
-            species: Atomic species
+            element: Element object representing the atomic species.
             n: Principal quantum number
             l: Orbital angular momentum quantum number
             s: Spin quantum number
             j: Total angular momentum quantum number
-            quantum_defect: QuantumDefect object for the atomic species and quantum numbers.
             database: Database instance, where the model potential parameters are stored
               If None, use the global database instance.
             add_spin_orbit: Whether to include the spin-orbit coupling potential in the total physical potential.
@@ -65,19 +62,18 @@ class ModelPotential:
               (see calc_potential_core and calc_potential_core_polarization)
 
         """
-        self.species = species
+        self.element = element
         self.n = n
         self.l = l
         self.s = s
         self.j = j
-        self.quantum_defect = quantum_defect
 
         if database is None:
             database = Database.get_global_instance()
         self.database = database
 
         self.ac, self.Z, self.a1, self.a2, self.a3, self.a4, self.rc = database.get_model_potential_parameters(
-            self.species, self.l
+            self.element.species, self.l
         )
 
         self.add_spin_orbit = add_spin_orbit
@@ -185,7 +181,7 @@ class ModelPotential:
 
         """
         x2 = x * x
-        return (1 / self.quantum_defect.mu) * self.l * (self.l + 1) / (2 * x2)
+        return (1 / self.element.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
 
     def calc_effective_potential_sqrt(self, x: "NDArray") -> "NDArray":
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
@@ -206,7 +202,7 @@ class ModelPotential:
 
         """
         x2 = x * x
-        return (1 / self.quantum_defect.mu) * (3 / 32) / x2
+        return (1 / self.element.reduced_mass_factor) * (3 / 32) / x2
 
     def calc_total_physical_potential(self, x: "NDArray") -> "NDArray":
         r"""Calculate the total physical potential V_phys(x) in atomic units.
@@ -283,7 +279,7 @@ class ModelPotential:
 
         if which == "classical":
             z_list = np.arange(max(dz, hydrogen_z_i - 10), hydrogen_z_i + 10, dz)
-            energy = self.quantum_defect.energy
+            energy = self.element.calc_energy(self.n, self.l, self.j, unit="a.u.")
         elif which == "zerocrossing":
             z_list = np.arange(max(dz, hydrogen_z_i / 2 - 5), hydrogen_z_i + 10, dz)
             energy = 0

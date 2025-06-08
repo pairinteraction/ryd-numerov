@@ -1,5 +1,4 @@
 import logging
-from functools import cached_property
 from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
 
 import numpy as np
@@ -9,7 +8,6 @@ from ryd_numerov.angular import calc_angular_matrix_element
 from ryd_numerov.elements.element import Element
 from ryd_numerov.model import Database
 from ryd_numerov.model.model_potential import ModelPotential
-from ryd_numerov.model.quantum_defect import QuantumDefect
 from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
@@ -157,10 +155,6 @@ class RydbergState:
         """The total spin quantum number."""
         return self.element.s
 
-    @cached_property
-    def quantum_defect(self) -> QuantumDefect:
-        return QuantumDefect(self.species, self.n, self.l, self.j, self.database)
-
     @property
     def model_potential(self) -> ModelPotential:
         if not hasattr(self, "_model_potential"):
@@ -185,12 +179,11 @@ class RydbergState:
 
         add_spin_orbit = add_spin_orbit if add_spin_orbit is not None else self.element.add_spin_orbit
         self._model_potential = ModelPotential(
-            self.species,
+            self.element,
             self.n,
             self.l,
             self.s,
             self.j,
-            self.quantum_defect,
             self.database,
             add_spin_orbit=add_spin_orbit,
             add_model_potentials=add_model_potentials,
@@ -254,7 +247,7 @@ class RydbergState:
         if hasattr(self, "_wavefunction"):
             raise RuntimeError("The wavefunction was already created, you should not create it again.")
 
-        self._wavefunction = Wavefunction(self.grid, self.model_potential, self.quantum_defect)
+        self._wavefunction = Wavefunction(self.element, self.grid, self.model_potential)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
         self._grid = self._wavefunction.grid
 
@@ -265,7 +258,7 @@ class RydbergState:
     def get_energy(self, unit: str) -> float: ...
 
     def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
-        energy_au = self.quantum_defect.energy
+        energy_au = self.element.calc_energy(self.n, self.l, self.j, unit="a.u.")
         if unit == "a.u.":
             return energy_au
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]

@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class Database:
-    """Interface to quantum defects SQL database."""
+    """Interface to model potential SQL database."""
 
     _global_instance: ClassVar[Optional["Database"]] = None
 
@@ -67,36 +67,6 @@ class Database:
             )
 
         return float(row[2]), int(row[3]), float(row[4]), float(row[5]), float(row[6]), float(row[7]), float(row[8])
-
-    def get_quantum_defect_parameters(
-        self, species: str, l: int, j: float
-    ) -> tuple[float, float, float, float, float, float]:
-        """Get Rydberg-Ritz parameters.
-
-        Args:
-            species: Atomic species
-            l: Angular momentum quantum number
-            j: Total angular momentum quantum number
-
-        Returns:
-            The quantum defect parameters for the given species, l and j, i.e.:
-                d0, d2, d4, d6, d8, Ry
-                If no match is found for l and j, returns d_i = 0 and the normal Ry.
-
-        """
-        cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? AND l=? AND j=?", (species, l, j))
-        row = cursor.fetchone()
-        if row is None:
-            cursor = self.conn.execute("SELECT * FROM rydberg_ritz WHERE species=? ORDER BY l DESC, j DESC", (species,))
-            row = cursor.fetchone()
-            if row is None:
-                raise ValueError(f"No Rydberg-Ritz parameters found for {species}")
-            row = (row[0], row[1], row[2], 0.0, 0.0, 0.0, 0.0, 0.0, row[8])
-            logger.debug(
-                "No Rydberg-Ritz parameters found for %s with l=%d and j=%d, returning zero quantum defects.",
-                *(species, l, j),
-            )
-        return row[3], row[4], row[5], row[6], row[7], row[8]
 
     def __del__(self) -> None:
         """Close database connection on object deletion."""
