@@ -6,7 +6,8 @@ import numpy as np
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from ryd_numerov.model import ModelPotential, QuantumDefect
+    from ryd_numerov.elements.element import Element
+    from ryd_numerov.model import ModelPotential
     from ryd_numerov.radial.grid import Grid
     from ryd_numerov.units import NDArray
 
@@ -26,21 +27,21 @@ class Wavefunction:
 
     def __init__(
         self,
+        element: "Element",
         grid: "Grid",
         model_potential: "ModelPotential",
-        quantum_defect: "QuantumDefect",
     ) -> None:
         """Create a Wavefunction object.
 
         Args:
+            element: The element object.
             grid: The grid object.
             model_potential: The model potential object.
-            quantum_defect: The quantum defect object.
 
         """
+        self.element = element
         self.grid = grid
         self.model_potential = model_potential
-        self.quantum_defect = quantum_defect
 
         self._w_list: Optional[NDArray] = None
 
@@ -103,18 +104,22 @@ class Wavefunction:
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
+        n, l, j = self.model_potential.n, self.model_potential.l, self.model_potential.j
         glist = (
             8
-            * self.quantum_defect.mu
+            * self.element.reduced_mass_factor
             * grid.z_list
             * grid.z_list
-            * (self.quantum_defect.energy - self.model_potential.calc_total_effective_potential(grid.x_list))
+            * (
+                self.element.calc_energy(n, l, j, unit="a.u.")
+                - self.model_potential.calc_total_effective_potential(grid.x_list)
+            )
         )
 
         if run_backward:
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
-            y0, y1 = 0, (-1) ** ((self.model_potential.n - self.model_potential.l - 1) % 2) * w0
+            y0, y1 = 0, (-1) ** ((n - l - 1) % 2) * w0
             x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
@@ -153,7 +158,7 @@ class Wavefunction:
 
     def get_x_min(self) -> float:
         """Implement a few special cases for the x_min point of the integration."""
-        species, n, l = self.model_potential.species, self.model_potential.n, self.model_potential.l
+        species, n, l = self.element.species, self.model_potential.n, self.model_potential.l
         if species in ["Rb", "Cs"] and n == 4 and l == 3:
             return 2
         if species == "Sr_singlet" and n == 5 and l == 0:
@@ -265,7 +270,7 @@ class Wavefunction:
                 )
 
         if warning_msgs:
-            species, j = self.model_potential.species, self.model_potential.j
+            species, j = self.element.species, self.model_potential.j
             msg = f"The wavefunction (species={species} n={n}, l={l}, j={j:.1f}) has some issues:"
             msg += "\n      ".join(["", *warning_msgs])
             logger.warning(msg)
