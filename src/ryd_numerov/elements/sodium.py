@@ -5,6 +5,7 @@ from ryd_numerov.elements.element import Element
 
 class Sodium(Element):
     species = "Na"
+    Z = 11
     s = 1 / 2
     ground_state_shell = (3, 0)
 
@@ -29,3 +30,15 @@ class Sodium(Element):
     }
 
     _corrected_rydberg_constant = (109734.69, None, "1/cm")
+
+    # Phys. Rev. A 49, 982 (1994)
+    alpha_c = 0.9448
+    # Phys. Rev. A 49, 982 (1994)
+    _r_c_dict: ClassVar = {0: 0.45489422, 1: 0.45798739, 2: 0.71875312, 3: 28.6735059}
+    # Phys. Rev. A 49, 982 (1994)
+    _parametric_model_potential_parameters: ClassVar = {
+        0: (4.82223117, 2.45449865, -1.12255048, -1.42631393),
+        1: (5.08382502, 2.18226881, -1.19534623, -1.03142861),
+        2: (3.53324124, 2.48697936, -0.75688448, -1.27852357),
+        3: (1.11056646, 1.05458759, 1.73203428, -0.09265696),
+    }

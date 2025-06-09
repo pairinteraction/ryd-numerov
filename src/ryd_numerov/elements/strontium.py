@@ -4,8 +4,21 @@ from ryd_numerov.elements.element import Element
 
 
 class Strontium(Element):
+    Z = 38
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
     _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
+
+    # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
+    alpha_c = 7.5
+    # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
+    _r_c_dict: ClassVar = {0: 1.59, 1: 1.58, 2: 1.57, 3: 1.56}
+    # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
+    _parametric_model_potential_parameters: ClassVar = {
+        0: (3.36124, 1.3337, 0, 5.94337),
+        1: (3.28205, 1.24035, 0, 3.78861),
+        2: (2.155, 1.4545, 0, 4.5111),
+        3: (2.1547, 1.14099, 0, 2.1987),
+    }
 
 
 class Strontium88Singlet(Strontium):

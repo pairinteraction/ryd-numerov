@@ -3,6 +3,8 @@ from abc import ABC
 from functools import cache
 from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
 
+import numpy as np
+
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
@@ -43,6 +45,8 @@ class Element(ABC):
 
     species: ClassVar[str]
     """Atomic species."""
+    Z: ClassVar[int]
+    """Atomic number of the element."""
     s: ClassVar[Union[int, float]]
     """Total spin quantum number."""
     ground_state_shell: ClassVar[tuple[int, int]]
@@ -61,6 +65,19 @@ class Element(ABC):
 
     _corrected_rydberg_constant: tuple[float, Optional[float], str]
     r"""Corrected Rydberg constant stored as (value, uncertainty, unit)"""
+
+    alpha_c: ClassVar[float] = 0
+    """Static dipole polarizability in atomic units (a.u.), used for the parametric model potential.
+    See also: Phys. Rev. A 49, 982 (1994)
+    """
+    _r_c_dict: ClassVar[dict[int, float]] = {0: np.inf}
+    """Cutoff radius {l: r_c} to truncate the unphysical short-range contribution of the polarization potential.
+    See also: Phys. Rev. A 49, 982 (1994)
+    """
+    _parametric_model_potential_parameters: ClassVar[dict[int, tuple[float, float, float, float]]] = {}
+    """Parameters {l: (a_1, a_2, a_3, a_4)} for the parametric model potential.
+    See also: Phys. Rev. A 49, 982 (1994)
+    """
 
     @classmethod
     @cache
@@ -237,3 +254,35 @@ class Element(ABC):
         if unit == "a.u.":
             return energy.magnitude
         return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+
+    def get_parametric_model_potential_parameters(self, l: int) -> tuple[float, float, float, float]:
+        """Get the parameters for the parametric model potential for the given principal quantum number n.
+
+        Args:
+            l: Orbital angular momentum quantum number.
+
+        Returns:
+            Parameters (a_1, a_2, a_3, a_4) for the parametric model potential.
+
+        """
+        if len(self._parametric_model_potential_parameters) == 0:
+            raise ValueError("No parametric model potential parameters defined for this element.")
+        if l in self._parametric_model_potential_parameters:
+            return self._parametric_model_potential_parameters[l]
+        max_l = max(self._parametric_model_potential_parameters.keys())
+        return self._parametric_model_potential_parameters[max_l]
+
+    def get_r_c(self, l: int) -> float:
+        """Get the cutoff radius for the polarization potential for the given orbital angular momentum quantum number l.
+
+        Args:
+            l: Orbital angular momentum quantum number.
+
+        Returns:
+            Cutoff radius r_c for the polarization potential.
+
+        """
+        if l in self._r_c_dict:
+            return self._r_c_dict[l]
+        max_l = max(self._r_c_dict.keys())
+        return self._r_c_dict[max_l]

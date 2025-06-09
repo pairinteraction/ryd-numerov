@@ -6,6 +6,7 @@ RydbergConstant = ureg.Quantity(1, "rydberg_constant").to("eV", "spectroscopy")
 
 class Hydrogen(Element):
     species = "H"
+    Z = 1
     s = 1 / 2
     ground_state_shell = (1, 0)
 
