@@ -3,6 +3,7 @@ from ryd_numerov.elements.element import Element
 
 class HeliumIon(Element):
     species = "He+"
+    Z = 2
     s = 1 / 2
     ground_state_shell = (1, 0)
 

@@ -5,6 +5,7 @@ from ryd_numerov.elements.element import Element
 
 class Potassium(Element):
     species = "K"
+    Z = 19
     s = 1 / 2
     ground_state_shell = (4, 0)
 
@@ -25,3 +26,15 @@ class Potassium(Element):
     }
 
     _corrected_rydberg_constant = (109735.774, None, "1/cm")
+
+    # Phys. Rev. A 49, 982 (1994)
+    alpha_c = 5.3310
+    # Phys. Rev. A 49, 982 (1994)
+    _r_c_dict: ClassVar = {0: 0.83167545, 1: 0.85235381, 2: 0.83216907, 3: 6.50294371}
+    # Phys. Rev. A 49, 982 (1994)
+    _parametric_model_potential_parameters: ClassVar = {
+        0: (3.56079437, 1.83909642, -1.74701102, -1.03237313),
+        1: (3.65670429, 1.67520788, -2.07416615, -0.89030421),
+        2: (4.12713694, 1.79837462, -1.69935174, -0.98913582),
+        3: (1.42310446, 1.27861156, 4.77441476, -0.94829262),
+    }

@@ -5,6 +5,7 @@ from ryd_numerov.elements.element import Element
 
 class Cesium(Element):
     species = "Cs"
+    Z = 55
     s = 1 / 2
     ground_state_shell = (6, 0)
 
@@ -26,3 +27,15 @@ class Cesium(Element):
     }
 
     _corrected_rydberg_constant = (109736.8627339, None, "1/cm")
+
+    # Phys. Rev. A 49, 982 (1994)
+    alpha_c = 15.6440
+    # Phys. Rev. A 49, 982 (1994)
+    _r_c_dict: ClassVar = {0: 0.02629242, 1: -0.09543125, 2: -0.74095193, 3: 0.00034538}
+    # Phys. Rev. A 49, 982 (1994)
+    _parametric_model_potential_parameters: ClassVar = {
+        0: (1.92046930, 1.47533800, -9.72143084, 3.49546309),
+        1: (2.13383095, 1.71398344, -24.65624280, 4.69366096),
+        2: (0.93007296, 1.61365288, -6.70128850, 4.32466196),
+        3: (1.99969677, 1.40000001, -3.20036138, 3.01048361),
+    }
