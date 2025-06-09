@@ -24,3 +24,20 @@ class Francium(Element):
     }
 
     _corrected_rydberg_constant = (109_736.862_733_9, None, "1/cm")
+
+    # J. Phys. B 43 202001 (2010)
+    alpha_c = 20.4
+    # Phys. Rev. A 49, 982 (1994)
+    _r_c_dict: ClassVar = {  # Using Cs values as approximation
+        0: 3.49546309,
+        1: 4.69366096,
+        2: 4.32466196,
+        3: 3.01048361,
+    }
+    # Phys. Rev. A 49, 982 (1994)
+    _parametric_model_potential_parameters: ClassVar = {
+        0: (1.47533800, -9.72143084, 0.02629242, 1.92046930),  # Using Cs values as approximation
+        1: (1.71398344, -24.65624280, -0.09543125, 2.13383095),  # Using Cs values as approximation
+        2: (1.61365288, -6.70128850, -0.74095193, 0.93007296),  # Using Cs values as approximation
+        3: (1.40000001, -3.20036138, 0.00034538, 1.99969677),  # Using Cs values as approximation
+    }

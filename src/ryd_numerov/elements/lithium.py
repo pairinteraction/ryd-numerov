@@ -5,6 +5,7 @@ from ryd_numerov.elements.element import Element
 
 class Lithium(Element):
     species = "Li"
+    Z = 3
     s = 1 / 2
     ground_state_shell = (2, 0)
 
@@ -25,3 +26,14 @@ class Lithium(Element):
     }
 
     _corrected_rydberg_constant = (109728.64, None, "1/cm")
+
+    # Phys. Rev. A 49, 982 (1994)
+    alpha_c = 0.1923
+    # Phys. Rev. A 49, 982 (1994)
+    _r_c_dict: ClassVar = {0: 0.61340824, 1: 0.61566441, 2: 2.34126273}
+    # Phys. Rev. A 49, 982 (1994)
+    _parametric_model_potential_parameters: ClassVar = {
+        0: (2.47718079, 1.84150932, -0.02169712, -0.11988362),
+        1: (3.45414648, 2.55151080, -0.21646561, -0.06990078),
+        2: (2.51909839, 2.43712450, 0.32505524, 0.10602430),
+    }
