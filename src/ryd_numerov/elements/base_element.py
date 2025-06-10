@@ -1,6 +1,9 @@
 import inspect
+import re
 from abc import ABC
+from fractions import Fraction
 from functools import cache
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
 
 import numpy as np
@@ -53,6 +56,8 @@ class BaseElement(ABC):
     """Total spin quantum number."""
     ground_state_shell: ClassVar[tuple[int, int]]
     """Shell (n, l) describing the electronic ground state configuration."""
+    _core_electron_configuration: ClassVar[str]
+    """Electron configuration of the core electrons, e.g. 4p6 for Rb or 5s for Sr."""
     _ionization_energy: tuple[float, Optional[float], str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
@@ -80,9 +85,82 @@ class BaseElement(ABC):
     See also: Phys. Rev. A 49, 982 (1994)
     """
 
+    _nist_energy_levels_file: Optional[Path] = None
+    """Path to the NIST energy levels file for this element.
+    The file should be directly downloaded from https://physics.nist.gov/PhysRefData/ASD/levels_form.html
+    in the 'Tab-delimited' format and in units of Hartree.
+    """
+
+    def __init__(self, use_nist_data: bool = True) -> None:
+        """Initialize an element instance.
+
+        Use this init method to set up additional properties and data for the element,
+        like loading NIST energy levels from a file.
+
+        Args:
+            use_nist_data: Whether to use NIST data for this element. Default is True.
+
+        """
+        self._nist_energy_levels: dict[tuple[int, int, float], float] = {}
+        if use_nist_data and self._nist_energy_levels_file is not None:
+            self._setup_nist_energy_levels(self._nist_energy_levels_file)
+
+    def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901
+        """Set up NIST energy levels from a file.
+
+        This method should be called in the constructor to load the NIST energy levels
+        from the specified file. It reads the file and prepares the data for further use.
+        """
+        if not file.exists():
+            raise ValueError(f"NIST energy data file {file} does not exist.")
+
+        header = file.read_text().splitlines()[0]
+        if "Level (Hartree)" not in header:
+            raise ValueError(
+                f"NIST energy data file {file} not given in Hartree, please download the data in units of Hartree."
+            )
+
+        l_str2int = {"s": 0, "p": 1, "d": 2, "f": 3, "g": 4, "h": 5, "i": 6, "k": 7, "l": 8, "m": 9}
+
+        data = np.loadtxt(file, skiprows=1, dtype=str, quotechar='"', delimiter="\t")
+        # data[i] := (Configuration, Term, J, Prefix, Energy, Suffix, Uncertainty, Reference)
+
+        for row in data:
+            if re.match(r"^([A-Z])", row[0]):
+                # Skip rows, where the first column starts with an element symbol
+                continue
+
+            config: str = row[0]
+            parts = config.split(".")
+            if self._core_electron_configuration not in parts[0]:
+                continue  # Skip configurations, where the inner electrons are not in the ground state configuration
+
+            multiplicity = int(row[1][0])
+            if (multiplicity - 1) / 2 != self.s:
+                continue
+
+            match = None
+            if len(parts) == 1:
+                match = re.match(r"^(\d+)([a-z])2$", parts[0])
+            elif len(parts) == 2:
+                match = re.match(r"^(\d+)([a-z])$", parts[1])
+            if match is None:
+                raise ValueError(f"Invalid configuration format: {config}.")
+
+            n = int(match.group(1))
+            l = l_str2int[match.group(2)]
+
+            j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
+            for j in j_list:
+                energy = float(row[4])
+                self._nist_energy_levels[(n, l, j)] = energy
+
+        if len(self._nist_energy_levels) == 0:
+            raise ValueError(f"No NIST energy levels found for element {self.species} in file {file}.")
+
     @classmethod
     @cache
-    def from_species(cls, species: str) -> "BaseElement":
+    def from_species(cls, species: str, use_nist_data: bool = True) -> "BaseElement":
         """Create an instance of the element class from the species string.
 
         This method searches through all subclasses of BaseElement until it finds one with a matching species attribute.
@@ -93,6 +171,7 @@ class BaseElement(ABC):
 
         Args:
             species: The species string (e.g. "Rb").
+            use_nist_data: Whether to use NIST data for this element. Default is True.
 
         Returns:
             An instance of the corresponding element class.
@@ -110,7 +189,7 @@ class BaseElement(ABC):
         concrete_subclasses = get_concrete_subclasses(cls)
         for subclass in concrete_subclasses:
             if subclass.species == species:
-                return subclass()
+                return subclass(use_nist_data=use_nist_data)
         raise ValueError(
             f"Unknown species: {species}. Available species: {[subclass.species for subclass in concrete_subclasses]}"
         )
@@ -254,7 +333,11 @@ class BaseElement(ABC):
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
-        energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
+        if (n, l, j) in self._nist_energy_levels:
+            energy_au = self._nist_energy_levels[(n, l, j)]
+            energy_au -= self.get_ionization_energy("hartree")
+        else:
+            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
             return energy

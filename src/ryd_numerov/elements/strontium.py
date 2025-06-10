@@ -1,10 +1,14 @@
+from pathlib import Path
 from typing import ClassVar, Optional
 
 from ryd_numerov.elements.base_element import BaseElement
 
 
-class Strontium(BaseElement):
+class _StrontiumAbstract(BaseElement):
     Z = 38
+
+    _core_electron_configuration = "5s"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "strontium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
     _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
@@ -24,7 +28,7 @@ class Strontium(BaseElement):
     }
 
 
-class Strontium88Singlet(Strontium):
+class Strontium88Singlet(_StrontiumAbstract):
     species = "Sr88_singlet"
     s = 0
     ground_state_shell = (5, 0)
@@ -43,7 +47,7 @@ class Strontium88Singlet(Strontium):
     _corrected_rydberg_constant = (109736.631, None, "1/cm")
 
 
-class Strontium88Triplet(Strontium):
+class Strontium88Triplet(_StrontiumAbstract):
     species = "Sr88_triplet"
     s = 1
     ground_state_shell = (4, 2)

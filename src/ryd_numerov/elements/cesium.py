@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
@@ -8,6 +9,8 @@ class Cesium(BaseElement):
     Z = 55
     s = 1 / 2
     ground_state_shell = (6, 0)
+    _core_electron_configuration = "5p6"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "cesium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440462&Mask=20
     _ionization_energy = (3.893_90, 0.000_002, "eV")
