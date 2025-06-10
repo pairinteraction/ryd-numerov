@@ -61,7 +61,9 @@ class ModelPotential:
         self.s = s
         self.j = j
 
-        self.additional_potentials = additional_potentials if additional_potentials is not None else []
+        if additional_potentials is None:
+            additional_potentials = self.element.additional_potentials_default
+        self.additional_potentials = additional_potentials
 
     def calc_potential_coulomb(self, x: "NDArray") -> "NDArray":
         r"""Calculate the coulomb potential V_Col(x) in atomic units.
