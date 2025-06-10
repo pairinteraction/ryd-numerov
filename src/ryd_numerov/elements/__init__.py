@@ -7,15 +7,15 @@ from ryd_numerov.elements.rubidium import Rubidium
 from ryd_numerov.elements.sodium import Sodium
 from ryd_numerov.elements.strontium import Strontium88Singlet, Strontium88Triplet
 
-__all__ = [  # noqa: RUF022
+__all__ = [
     "BaseElement",
-    "HydrogenTextBook",
+    "Cesium",
     "Hydrogen",
+    "HydrogenTextBook",
     "Lithium",
-    "Sodium",
     "Potassium",
     "Rubidium",
-    "Cesium",
+    "Sodium",
     "Strontium88Singlet",
     "Strontium88Triplet",
 ]

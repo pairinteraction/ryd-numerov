@@ -188,22 +188,34 @@ class BaseElement(ABC):
             An instance of the corresponding element class.
 
         """
-
-        def get_concrete_subclasses(_cls: type["BaseElement"]) -> list[type["BaseElement"]]:
-            subclasses = []
-            for subclass in _cls.__subclasses__():
-                if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
-                    subclasses.append(subclass)
-                subclasses.extend(get_concrete_subclasses(subclass))
-            return subclasses
-
-        concrete_subclasses = get_concrete_subclasses(cls)
+        concrete_subclasses = cls._get_concrete_subclasses()
         for subclass in concrete_subclasses:
             if subclass.species == species:
                 return subclass(use_nist_data=use_nist_data)
         raise ValueError(
             f"Unknown species: {species}. Available species: {[subclass.species for subclass in concrete_subclasses]}"
         )
+
+    @classmethod
+    def _get_concrete_subclasses(cls) -> list[type["BaseElement"]]:
+        subclasses = []
+        for subclass in cls.__subclasses__():
+            if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
+                subclasses.append(subclass)
+            subclasses.extend(subclass._get_concrete_subclasses())  # noqa: SLF001
+        return subclasses
+
+    @classmethod
+    def get_available_species(cls) -> list[str]:
+        """Get a list of all available species in the library.
+
+        This method returns a list of species strings for all concrete subclasses of BaseElement.
+
+        Returns:
+            List of species strings.
+
+        """
+        return sorted([subclass.species for subclass in cls._get_concrete_subclasses()])
 
     def is_allowed_shell(self, n: int, l: int) -> bool:
         """Check if the quantum numbers describe an allowed shell.
