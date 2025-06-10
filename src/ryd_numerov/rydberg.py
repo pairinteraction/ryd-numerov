@@ -6,7 +6,6 @@ from scipy.special import exprel
 
 from ryd_numerov.angular import calc_angular_matrix_element
 from ryd_numerov.elements.element import Element
-from ryd_numerov.model import Database
 from ryd_numerov.model.model_potential import ModelPotential
 from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
@@ -44,7 +43,6 @@ class RydbergState:
         l: int,
         j: Optional[float] = None,
         m: Optional[float] = None,
-        database: Optional["Database"] = None,
     ) -> None:
         r"""Initialize the model potential.
 
@@ -55,8 +53,6 @@ class RydbergState:
             j: Total angular momentum quantum number
             m: Magnetic quantum number
               Optional, only needed for concrete angular matrix elements.
-            database: Database instance, where the model potential parameters are stored
-              If None, use the global database instance.
 
         """
         self.species = species
@@ -70,10 +66,6 @@ class RydbergState:
             j = self.l + self.s
         self.j = j
         self.m = m
-
-        if database is None:
-            database = Database.get_global_instance()
-        self.database = database
 
         self.sanity_check()
 
@@ -179,7 +171,6 @@ class RydbergState:
             self.s,
             self.j,
             additional_potentials,
-            database=self.database,
         )
 
     @property
@@ -606,7 +597,7 @@ class RydbergState:
                             or not self.element.is_allowed_shell(n, l)
                         ):
                             continue
-                        other = self.__class__(self.species, n=n, l=l, j=float(j), m=float(m), database=self.database)
+                        other = self.__class__(self.species, n=n, l=l, j=float(j), m=float(m))
                         assert other.m is not None
                         if other.get_energy("a.u.") < self.get_energy("a.u.") or not only_smaller_energy:
                             relevant_states.append(other)
@@ -636,7 +627,7 @@ class RydbergState:
                         or not self.element.is_allowed_shell(n, l)
                     ):
                         continue
-                    other = self.__class__(self.species, n=n, l=l, j=float(j), database=self.database)
+                    other = self.__class__(self.species, n=n, l=l, j=float(j))
                     if other.get_energy("a.u.") < self.get_energy("a.u.") or not only_smaller_energy:
                         relevant_states.append(other)
                         energy_differences.append(self.get_energy("a.u.") - other.get_energy("a.u."))
