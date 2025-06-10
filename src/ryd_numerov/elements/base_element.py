@@ -37,7 +37,7 @@ SORTED_SHELLS = [  # (n, l)
 ]
 
 
-class Element(ABC):
+class BaseElement(ABC):
     """Abstract base class for all elements.
 
     For the electronic ground state configurations and sorted shells,
@@ -82,7 +82,7 @@ class Element(ABC):
 
     @classmethod
     @cache
-    def from_species(cls, species: str) -> "Element":
+    def from_species(cls, species: str) -> "BaseElement":
         """Create an instance of the element class from the species string.
 
         Args:
@@ -93,7 +93,7 @@ class Element(ABC):
 
         """
 
-        def get_concrete_subclasses(_cls: type[Element]) -> list[type[Element]]:
+        def get_concrete_subclasses(_cls: type["BaseElement"]) -> list[type["BaseElement"]]:
             subclasses = []
             for subclass in _cls.__subclasses__():
                 if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
