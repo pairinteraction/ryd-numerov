@@ -6,7 +6,7 @@ import numpy as np
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from ryd_numerov.elements.element import Element
+    from ryd_numerov.elements import BaseElement
     from ryd_numerov.model import ModelPotential
     from ryd_numerov.radial.grid import Grid
     from ryd_numerov.units import NDArray
@@ -27,7 +27,7 @@ class Wavefunction:
 
     def __init__(
         self,
-        element: "Element",
+        element: "BaseElement",
         grid: "Grid",
         model_potential: "ModelPotential",
     ) -> None:

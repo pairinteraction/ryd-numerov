@@ -1,9 +1,9 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class Sodium(Element):
+class Sodium(BaseElement):
     species = "Na"
     Z = 11
     s = 1 / 2

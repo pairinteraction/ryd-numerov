@@ -6,7 +6,7 @@ import numpy as np
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
-    from ryd_numerov.elements.element import Element
+    from ryd_numerov.elements import BaseElement
     from ryd_numerov.units import NDArray
 
 
@@ -37,7 +37,7 @@ class ModelPotential:
 
     def __init__(
         self,
-        element: "Element",
+        element: "BaseElement",
         n: int,
         l: int,
         s: float,
@@ -47,7 +47,7 @@ class ModelPotential:
         r"""Initialize the model potential.
 
         Args:
-            element: Element object representing the atomic species.
+            element: BaseElement object representing the atomic species.
             n: Principal quantum number
             l: Orbital angular momentum quantum number
             s: Spin quantum number

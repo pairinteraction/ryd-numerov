@@ -5,7 +5,7 @@ import numpy as np
 from scipy.special import exprel
 
 from ryd_numerov.angular import calc_angular_matrix_element
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements import BaseElement
 from ryd_numerov.model.model_potential import ModelPotential
 from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
@@ -56,7 +56,7 @@ class RydbergState:
 
         """
         self.species = species
-        self.element = Element.from_species(species)
+        self.element = BaseElement.from_species(species)
 
         self.n = n
         self.l = l

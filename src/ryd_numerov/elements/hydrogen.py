@@ -1,12 +1,12 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.units import ureg
 
 RydbergConstant = ureg.Quantity(1, "rydberg_constant").to("eV", "spectroscopy")
 
 
-class Hydrogen(Element):
+class Hydrogen(BaseElement):
     species = "H"
     Z = 1
     s = 1 / 2
@@ -20,7 +20,7 @@ class Hydrogen(Element):
     _corrected_rydberg_constant = (109677.58340280356, None, "1/cm")
 
 
-class HydrogenTextBook(Element):
+class HydrogenTextBook(BaseElement):
     """Hydrogen from QM textbook with infinite nucleus mass and no spin orbit coupling."""
 
     species = "H_textbook"
