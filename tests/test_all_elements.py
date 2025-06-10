@@ -1,9 +1,10 @@
 import pytest
 
+from ryd_numerov.elements import BaseElement
 from ryd_numerov.rydberg import RydbergState
 
 
-@pytest.mark.parametrize("species", ["H_textbook", "H", "Li", "Na", "K", "Rb", "Cs", "Sr88_singlet", "Sr88_triplet"])
+@pytest.mark.parametrize("species", BaseElement.get_available_species())
 def test_magnetic(species: str) -> None:
     """Test magnetic units."""
     ket = RydbergState(species, n=50, l=0)
