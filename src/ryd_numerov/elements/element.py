@@ -53,6 +53,15 @@ class Element(ABC):
     """Whether the default for this element is to add spin-orbit coupling to the Hamiltonian
     (mainly used for H_textbook)."""
 
+    # Parameters for the extended Rydberg Ritz formula, see calc_n_star
+    _quantum_defects: ClassVar[dict[tuple[int, float], tuple[float, float, float, float, float]]] = {}
+    """Dictionary containing the quantum defects for each (l, j) combination, i.e.
+    _quantum_defects[(l,j)] = (d0, d2, d4, d6, d8)
+    """
+
+    _corrected_rydberg_constant: tuple[float, Optional[float], str]
+    r"""Corrected Rydberg constant stored as (value, uncertainty, unit)"""
+
     @classmethod
     @cache
     def from_species(cls, species: str) -> "Element":
@@ -128,3 +137,102 @@ class Element(ABC):
         if unit == "a.u.":
             return ionization_energy.magnitude
         return ionization_energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+
+    @overload
+    def get_corrected_rydberg_constant(self, unit: None = None) -> "PintFloat": ...
+
+    @overload
+    def get_corrected_rydberg_constant(self, unit: str) -> float: ...
+
+    def get_corrected_rydberg_constant(self, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
+        r"""Return the corrected Rydberg constant in the desired unit.
+
+        The corrected Rydberg constant is defined as
+
+        .. math::
+            R_M = R_\infty * \frac{m_{Core}}{m_{Core} + m_e}
+
+        where :math:`R_\infty` is the Rydberg constant for infinite nuclear mass,
+        :math:`m_{Core}` is the mass of the core,
+        and :math:`m_e` is the mass of the electron.
+
+        Args:
+            unit: Desired unit for the corrected Rydberg constant. Default is atomic units "hartree".
+
+        Returns:
+            Corrected Rydberg constant in the desired unit.
+
+        """
+        corrected_rydberg_constant: PintFloat = ureg.Quantity(
+            self._corrected_rydberg_constant[0], self._corrected_rydberg_constant[2]
+        )
+        corrected_rydberg_constant = corrected_rydberg_constant.to("hartree", "spectroscopy")
+        if unit is None:
+            return corrected_rydberg_constant
+        if unit == "a.u.":
+            return corrected_rydberg_constant.magnitude
+        return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+
+    @property
+    def reduced_mass_factor(self) -> float:
+        r"""The reduced mass factor \mu.
+
+        The reduced mass factor
+
+        .. math::
+            \mu = \frac{m_{Core}}{m_{Core} + m_e}
+
+        calculated via the corrected Rydberg constant
+
+        .. math::
+            \mu = \frac{R_M}{R_\infty}
+
+        """
+        return (  # type: ignore [no-any-return]  # pint typing .to(unit)
+            self.get_corrected_rydberg_constant("hartree")
+            / ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy").magnitude
+        )
+
+    def calc_n_star(self, n: int, l: int, j: float) -> float:
+        r"""Calculate the effective principal quantum number for the given n, l and j.
+
+        The effective principal quantum number in quantum defect theory
+        is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`
+        where
+
+        .. math::
+            \delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...
+
+        References:
+            - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
+            - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
+
+        """
+        assert j % 1 in [0, 0.5], f"j must be integer or half-integer, but is {j}"
+        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j), (0, 0, 0, 0, 0))
+        delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
+        return n - delta_nlj
+
+    @overload
+    def calc_energy(self, n: int, l: int, j: float, unit: None = None) -> "PintFloat": ...
+
+    @overload
+    def calc_energy(self, n: int, l: int, j: float, unit: str) -> float: ...
+
+    def calc_energy(self, n: int, l: int, j: float, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
+        r"""Calculate the energy of a Rydberg state with for the given n, l and j.
+
+        is the quantum defect. The energy of the Rydberg state is then given by
+
+        .. math::
+            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}
+
+        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
+        """
+        energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
+        energy: PintFloat = ureg.Quantity(energy_au, "hartree")
+        if unit is None:
+            return energy
+        if unit == "a.u.":
+            return energy.magnitude
+        return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
