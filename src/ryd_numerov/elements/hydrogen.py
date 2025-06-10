@@ -25,6 +25,4 @@ class HydrogenTextBook(Element):
 
     _ionization_energy = (RydbergConstant.magnitude, 0, str(RydbergConstant.units))
 
-    add_spin_orbit = False
-
     _corrected_rydberg_constant = (109737.31568160003, None, "1/cm")
