@@ -230,7 +230,7 @@ def spherical_like_matrix_element(l1: int, l2: int, operator: OperatorType, kapp
     """
     assert operator in ["SPHERICAL", "ELECTRIC"]
 
-    prefactor = minus_one_pow(l2)
+    prefactor: float = minus_one_pow(l2)
     prefactor *= np.sqrt((2 * l1 + 1) * (2 * l2 + 1))
     if operator == "SPHERICAL":
         prefactor *= np.sqrt((2 * kappa + 1) / (4 * np.pi))
