@@ -12,6 +12,8 @@ class Lithium(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C7439932&Mask=20
     _ionization_energy = (5.391_72, None, "eV")
 
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+
     # -- [1] Phys. Rev. A 34, 2889 (1986) (Li 7)
     # -- [2] T. F. Gallagher, ``Rydberg Atoms'', Cambridge University Press (2005), ISBN: 978-0-52-102166-1
     # -- [3] Johansson I 1958 Ark. Fysik 15 169

@@ -11,6 +11,8 @@ class Francium(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440735&Mask=20
     _ionization_energy = (4.071_2, 0.000_04, "eV")
 
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+
     # -- [1] Phys. Rev. A 86, 052518 (2012)
     # -- [2] Phys. Rev. A 93, 042506 (2016)
     _quantum_defects: ClassVar = {

@@ -12,6 +12,8 @@ class Potassium(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440097&Mask=20
     _ionization_energy = (4.340_66, 0.000_01, "eV")
 
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+
     # -- [1] Phys. Scr. 27, 300 (1983)
     # -- [2] Opt. Commun. 39, 370 (1981)
     # -- [3] Ark. Fys., 10 p.583 (1956)

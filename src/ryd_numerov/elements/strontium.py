@@ -5,8 +5,11 @@ from ryd_numerov.elements.element import Element
 
 class Strontium(Element):
     Z = 38
+
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
     _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
+
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
 
     # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
     alpha_c = 7.5
