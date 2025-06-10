@@ -14,6 +14,7 @@ from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from ryd_numerov.model.model_potential import ADDITIONAL_POTENTIALS
     from ryd_numerov.units import NDArray, PintArray, PintFloat
 
 
@@ -161,32 +162,24 @@ class RydbergState:
             self.create_model_potential()
         return self._model_potential
 
-    def create_model_potential(
-        self, *, add_spin_orbit: Optional[bool] = None, add_model_potentials: bool = True
-    ) -> None:
+    def create_model_potential(self, additional_potentials: Optional[list["ADDITIONAL_POTENTIALS"]] = None) -> None:
         """Create the model potential for the Rydberg state.
 
         Args:
-            add_spin_orbit: Whether to include the spin-orbit coupling potential in the total physical potential.
-              Defaults to True.
-            add_model_potentials: Whether to include the model potentials
-              (see calc_potential_core and calc_potential_core_polarization)
-              Defaults to True.
+            additional_potentials: Additional potentials to include in the model potential.
 
         """
         if hasattr(self, "_model_potential"):
             raise RuntimeError("The model_potential was already created, you should not create it again.")
 
-        add_spin_orbit = add_spin_orbit if add_spin_orbit is not None else self.element.add_spin_orbit
         self._model_potential = ModelPotential(
             self.element,
             self.n,
             self.l,
             self.s,
             self.j,
-            self.database,
-            add_spin_orbit=add_spin_orbit,
-            add_model_potentials=add_model_potentials,
+            additional_potentials,
+            database=self.database,
         )
 
     @property

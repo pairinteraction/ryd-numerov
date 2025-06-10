@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+ADDITIONAL_POTENTIALS = Literal["spin_orbit", "core_corrections", "core_polarization"]
+
 
 class ModelPotential:
     """Model potential parameters for an atomic species and angular momentum.
@@ -42,10 +44,9 @@ class ModelPotential:
         l: int,
         s: float,
         j: float,
-        database: Optional["Database"] = None,
+        additional_potentials: Optional[list[ADDITIONAL_POTENTIALS]] = None,
         *,
-        add_spin_orbit: bool = True,
-        add_model_potentials: bool = True,
+        database: Optional["Database"] = None,
     ) -> None:
         r"""Initialize the model potential.
 
@@ -55,11 +56,9 @@ class ModelPotential:
             l: Orbital angular momentum quantum number
             s: Spin quantum number
             j: Total angular momentum quantum number
+            additional_potentials: List of additional potentials to include in the model.
             database: Database instance, where the model potential parameters are stored
               If None, use the global database instance.
-            add_spin_orbit: Whether to include the spin-orbit coupling potential in the total physical potential.
-            add_model_potentials: Whether to include the model potentials
-              (see calc_potential_core and calc_potential_core_polarization)
 
         """
         self.element = element
@@ -76,21 +75,39 @@ class ModelPotential:
             self.element.species, self.l
         )
 
-        self.add_spin_orbit = add_spin_orbit
-        self.add_model_potentials = add_model_potentials
+        self.additional_potentials = additional_potentials if additional_potentials is not None else []
 
     @property
     def xc(self) -> float:
         """Core radius parameter in dimensionless units."""
         return self.rc
 
-    def calc_potential_core(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the core potential V_c(x) in atomic units.
+    def calc_potential_coulomb(self, x: "NDArray") -> "NDArray":
+        r"""Calculate the coulomb potential V_Col(x) in atomic units.
+
+        The coulomb potential is given as
+
+        .. math::
+            V_{Col}(x) = -1 / x
+
+        where x = r / a_0.
+
+        Args:
+            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
+
+        Returns:
+            V_Col: The coulomb potential V_Col(x) in atomic units.
+
+        """
+        return -1 / x
+
+    def calc_potential_core_corrections(self, x: "NDArray") -> "NDArray":
+        r"""Calculate the core potential corrections V_cc(x) in atomic units.
 
         The core potential is given as
 
         .. math::
-            V_c(x) = -Z_{nl} / x
+            V_cc(x) = -(Z_{nl}-1) / x
 
         where x = r / a_0 and Z_{nl} is the effective nuclear charge
 
@@ -101,14 +118,12 @@ class ModelPotential:
             x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
 
         Returns:
-            V_c: The core potential V_c(x) in atomic units.
+            V_cc: The core potential corrections V_cc(x) in atomic units.
 
         """
-        if not self.add_model_potentials:
-            return -1 / x
         exp_a1 = np.exp(-self.a1 * x)
         exp_a2 = np.exp(-self.a2 * x)
-        z_nl: NDArray = 1 + (self.Z - 1) * exp_a1 - x * (self.a3 + self.a4 * x) * exp_a2
+        z_nl: NDArray = (self.Z - 1) * exp_a1 - x * (self.a3 + self.a4 * x) * exp_a2
         return -z_nl / x
 
     def calc_potential_core_polarization(self, x: "NDArray") -> "NDArray":
@@ -128,7 +143,7 @@ class ModelPotential:
             V_p: The polarization potential V_p(x) in atomic units.
 
         """
-        if self.ac == 0 or not self.add_model_potentials:
+        if self.ac == 0:
             return np.zeros_like(x)
         x2: NDArray = x * x
         x4: NDArray = x2 * x2
@@ -220,11 +235,14 @@ class ModelPotential:
             V_phys: The total physical potential V_phys(x) in atomic units.
 
         """
-        v_tot = (
-            self.calc_potential_core(x) + self.calc_potential_core_polarization(x) + self.calc_potential_centrifugal(x)
-        )
-        if self.add_spin_orbit:
+        v_tot = self.calc_potential_coulomb(x) + self.calc_potential_centrifugal(x)
+        if "spin_orbit" in self.additional_potentials:
             v_tot += self.calc_potential_spin_orbit(x)
+        if "core_corrections" in self.additional_potentials:
+            v_tot += self.calc_potential_core_corrections(x)
+        if "core_polarization" in self.additional_potentials:
+            v_tot += self.calc_potential_core_polarization(x)
+
         return v_tot
 
     def calc_total_effective_potential(self, x: "NDArray") -> "NDArray":
