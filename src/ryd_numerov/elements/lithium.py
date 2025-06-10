@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
@@ -8,6 +9,8 @@ class Lithium(BaseElement):
     Z = 3
     s = 1 / 2
     ground_state_shell = (2, 0)
+    _core_electron_configuration = "1s2"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "lithium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7439932&Mask=20
     _ionization_energy = (5.391_72, None, "eV")

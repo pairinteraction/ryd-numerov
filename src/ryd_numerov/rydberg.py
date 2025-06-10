@@ -56,7 +56,6 @@ class RydbergState:
 
         """
         self.species = species
-        self.element = BaseElement.from_species(species)
 
         self.n = n
         self.l = l
@@ -133,7 +132,8 @@ class RydbergState:
             logger.error("m must be %s for %s, but is %s", type_, self.species, self.m)
             good = False
 
-        if not self.element.is_allowed_shell(self.n, self.l):
+        _element = BaseElement.from_species(self.species, use_nist_data=False)
+        if not _element.is_allowed_shell(self.n, self.l):
             logger.error(
                 "The shell (n=%s, l=%s) is not allowed for the species %s.",
                 *(self.n, self.l, self.species),
@@ -144,9 +144,25 @@ class RydbergState:
             raise ValueError(f"Invalid Rydberg state {self!r}")
 
     @property
+    def element(self) -> BaseElement:
+        """The element of the Rydberg state."""
+        if not hasattr(self, "_element"):
+            self.create_element()
+        return self._element
+
+    def create_element(self, *, use_nist_data: bool = True) -> None:
+        """Create the element for the Rydberg state."""
+        if hasattr(self, "_element"):
+            raise RuntimeError("The element was already created, you should not create it again.")
+        self._element = BaseElement.from_species(self.species, use_nist_data=use_nist_data)
+
+    @property
     def s(self) -> float:
         """The total spin quantum number."""
-        return self.element.s
+        if not hasattr(self, "_s"):
+            _element = BaseElement.from_species(self.species, use_nist_data=False)
+            self._s = _element.s
+        return self._s
 
     @property
     def model_potential(self) -> ModelPotential:

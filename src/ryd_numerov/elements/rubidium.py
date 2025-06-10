@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
@@ -7,6 +8,8 @@ class _RubidiumAbstract(BaseElement):
     Z = 37
     s = 1 / 2
     ground_state_shell = (5, 0)
+    _core_electron_configuration = "4p6"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "rubidium.txt"
 
     # https://journals.aps.org/pra/pdf/10.1103/PhysRevA.83.052515
     _ionization_energy = (1_010_029.164_6, 0.000_3, "GHz")

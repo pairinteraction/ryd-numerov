@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
@@ -8,6 +9,8 @@ class Sodium(BaseElement):
     Z = 11
     s = 1 / 2
     ground_state_shell = (3, 0)
+    _core_electron_configuration = "2p6"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "sodium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440235&Mask=20
     _ionization_energy = (5.139_08, None, "eV")

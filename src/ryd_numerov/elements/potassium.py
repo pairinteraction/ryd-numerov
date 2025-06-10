@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
@@ -8,6 +9,8 @@ class Potassium(BaseElement):
     Z = 19
     s = 1 / 2
     ground_state_shell = (4, 0)
+    _core_electron_configuration = "3p6"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "potassium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440097&Mask=20
     _ionization_energy = (4.340_66, 0.000_01, "eV")

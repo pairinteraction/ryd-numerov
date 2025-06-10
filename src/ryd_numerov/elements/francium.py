@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
@@ -5,8 +6,11 @@ from ryd_numerov.elements.base_element import BaseElement
 
 class Francium(BaseElement):
     species = "Fr"
+    Z = 87
     s = 1 / 2
     ground_state_shell = (7, 0)
+    _core_electron_configuration = "6p6"
+    _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "francium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440735&Mask=20
     _ionization_energy = (4.071_2, 0.000_04, "eV")

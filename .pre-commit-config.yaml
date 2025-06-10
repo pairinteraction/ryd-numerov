@@ -12,6 +12,7 @@ repos:
     rev: v1.5.5
     hooks:
       - id: remove-tabs
+        exclude: 'Makefile|nist_energy_levels/.*\.txt$'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2

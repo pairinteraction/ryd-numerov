@@ -88,6 +88,9 @@ version = {attr = "ryd_numerov.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+ryd_numerov = ["elements/nist_energy_levels/*.txt"]
+
 [tool.check-wheel-contents]
 toplevel = ["ryd_numerov"]
 
