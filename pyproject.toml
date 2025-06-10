@@ -88,10 +88,6 @@ version = {attr = "ryd_numerov.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-ryd_numerov = ["model/database.sql"]
-
-
 [tool.check-wheel-contents]
 toplevel = ["ryd_numerov"]
 

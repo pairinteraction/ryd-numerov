@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Literal, Optional
 
 import numpy as np
 
-from ryd_numerov.model.database import Database
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
@@ -32,7 +31,6 @@ class ModelPotential:
         a3: Model potential parameter a3 in atomic units.
         a4: Model potential parameter a4 in atomic units.
         rc: Core radius parameter in atomic units.
-        database: Database instance, where the model potential parameters are stored.
 
 
     """
@@ -45,8 +43,6 @@ class ModelPotential:
         s: float,
         j: float,
         additional_potentials: Optional[list[ADDITIONAL_POTENTIALS]] = None,
-        *,
-        database: Optional["Database"] = None,
     ) -> None:
         r"""Initialize the model potential.
 
@@ -57,8 +53,6 @@ class ModelPotential:
             s: Spin quantum number
             j: Total angular momentum quantum number
             additional_potentials: List of additional potentials to include in the model.
-            database: Database instance, where the model potential parameters are stored
-              If None, use the global database instance.
 
         """
         self.element = element
@@ -67,20 +61,7 @@ class ModelPotential:
         self.s = s
         self.j = j
 
-        if database is None:
-            database = Database.get_global_instance()
-        self.database = database
-
-        self.ac, self.Z, self.a1, self.a2, self.a3, self.a4, self.rc = database.get_model_potential_parameters(
-            self.element.species, self.l
-        )
-
         self.additional_potentials = additional_potentials if additional_potentials is not None else []
-
-    @property
-    def xc(self) -> float:
-        """Core radius parameter in dimensionless units."""
-        return self.rc
 
     def calc_potential_coulomb(self, x: "NDArray") -> "NDArray":
         r"""Calculate the coulomb potential V_Col(x) in atomic units.
@@ -121,9 +102,10 @@ class ModelPotential:
             V_cc: The core potential corrections V_cc(x) in atomic units.
 
         """
-        exp_a1 = np.exp(-self.a1 * x)
-        exp_a2 = np.exp(-self.a2 * x)
-        z_nl: NDArray = (self.Z - 1) * exp_a1 - x * (self.a3 + self.a4 * x) * exp_a2
+        a1, a2, a3, a4 = self.element.get_parametric_model_potential_parameters(self.l)
+        exp_a1 = np.exp(-a1 * x)
+        exp_a2 = np.exp(-a2 * x)
+        z_nl: NDArray = (self.element.Z - 1) * exp_a1 - x * (a3 + a4 * x) * exp_a2
         return -z_nl / x
 
     def calc_potential_core_polarization(self, x: "NDArray") -> "NDArray":
@@ -143,13 +125,15 @@ class ModelPotential:
             V_p: The polarization potential V_p(x) in atomic units.
 
         """
-        if self.ac == 0:
+        alpha_c = self.element.alpha_c
+        if alpha_c == 0:
             return np.zeros_like(x)
+        x_c = self.element.get_r_c(self.l)
         x2: NDArray = x * x
         x4: NDArray = x2 * x2
         x6: NDArray = x4 * x2
-        exp_x6 = np.exp(-(x6 / self.xc**6))
-        v_p: NDArray = -self.ac / (2 * x4) * (1 - exp_x6)
+        exp_x6 = np.exp(-(x6 / x_c**6))
+        v_p: NDArray = -alpha_c / (2 * x4) * (1 - exp_x6)
         return v_p
 
     def calc_potential_spin_orbit(self, x: "NDArray") -> "NDArray":
@@ -174,8 +158,9 @@ class ModelPotential:
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
         x3 = x * x * x
         v_so: NDArray = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
-        if x[0] < self.xc:
-            v_so *= x > self.xc
+        x_c = self.element.get_r_c(self.l)
+        if x[0] < x_c:
+            v_so *= x > x_c
         return v_so
 
     def calc_potential_centrifugal(self, x: "NDArray") -> "NDArray":
