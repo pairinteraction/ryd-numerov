@@ -194,11 +194,6 @@ class BaseElement(ABC):
             f"Unknown species: {species}. Available species: {[subclass.species for subclass in concrete_subclasses]}"
         )
 
-    @property
-    def is_alkali(self) -> bool:
-        """Check if the element is an alkali metal."""
-        return self.s == 1 / 2
-
     def is_allowed_shell(self, n: int, l: int) -> bool:
         """Check if the quantum numbers describe an allowed shell.
 
