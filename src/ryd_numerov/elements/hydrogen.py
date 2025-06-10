@@ -12,6 +12,8 @@ class Hydrogen(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C1333740&Mask=20
     _ionization_energy = (15.425_93, 0.000_05, "eV")
 
+    _corrected_rydberg_constant = (109677.58340280356, None, "1/cm")
+
 
 class HydrogenTextBook(Element):
     """Hydrogen from QM textbook with infinite nucleus mass and no spin orbit coupling."""
@@ -23,3 +25,5 @@ class HydrogenTextBook(Element):
     _ionization_energy = (RydbergConstant.magnitude, 0, str(RydbergConstant.units))
 
     add_spin_orbit = False
+
+    _corrected_rydberg_constant = (109737.31568160003, None, "1/cm")
