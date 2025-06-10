@@ -1,9 +1,9 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class Francium(Element):
+class Francium(BaseElement):
     species = "Fr"
     s = 1 / 2
     ground_state_shell = (7, 0)

@@ -1,9 +1,9 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class Potassium(Element):
+class Potassium(BaseElement):
     species = "K"
     Z = 19
     s = 1 / 2

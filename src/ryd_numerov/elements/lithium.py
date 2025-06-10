@@ -1,9 +1,9 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class Lithium(Element):
+class Lithium(BaseElement):
     species = "Li"
     Z = 3
     s = 1 / 2

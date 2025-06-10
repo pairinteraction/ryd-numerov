@@ -1,9 +1,9 @@
 from typing import ClassVar, Optional
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class Strontium(Element):
+class Strontium(BaseElement):
     Z = 38
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20

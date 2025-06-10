@@ -1,9 +1,9 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class Cesium(Element):
+class Cesium(BaseElement):
     species = "Cs"
     Z = 55
     s = 1 / 2

@@ -1,9 +1,9 @@
 from typing import ClassVar
 
-from ryd_numerov.elements.element import Element
+from ryd_numerov.elements.base_element import BaseElement
 
 
-class _RubidiumAbstract(Element):
+class _RubidiumAbstract(BaseElement):
     Z = 37
     s = 1 / 2
     ground_state_shell = (5, 0)
