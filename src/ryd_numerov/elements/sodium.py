@@ -12,6 +12,8 @@ class Sodium(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440235&Mask=20
     _ionization_energy = (5.139_08, None, "eV")
 
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+
     # -- [1] Phys. Rev. A 45, 4720 (1992)
     # -- [2] Quantum Electron. 25 914 (1995)
     # -- [3] J. Phys. B: At. Mol. Opt. Phys. 30 2345 (1997)

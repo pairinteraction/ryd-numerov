@@ -8,7 +8,9 @@ import numpy as np
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
+    from ryd_numerov.model.model_potential import ADDITIONAL_POTENTIALS
     from ryd_numerov.units import PintFloat
+
 
 # List of energetically sorted shells
 SORTED_SHELLS = [  # (n, l)
@@ -53,6 +55,8 @@ class Element(ABC):
     """Shell (n, l) describing the electronic ground state configuration."""
     _ionization_energy: tuple[float, Optional[float], str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
+
+    additional_potentials_default: ClassVar[list["ADDITIONAL_POTENTIALS"]] = []
 
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
     _quantum_defects: ClassVar[dict[tuple[int, float], tuple[float, float, float, float, float]]] = {}

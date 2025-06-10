@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from ryd_numerov.elements.element import Element
 from ryd_numerov.units import ureg
 
@@ -13,6 +15,8 @@ class Hydrogen(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C1333740&Mask=20
     _ionization_energy = (15.425_93, 0.000_05, "eV")
 
+    additional_potentials_default: ClassVar = ["spin_orbit"]
+
     _corrected_rydberg_constant = (109677.58340280356, None, "1/cm")
 
 
@@ -24,5 +28,7 @@ class HydrogenTextBook(Element):
     ground_state_shell = (1, 0)
 
     _ionization_energy = (RydbergConstant.magnitude, 0, str(RydbergConstant.units))
+
+    additional_potentials_default: ClassVar = []
 
     _corrected_rydberg_constant = (109737.31568160003, None, "1/cm")

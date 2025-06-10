@@ -12,6 +12,8 @@ class Cesium(Element):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440462&Mask=20
     _ionization_energy = (3.893_90, 0.000_002, "eV")
 
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+
     # -- [1] Phys. Rev. A 93, 013424 (2016)
     # -- [2] Phys. Rev. A 26, 2733 (1982)
     # -- [3] Phys. Rev. A 35, 4650 (1987)

@@ -11,6 +11,8 @@ class _RubidiumAbstract(Element):
     # https://journals.aps.org/pra/pdf/10.1103/PhysRevA.83.052515
     _ionization_energy = (1_010_029.164_6, 0.000_3, "GHz")
 
+    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+
     # older value
     # https://webbook.nist.gov/cgi/inchi?ID=C7440177&Mask=20
     # _ionization_energy = (4.177_13, 0.000_002, "eV")  # noqa: ERA001
