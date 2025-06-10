@@ -74,6 +74,10 @@ class RydbergState:
     def __str__(self) -> str:
         return self.get_label("ket")
 
+    def copy(self) -> "Self":
+        """Create a copy of the Rydberg state."""
+        return self.__class__(self.species, n=self.n, l=self.l, j=self.j, m=self.m)
+
     def get_label(self, fmt: Literal["raw", "ket", "bra"]) -> str:
         """Label representing the ket.
 
@@ -196,6 +200,11 @@ class RydbergState:
             self.create_grid()
         return self._grid
 
+    @property
+    def z_list(self) -> "NDArray":
+        """The list of z values for the grid."""
+        return self.grid.z_list
+
     def create_grid(
         self,
         x_min: Optional[float] = None,
@@ -242,6 +251,11 @@ class RydbergState:
         if not hasattr(self, "_wavefunction"):
             self.create_wavefunction()
         return self._wavefunction
+
+    @property
+    def w_list(self) -> "NDArray":
+        """The list of w values for the wavefunction."""
+        return self.wavefunction.w_list
 
     def create_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
         if hasattr(self, "_wavefunction"):
