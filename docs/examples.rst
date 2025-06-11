@@ -24,6 +24,7 @@ Some comparisons to pairinteraction and ARC
    examples/comparisons/compare_radial_matrix_element.ipynb
    examples/comparisons/compare_dipole_matrix_element.ipynb
    examples/comparisons/compare_z_min_cutoff.ipynb
+   examples/comparisons/compare_nist_energy_levels_data.ipynb
 
 
 .. rubric:: Benchmark
