@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING, Literal, Optional, get_args
 
 import numpy as np
 
-from ryd_numerov.units import ureg
-
 if TYPE_CHECKING:
     from ryd_numerov.elements import BaseElement
     from ryd_numerov.units import NDArray
@@ -12,40 +10,17 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-PotentialType = Literal[
-    "coulomb",
-    "coulomb+spin_orbit",
-    "model_potential_marinescu_1993",
-    "model_potential_marinescu_1993+spin_orbit",
-]
+PotentialType = Literal["coulomb", "model_potential_marinescu_1993"]
 
 
 class Model:
-    """Model to describe the potentials for an atomic state.
-
-    Attributes:
-        species: Atomic species
-        n: Principal quantum number
-        l: Orbital angular momentum quantum number
-        s: Spin quantum number
-        j: Total angular momentum quantum number
-        ac: Polarizability parameter in atomic units.
-        Z: Nuclear charge.
-        a1: Model potential parameter a1 in atomic units.
-        a2: Model potential parameter a2 in atomic units.
-        a3: Model potential parameter a3 in atomic units.
-        a4: Model potential parameter a4 in atomic units.
-        rc: Core radius parameter in atomic units.
-
-
-    """
+    """Model to describe the potentials for an atomic state."""
 
     def __init__(
         self,
         element: "BaseElement",
         n: int,
         l: int,
-        s: float,
         j: float,
         potential_type: Optional[PotentialType] = None,
     ) -> None:
@@ -55,29 +30,29 @@ class Model:
             element: BaseElement object representing the atomic species.
             n: Principal quantum number
             l: Orbital angular momentum quantum number
-            s: Spin quantum number
             j: Total angular momentum quantum number
             potential_type: Which potential to use for the model.
 
         """
         self.element = element
-        self.n = n
         self.l = l
-        self.s = s
+
+        # n and j are only used for the turning point calculation ...
+        self.n = n
         self.j = j
 
         if potential_type is None:
             potential_type = self.element.potential_type_default
             if potential_type is None:
-                potential_type = "coulomb+spin_orbit"
+                potential_type = "coulomb"
         if potential_type not in get_args(PotentialType):
             raise ValueError(f"Invalid potential type {potential_type}. Must be one of {get_args(PotentialType)}.")
-        self._potentials = potential_type.split("+")
+        self.potential_type = potential_type
 
     def calc_potential_coulomb(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the coulomb potential V_Col(x) in atomic units.
+        r"""Calculate the Coulomb potential V_Col(x) in atomic units.
 
-        The coulomb potential is given as
+        The Coulomb potential is given as
 
         .. math::
             V_{Col}(x) = -1 / x
@@ -85,57 +60,13 @@ class Model:
         where x = r / a_0.
 
         Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
+            x: The dimensionless radial coordinate x = r / a_0, for which to calculate the potential.
 
         Returns:
-            V_Col: The coulomb potential V_Col(x) in atomic units.
+            V_Col: The Coulomb potential V_Col(x) in atomic units.
 
         """
         return -1 / x
-
-    def calc_potential_spin_orbit(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the spin-orbit coupling potential V_so(x) in atomic units.
-
-        The spin-orbit coupling potential is given as
-
-        .. math::
-            V_{so}(x) = \frac{\alpha^2}{4x^3} [j(j+1) - l(l+1) - s(s+1)]
-
-        where x = r / a_0, \alpha is the fine structure constant,
-        j is the total angular momentum quantum number, l is the orbital angular momentum
-        quantum number, and s is the spin quantum number.
-
-        Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
-
-        Returns:
-            V_so: The spin-orbit coupling potential V_so(x) in atomic units.
-
-        """
-        alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
-        x3 = x * x * x
-        v_so: NDArray = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
-        return v_so
-
-    def calc_potential_centrifugal(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the centrifugal potential V_l(x) in atomic units.
-
-        The centrifugal potential is given as
-
-        .. math::
-            V_l(x) = \frac{l(l+1)}{2x^2}
-
-        where x = r / a_0 and l is the orbital angular momentum quantum number.
-
-        Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
-
-        Returns:
-            V_l: The centrifugal potential V_l(x) in atomic units.
-
-        """
-        x2 = x * x
-        return (1 / self.element.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
 
     def calc_model_potential_marinescu_1993(self, x: "NDArray") -> "NDArray":
         r"""Calculate the model potential by Marinescu et al. (1994) in atomic units.
@@ -189,6 +120,26 @@ class Model:
 
         return v_c + v_p
 
+    def calc_effective_potential_centrifugal(self, x: "NDArray") -> "NDArray":
+        r"""Calculate the effective centrifugal potential V_l(x) in atomic units.
+
+        The effective centrifugal potential is given as
+
+        .. math::
+            V_l(x) = \frac{l(l+1)}{2x^2}
+
+        where x = r / a_0 and l is the orbital angular momentum quantum number.
+
+        Args:
+            x: The dimensionless radial coordinate x = r / a_0, for which to calculate the potential.
+
+        Returns:
+            V_l: The effective centrifugal potential V_l(x) in atomic units.
+
+        """
+        x2 = x * x
+        return (1 / self.element.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
+
     def calc_effective_potential_sqrt(self, x: "NDArray") -> "NDArray":
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
 
@@ -201,7 +152,7 @@ class Model:
             V_{sqrt}(x) = \frac{3}{32x^2}
 
         Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
+            x: The dimensionless radial coordinate x = r / a_0, for which to calculate the potential.
 
         Returns:
             V_sqrt: The sqrt transformation potential V_sqrt(x) in atomic units.
@@ -210,68 +161,65 @@ class Model:
         x2 = x * x
         return (1 / self.element.reduced_mass_factor) * (3 / 32) / x2
 
-    def calc_total_physical_potential(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the total physical potential V_phys(x) in atomic units.
+    def calc_total_effective_potential(self, x: "NDArray") -> "NDArray":
+        r"""Calculate the total effective potential V_eff(x) in atomic units.
 
-        The total physical potential is the sum of the core potential, polarization potential,
-        centrifugal potential, and optionally the spin-orbit coupling:
+        The total effective potential includes all physical and effective potentials:
 
         .. math::
-            V_{phys}(x) = V_c(x) + V_p(x) + V_l(x) + V_{so}(x)
+            V_{eff}(x) = V(x) + V_l(x) + V_{sqrt}(x)
+
+        where V(x) is the physical potential (either Coulomb or a model potential),
+        V_l(x) is the effective centrifugal potential,
+        and V_{sqrt}(x) is the effective potential from the sqrt transformation.
+
+        Note that we on purpose do not include the spin-orbit potential for several reasons:
+
+        i) The fine structure corrections are important for the energies of the states.
+           This includes a) spin-orbit coupling, b) Darwin term, and c) relativistic corrections to the kinetic energy.
+           Since we (obviously) can not include the latter two in the model,
+           it is only consistent to not include the spin-orbit term either.
+
+        ii) The model potentials are generated without the spin-orbit term,
+            since their accuracy is not sufficient to resolve the fine structure corrections at small distances.
+            (This can also be seen by running Numerov for low lying states with an energy changed by e.g. 1%,
+            which will lead to almost no change in the wavefunction.)
 
         Args:
             x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
 
         Returns:
-            V_phys: The total physical potential V_phys(x) in atomic units.
+            V_eff: The total potential V_eff(x) in atomic units.
 
         """
-        v = self.calc_potential_centrifugal(x)
+        # Note: we do not include the spin-orbit potential, see docstring for details.
+        if self.potential_type == "coulomb":
+            v = self.calc_potential_coulomb(x)
+        elif self.potential_type == "model_potential_marinescu_1993":
+            v = self.calc_model_potential_marinescu_1993(x)
 
-        if "spin_orbit" in self._potentials:
-            v += self.calc_potential_spin_orbit(x)
-
-        if "coulomb" in self._potentials:
-            v += self.calc_potential_coulomb(x)
-        elif "model_potential_marinescu_1993" in self._potentials:
-            v += self.calc_model_potential_marinescu_1993(x)
+        v += self.calc_effective_potential_centrifugal(x)
+        v += self.calc_effective_potential_sqrt(x)
 
         return v
-
-    def calc_total_effective_potential(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the total potential V_tot(x) in atomic units.
-
-        The total effective potential includes all physical and non-physical potentials:
-
-        .. math::
-            V_{tot}(x) = V_c(x) + V_p(x) + V_l(x) + V_{so}(x) + V_{sqrt}(x)
-
-        Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
-
-        Returns:
-            V_tot: The total potential V_tot(x) in atomic units.
-
-        """
-        return self.calc_total_physical_potential(x) + self.calc_effective_potential_sqrt(x)
 
     def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-3) -> float:
         r"""Calculate the inner turning point z_i for the model.
 
         There are three different turning points we consider:
 
-        - The hydrogen turning point, where for the idealized hydrogen atom the potential equals the energy,
-          i.e. V_c(r_i) + V_l(r_i) = E.
+        - The hydrogen turning point, where for the idealized hydrogen atom the potential
+          equals the energy, i.e. V_Col(r_i) + V_l(r_i) = E.
           This is exactly the case at
 
             .. math::
                 r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
 
-        - The classical turning point, where the physical potential of the Rydberg model equals the energy,
-          i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = E.
+        - The classical turning point, where the potential of the Rydberg model equals the energy,
+          i.e. V(r_i) + V_l(r_i) = E.
 
-        - The zero-crossing turning point, where the physical potential of the Rydberg model equals zero,
-          i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = 0.
+        - The zero-crossing turning point, where the potential of the Rydberg model equals zero,
+          i.e. V(r_i) + V_l(r_i) = 0.
 
         Args:
             which: Which turning point to calculate, one of "hydrogen", "classical", "zerocrossing".
@@ -296,7 +244,7 @@ class Model:
             energy = 0
 
         x_list = z_list * z_list
-        v_phys = self.calc_total_physical_potential(x_list)
+        v_phys = self.calc_total_effective_potential(x_list)
         arg: int = np.argwhere(v_phys < energy)[0][0]
 
         if arg == 0:
