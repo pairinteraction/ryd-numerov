@@ -2,7 +2,7 @@ import inspect
 import re
 from abc import ABC
 from fractions import Fraction
-from functools import cache
+from functools import cache, cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
 
@@ -272,7 +272,7 @@ class BaseElement(ABC):
             return corrected_rydberg_constant.magnitude
         return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
 
-    @property
+    @cached_property  # don't remove this caching without benchmarking it!!!
     def reduced_mass_factor(self) -> float:
         r"""The reduced mass factor \mu.
 
