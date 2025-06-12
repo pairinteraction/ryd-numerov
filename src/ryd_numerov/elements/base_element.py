@@ -91,7 +91,7 @@ class BaseElement(ABC):
     in the 'Tab-delimited' format and in units of Hartree.
     """
 
-    def __init__(self, use_nist_data: bool = True) -> None:
+    def __init__(self, use_nist_data: bool = True, *, nist_n_max: int = 15) -> None:
         """Initialize an element instance.
 
         Use this init method to set up additional properties and data for the element,
@@ -99,17 +99,26 @@ class BaseElement(ABC):
 
         Args:
             use_nist_data: Whether to use NIST data for this element. Default is True.
+            nist_n_max: Maximum principal quantum number for which to load the NIST energy levels. Default is 15.
 
         """
         self._nist_energy_levels: dict[tuple[int, int, float], float] = {}
         if use_nist_data and self._nist_energy_levels_file is not None:
-            self._setup_nist_energy_levels(self._nist_energy_levels_file)
+            self._setup_nist_energy_levels(self._nist_energy_levels_file, nist_n_max)
 
-    def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901
+    def _setup_nist_energy_levels(self, file: Path, n_max: int) -> None:  # noqa: C901
         """Set up NIST energy levels from a file.
 
         This method should be called in the constructor to load the NIST energy levels
         from the specified file. It reads the file and prepares the data for further use.
+
+        Args:
+            file: Path to the NIST energy levels file.
+            n_max: Maximum principal quantum number for which to load the NIST energy levels.
+                For large quantum numbers, the NIST data is not accurate enough
+                (it does not even show fine structure splitting),
+                so we limit the maximum principal quantum number to 15 by default.
+
         """
         if not file.exists():
             raise ValueError(f"NIST energy data file {file} does not exist.")
@@ -148,6 +157,8 @@ class BaseElement(ABC):
                 raise ValueError(f"Invalid configuration format: {config}.")
 
             n = int(match.group(1))
+            if n > n_max:
+                continue
             l = l_str2int[match.group(2)]
 
             j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
