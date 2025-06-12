@@ -15,7 +15,7 @@ class Lithium(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C7439932&Mask=20
     _ionization_energy = (5.391_72, None, "eV")
 
-    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+    potential_type_default = "model_potential_marinescu_1993"
 
     # -- [1] Phys. Rev. A 34, 2889 (1986) (Li 7)
     # -- [2] T. F. Gallagher, ``Rydberg Atoms'', Cambridge University Press (2005), ISBN: 978-0-52-102166-1
@@ -33,11 +33,9 @@ class Lithium(BaseElement):
     _corrected_rydberg_constant = (109728.64, None, "1/cm")
 
     # Phys. Rev. A 49, 982 (1994)
-    alpha_c = 0.1923
-    # Phys. Rev. A 49, 982 (1994)
-    _r_c_dict: ClassVar = {0: 0.61340824, 1: 0.61566441, 2: 2.34126273}
-    # Phys. Rev. A 49, 982 (1994)
-    _parametric_model_potential_parameters: ClassVar = {
+    alpha_c_marinescu_1993 = 0.1923
+    r_c_dict_marinescu_1993: ClassVar = {0: 0.61340824, 1: 0.61566441, 2: 2.34126273}
+    model_potential_parameter_marinescu_1993: ClassVar = {
         0: (2.47718079, 1.84150932, -0.02169712, -0.11988362),
         1: (3.45414648, 2.55151080, -0.21646561, -0.06990078),
         2: (2.51909839, 2.43712450, 0.32505524, 0.10602430),

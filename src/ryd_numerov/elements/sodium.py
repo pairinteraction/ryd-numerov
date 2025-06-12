@@ -15,7 +15,7 @@ class Sodium(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440235&Mask=20
     _ionization_energy = (5.139_08, None, "eV")
 
-    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+    potential_type_default = "model_potential_marinescu_1993"
 
     # -- [1] Phys. Rev. A 45, 4720 (1992)
     # -- [2] Quantum Electron. 25 914 (1995)
@@ -37,11 +37,9 @@ class Sodium(BaseElement):
     _corrected_rydberg_constant = (109734.69, None, "1/cm")
 
     # Phys. Rev. A 49, 982 (1994)
-    alpha_c = 0.9448
-    # Phys. Rev. A 49, 982 (1994)
-    _r_c_dict: ClassVar = {0: 0.45489422, 1: 0.45798739, 2: 0.71875312, 3: 28.6735059}
-    # Phys. Rev. A 49, 982 (1994)
-    _parametric_model_potential_parameters: ClassVar = {
+    alpha_c_marinescu_1993 = 0.9448
+    r_c_dict_marinescu_1993: ClassVar = {0: 0.45489422, 1: 0.45798739, 2: 0.71875312, 3: 28.6735059}
+    model_potential_parameter_marinescu_1993: ClassVar = {
         0: (4.82223117, 2.45449865, -1.12255048, -1.42631393),
         1: (5.08382502, 2.18226881, -1.19534623, -1.03142861),
         2: (3.53324124, 2.48697936, -0.75688448, -1.27852357),

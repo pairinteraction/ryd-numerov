@@ -1,3 +1,3 @@
-from ryd_numerov.model.model_potential import ModelPotential
+from ryd_numerov.model.model import Model
 
-__all__ = ["ModelPotential"]
+__all__ = ["Model"]

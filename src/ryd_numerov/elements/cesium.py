@@ -15,7 +15,7 @@ class Cesium(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440462&Mask=20
     _ionization_energy = (3.893_90, 0.000_002, "eV")
 
-    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+    potential_type_default = "model_potential_marinescu_1993"
 
     # -- [1] Phys. Rev. A 93, 013424 (2016)
     # -- [2] Phys. Rev. A 26, 2733 (1982)
@@ -34,11 +34,9 @@ class Cesium(BaseElement):
     _corrected_rydberg_constant = (109736.8627339, None, "1/cm")
 
     # Phys. Rev. A 49, 982 (1994)
-    alpha_c = 15.6440
-    # Phys. Rev. A 49, 982 (1994)
-    _r_c_dict: ClassVar = {0: 0.02629242, 1: -0.09543125, 2: -0.74095193, 3: 0.00034538}
-    # Phys. Rev. A 49, 982 (1994)
-    _parametric_model_potential_parameters: ClassVar = {
+    alpha_c_marinescu_1993 = 15.6440
+    r_c_dict_marinescu_1993: ClassVar = {0: 0.02629242, 1: -0.09543125, 2: -0.74095193, 3: 0.00034538}
+    model_potential_parameter_marinescu_1993: ClassVar = {
         0: (1.92046930, 1.47533800, -9.72143084, 3.49546309),
         1: (2.13383095, 1.71398344, -24.65624280, 4.69366096),
         2: (0.93007296, 1.61365288, -6.70128850, 4.32466196),

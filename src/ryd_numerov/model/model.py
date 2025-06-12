@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional, get_args
 
 import numpy as np
 
@@ -12,11 +12,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ADDITIONAL_POTENTIALS = Literal["spin_orbit", "core_corrections", "core_polarization"]
+PotentialType = Literal[
+    "coulomb",
+    "coulomb+spin_orbit",
+    "model_potential_marinescu_1993",
+    "model_potential_marinescu_1993+spin_orbit",
+]
 
 
-class ModelPotential:
-    """Model potential parameters for an atomic species and angular momentum.
+class Model:
+    """Model to describe the potentials for an atomic state.
 
     Attributes:
         species: Atomic species
@@ -42,9 +47,9 @@ class ModelPotential:
         l: int,
         s: float,
         j: float,
-        additional_potentials: Optional[list[ADDITIONAL_POTENTIALS]] = None,
+        potential_type: Optional[PotentialType] = None,
     ) -> None:
-        r"""Initialize the model potential.
+        r"""Initialize the model.
 
         Args:
             element: BaseElement object representing the atomic species.
@@ -52,7 +57,7 @@ class ModelPotential:
             l: Orbital angular momentum quantum number
             s: Spin quantum number
             j: Total angular momentum quantum number
-            additional_potentials: List of additional potentials to include in the model.
+            potential_type: Which potential to use for the model.
 
         """
         self.element = element
@@ -61,9 +66,13 @@ class ModelPotential:
         self.s = s
         self.j = j
 
-        if additional_potentials is None:
-            additional_potentials = self.element.additional_potentials_default
-        self.additional_potentials = additional_potentials
+        if potential_type is None:
+            potential_type = self.element.potential_type_default
+            if potential_type is None:
+                potential_type = "coulomb+spin_orbit"
+        if potential_type not in get_args(PotentialType):
+            raise ValueError(f"Invalid potential type {potential_type}. Must be one of {get_args(PotentialType)}.")
+        self._potentials = potential_type.split("+")
 
     def calc_potential_coulomb(self, x: "NDArray") -> "NDArray":
         r"""Calculate the coulomb potential V_Col(x) in atomic units.
@@ -84,67 +93,13 @@ class ModelPotential:
         """
         return -1 / x
 
-    def calc_potential_core_corrections(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the core potential corrections V_cc(x) in atomic units.
-
-        The core potential is given as
-
-        .. math::
-            V_cc(x) = -(Z_{nl}-1) / x
-
-        where x = r / a_0 and Z_{nl} is the effective nuclear charge
-
-        .. math::
-            Z_{nl} = 1 + (Z - 1) \exp(-a_1 x) - x (a_3 + a_4 x) \exp(-a_2 x)
-
-        Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
-
-        Returns:
-            V_cc: The core potential corrections V_cc(x) in atomic units.
-
-        """
-        a1, a2, a3, a4 = self.element.get_parametric_model_potential_parameters(self.l)
-        exp_a1 = np.exp(-a1 * x)
-        exp_a2 = np.exp(-a2 * x)
-        z_nl: NDArray = (self.element.Z - 1) * exp_a1 - x * (a3 + a4 * x) * exp_a2
-        return -z_nl / x
-
-    def calc_potential_core_polarization(self, x: "NDArray") -> "NDArray":
-        r"""Calculate the core polarization potential V_p(x) in atomic units.
-
-        The core polarization potential is given as
-
-        .. math::
-            V_p(x) = -\frac{a_c}{2x^4} (1 - e^{-x^6/x_c**6})
-
-        where x = r / a_0, a_c is the static core dipole polarizability and x_c is the effective core size.
-
-        Args:
-            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
-
-        Returns:
-            V_p: The polarization potential V_p(x) in atomic units.
-
-        """
-        alpha_c = self.element.alpha_c
-        if alpha_c == 0:
-            return np.zeros_like(x)
-        x_c = self.element.get_r_c(self.l)
-        x2: NDArray = x * x
-        x4: NDArray = x2 * x2
-        x6: NDArray = x4 * x2
-        exp_x6 = np.exp(-(x6 / x_c**6))
-        v_p: NDArray = -alpha_c / (2 * x4) * (1 - exp_x6)
-        return v_p
-
     def calc_potential_spin_orbit(self, x: "NDArray") -> "NDArray":
         r"""Calculate the spin-orbit coupling potential V_so(x) in atomic units.
 
         The spin-orbit coupling potential is given as
 
         .. math::
-            V_{so}(x > x_c) = \frac{\alpha^2}{4x^3} [j(j+1) - l(l+1) - s(s+1)]
+            V_{so}(x) = \frac{\alpha^2}{4x^3} [j(j+1) - l(l+1) - s(s+1)]
 
         where x = r / a_0, \alpha is the fine structure constant,
         j is the total angular momentum quantum number, l is the orbital angular momentum
@@ -160,9 +115,6 @@ class ModelPotential:
         alpha = ureg.Quantity(1, "fine_structure_constant").to_base_units().magnitude
         x3 = x * x * x
         v_so: NDArray = alpha**2 / (4 * x3) * (self.j * (self.j + 1) - self.l * (self.l + 1) - self.s * (self.s + 1))
-        x_c = self.element.get_r_c(self.l)
-        if x[0] < x_c:
-            v_so *= x > x_c
         return v_so
 
     def calc_potential_centrifugal(self, x: "NDArray") -> "NDArray":
@@ -184,6 +136,58 @@ class ModelPotential:
         """
         x2 = x * x
         return (1 / self.element.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
+
+    def calc_model_potential_marinescu_1993(self, x: "NDArray") -> "NDArray":
+        r"""Calculate the model potential by Marinescu et al. (1994) in atomic units.
+
+        The model potential from
+        M. Marinescu, Phys. Rev. A 49, 982 (1994), https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982
+        is given by
+
+        .. math::
+            V_{mp,marinescu}(x) = - \frac{Z_{l}}{x} - \frac{\alpha_c}{2x^4} (1 - e^{-x^6/x_c**6})
+
+        where Z_{l} is the effective nuclear charge, :math:`\alpha_c` is the static core dipole polarizability,
+        and x_c is the effective core size.
+
+        .. math::
+            Z_{l} = 1 + (Z - 1) \exp(-a_1 x) - x (a_3 + a_4 x) \exp(-a_2 x)
+
+        with the nuclear charge Z.
+
+        Args:
+            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
+
+        Returns:
+            V_{mp,marinescu}: The four parameter potential V_{mp,marinescu}(x) in atomic units.
+
+        """
+        parameter_dict = self.element.model_potential_parameter_marinescu_1993
+        if len(parameter_dict) == 0:
+            raise ValueError("No parametric model potential parameters defined for this element.")
+        # default to parameters for the maximum l
+        a1, a2, a3, a4 = parameter_dict.get(self.l, parameter_dict[max(parameter_dict.keys())])
+        exp_a1 = np.exp(-a1 * x)
+        exp_a2 = np.exp(-a2 * x)
+        z_nl: NDArray = 1 + (self.element.Z - 1) * exp_a1 - x * (a3 + a4 * x) * exp_a2
+        v_c = -z_nl / x
+
+        alpha_c = self.element.alpha_c_marinescu_1993
+        if alpha_c == 0:
+            v_p = 0
+        else:
+            r_c_dict = self.element.r_c_dict_marinescu_1993
+            if len(r_c_dict) == 0:
+                raise ValueError("No parametric model potential parameters defined for this element.")
+            # default to x_c for the maximum l
+            x_c = r_c_dict.get(self.l, r_c_dict[max(r_c_dict.keys())])
+            x2: NDArray = x * x
+            x4: NDArray = x2 * x2
+            x6: NDArray = x4 * x2
+            exp_x6 = np.exp(-(x6 / x_c**6))
+            v_p = -alpha_c / (2 * x4) * (1 - exp_x6)
+
+        return v_c + v_p
 
     def calc_effective_potential_sqrt(self, x: "NDArray") -> "NDArray":
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
@@ -222,15 +226,17 @@ class ModelPotential:
             V_phys: The total physical potential V_phys(x) in atomic units.
 
         """
-        v_tot = self.calc_potential_coulomb(x) + self.calc_potential_centrifugal(x)
-        if "spin_orbit" in self.additional_potentials:
-            v_tot += self.calc_potential_spin_orbit(x)
-        if "core_corrections" in self.additional_potentials:
-            v_tot += self.calc_potential_core_corrections(x)
-        if "core_polarization" in self.additional_potentials:
-            v_tot += self.calc_potential_core_polarization(x)
+        v = self.calc_potential_centrifugal(x)
 
-        return v_tot
+        if "spin_orbit" in self._potentials:
+            v += self.calc_potential_spin_orbit(x)
+
+        if "coulomb" in self._potentials:
+            v += self.calc_potential_coulomb(x)
+        elif "model_potential_marinescu_1993" in self._potentials:
+            v += self.calc_model_potential_marinescu_1993(x)
+
+        return v
 
     def calc_total_effective_potential(self, x: "NDArray") -> "NDArray":
         r"""Calculate the total potential V_tot(x) in atomic units.
@@ -250,7 +256,7 @@ class ModelPotential:
         return self.calc_total_physical_potential(x) + self.calc_effective_potential_sqrt(x)
 
     def calc_z_turning_point(self, which: Literal["hydrogen", "classical", "zerocrossing"], dz: float = 1e-3) -> float:
-        r"""Calculate the inner turning point z_i for the model potential.
+        r"""Calculate the inner turning point z_i for the model.
 
         There are three different turning points we consider:
 
@@ -261,10 +267,10 @@ class ModelPotential:
             .. math::
                 r_i = n^2 - n \sqrt{n^2 - l(l + 1)}
 
-        - The classical turning point, where the physical potential of the Rydberg model potential equals the energy,
+        - The classical turning point, where the physical potential of the Rydberg model equals the energy,
           i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = E.
 
-        - The zero-crossing turning point, where the physical potential of the Rydberg model potential equals zero,
+        - The zero-crossing turning point, where the physical potential of the Rydberg model equals zero,
           i.e. V_phys(r_i) = V_c(r_i) + V_p(r_i) + V_l(r_i) + V_{so}(r_i) = 0.
 
         Args:
