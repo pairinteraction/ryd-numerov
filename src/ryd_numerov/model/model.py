@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-PotentialType = Literal["coulomb", "model_potential_marinescu_1993"]
+PotentialType = Literal["coulomb", "model_potential_marinescu_1993", "model_potential_fei_2009"]
 
 XType = TypeVar("XType", "NDArray", float)
 
@@ -114,6 +114,30 @@ class Model:
 
         return v_c + v_p
 
+    def calc_model_potential_fei_2009(self, x: "XType") -> "XType":
+        r"""Calculate the model potential by Fei et al. (2009) in atomic units.
+
+        The four parameter potential from Y. Fei et al., Chin. Phys. B 18, 4349 (2009), https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025
+        is given by
+
+        .. math::
+            V_{mp,fei}(x) = - \frac{1}{x}
+                - \frac{Z-1}{x} \cdot [1 - \alpha + \alpha e^{\beta x^\delta + \gamma x^{2\delta}}]^{-1}
+
+        where Z is the nuclear charge.
+
+        Args:
+            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.
+
+        Returns:
+            V_{mp,fei}: The four parameter potential V_{mp,fei}(x) in atomic units.
+
+        """
+        delta, alpha, beta, gamma = self.element.model_potential_parameter_fei_2009
+        with np.errstate(over="ignore"):
+            denom: XType = 1 - alpha + alpha * np.exp(beta * x**delta + gamma * x ** (2.0 * delta))
+            return -1 / x - (self.element.Z - 1) / (x * denom)
+
     def calc_effective_potential_centrifugal(self, x: "XType") -> "XType":
         r"""Calculate the effective centrifugal potential V_l(x) in atomic units.
 
@@ -191,6 +215,8 @@ class Model:
             v = self.calc_potential_coulomb(x)
         elif self.potential_type == "model_potential_marinescu_1993":
             v = self.calc_model_potential_marinescu_1993(x)
+        elif self.potential_type == "model_potential_fei_2009":
+            v = self.calc_model_potential_fei_2009(x)
         else:
             raise ValueError(f"Invalid potential type {self.potential_type}.")
 

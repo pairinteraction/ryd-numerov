@@ -61,9 +61,6 @@ class BaseElement(ABC):
     _ionization_energy: tuple[float, Optional[float], str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
-    potential_type_default: Optional["PotentialType"] = None
-    """Default potential type to use for this element. If None, the potential type must be specified explicitly."""
-
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
     _quantum_defects: ClassVar[dict[tuple[int, float], tuple[float, float, float, float, float]]] = {}
     """Dictionary containing the quantum defects for each (l, j) combination, i.e.
@@ -72,6 +69,11 @@ class BaseElement(ABC):
 
     _corrected_rydberg_constant: tuple[float, Optional[float], str]
     r"""Corrected Rydberg constant stored as (value, uncertainty, unit)"""
+
+    potential_type_default: Optional["PotentialType"] = None
+    """Default potential type to use for this element. If None, the potential type must be specified explicitly.
+    In general, it looks like marinescu_1993 is better for alkali atoms, and fei_2009 is better for alkaline earth atoms
+    """
 
     # Model Potential Parameters for marinescu_1993
     alpha_c_marinescu_1993: ClassVar[float]
@@ -85,6 +87,12 @@ class BaseElement(ABC):
     model_potential_parameter_marinescu_1993: ClassVar[dict[int, tuple[float, float, float, float]]]
     """Parameters {l: (a_1, a_2, a_3, a_4)} for the parametric model potential.
     See also: M. Marinescu, Phys. Rev. A 49, 982 (1994), https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982
+    """
+
+    # Model Potential Parameters for fei_2009
+    model_potential_parameter_fei_2009: tuple[float, float, float, float]
+    """Parameters (delta, alpha, beta, gamma) for the new four-parameter potential, used in the model potential
+    defined in: Y. Fei et al., Chin. Phys. B 18, 4349 (2009), https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025
     """
 
     _nist_energy_levels_file: Optional[Path] = None

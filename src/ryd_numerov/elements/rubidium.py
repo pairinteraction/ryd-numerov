@@ -47,6 +47,9 @@ class _RubidiumAbstract(BaseElement):
         3: (2.39848933, 1.76810544, -12.0710678, 0.77256589),
     }
 
+    # https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025
+    model_potential_parameter_fei_2009 = (0.9708, 13.9706, 0.2909, 0.2215)
+
 
 class Rubidium87(_RubidiumAbstract):
     species = "Rb87"

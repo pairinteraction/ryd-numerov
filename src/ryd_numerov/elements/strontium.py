@@ -13,7 +13,7 @@ class _StrontiumAbstract(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
     _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
 
-    potential_type_default = "model_potential_marinescu_1993"
+    potential_type_default = "model_potential_fei_2009"
 
     # Phys. Rev. A 89, 023426 (2014)
     alpha_c_marinescu_1993 = 7.5
@@ -24,6 +24,9 @@ class _StrontiumAbstract(BaseElement):
         2: (2.155, 1.4545, 0, 4.5111),
         3: (2.1547, 1.14099, 0, 2.1987),
     }
+
+    # https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025
+    model_potential_parameter_fei_2009 = (0.9959, 16.9567, 0.2648, 0.1439)
 
 
 class Strontium88Singlet(_StrontiumAbstract):
