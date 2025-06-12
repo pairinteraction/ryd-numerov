@@ -188,7 +188,6 @@ class RydbergState:
             self.element,
             self.n,
             self.l,
-            self.s,
             self.j,
             potential_type,
         )

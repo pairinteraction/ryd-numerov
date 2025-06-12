@@ -13,7 +13,7 @@ class Hydrogen(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C1333740&Mask=20
     _ionization_energy = (15.425_93, 0.000_05, "eV")
 
-    potential_type_default = "coulomb+spin_orbit"
+    potential_type_default = "coulomb"
 
     _corrected_rydberg_constant = (109677.58340280356, None, "1/cm")
 
