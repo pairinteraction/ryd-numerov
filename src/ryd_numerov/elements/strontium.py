@@ -13,14 +13,12 @@ class _StrontiumAbstract(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
     _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
 
-    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+    potential_type_default = "model_potential_marinescu_1993"
 
-    # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
-    alpha_c = 7.5
-    # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
-    _r_c_dict: ClassVar = {0: 1.59, 1: 1.58, 2: 1.57, 3: 1.56}
-    # http://dollywood.itp.tuwien.ac.at/~shuhei/pub_Rydberg/PhysRevA.89.023426.pdf
-    _parametric_model_potential_parameters: ClassVar = {
+    # Phys. Rev. A 89, 023426 (2014)
+    alpha_c_marinescu_1993 = 7.5
+    r_c_dict_marinescu_1993: ClassVar = {0: 1.59, 1: 1.58, 2: 1.57, 3: 1.56}
+    model_potential_parameter_marinescu_1993: ClassVar = {
         0: (3.36124, 1.3337, 0, 5.94337),
         1: (3.28205, 1.24035, 0, 3.78861),
         2: (2.155, 1.4545, 0, 4.5111),

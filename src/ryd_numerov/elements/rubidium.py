@@ -14,7 +14,7 @@ class _RubidiumAbstract(BaseElement):
     # https://journals.aps.org/pra/pdf/10.1103/PhysRevA.83.052515
     _ionization_energy = (1_010_029.164_6, 0.000_3, "GHz")
 
-    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+    potential_type_default = "model_potential_marinescu_1993"
 
     # older value
     # https://webbook.nist.gov/cgi/inchi?ID=C7440177&Mask=20
@@ -38,11 +38,9 @@ class _RubidiumAbstract(BaseElement):
     }
 
     # Phys. Rev. A 49, 982 (1994)
-    alpha_c = 9.076
-    # Phys. Rev. A 49, 982 (1994)
-    _r_c_dict: ClassVar = {0: 1.66242117, 1: 1.50195124, 2: 4.86851938, 3: 4.79831327}
-    # Phys. Rev. A 49, 982 (1994)
-    _parametric_model_potential_parameters: ClassVar = {
+    alpha_c_marinescu_1993 = 9.076
+    r_c_dict_marinescu_1993: ClassVar = {0: 1.66242117, 1: 1.50195124, 2: 4.86851938, 3: 4.79831327}
+    model_potential_parameter_marinescu_1993: ClassVar = {
         0: (3.69628474, 1.64915255, -9.86069196, 0.19579987),
         1: (4.44088978, 1.92828831, -16.79597770, -0.81633314),
         2: (3.78717363, 1.57027864, -11.6558897, 0.52942835),

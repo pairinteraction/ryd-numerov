@@ -6,14 +6,14 @@ from scipy.special import exprel
 
 from ryd_numerov.angular import calc_angular_matrix_element
 from ryd_numerov.elements import BaseElement
-from ryd_numerov.model.model_potential import ModelPotential
+from ryd_numerov.model import Model
 from ryd_numerov.radial import Grid, Wavefunction, calc_radial_matrix_element
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ryd_numerov.model.model_potential import ADDITIONAL_POTENTIALS
+    from ryd_numerov.model.model import PotentialType
     from ryd_numerov.units import NDArray, PintArray, PintFloat
 
 
@@ -44,7 +44,7 @@ class RydbergState:
         j: Optional[float] = None,
         m: Optional[float] = None,
     ) -> None:
-        r"""Initialize the model potential.
+        r"""Initialize the Rydberg state.
 
         Args:
             species: Atomic species
@@ -169,28 +169,28 @@ class RydbergState:
         return self._s
 
     @property
-    def model_potential(self) -> ModelPotential:
-        if not hasattr(self, "_model_potential"):
-            self.create_model_potential()
-        return self._model_potential
+    def model(self) -> Model:
+        if not hasattr(self, "_model"):
+            self.create_model()
+        return self._model
 
-    def create_model_potential(self, additional_potentials: Optional[list["ADDITIONAL_POTENTIALS"]] = None) -> None:
-        """Create the model potential for the Rydberg state.
+    def create_model(self, potential_type: Optional["PotentialType"] = None) -> None:
+        """Create the model for the Rydberg state.
 
         Args:
-            additional_potentials: Additional potentials to include in the model potential.
+            potential_type: Which potential to use for the model.
 
         """
-        if hasattr(self, "_model_potential"):
-            raise RuntimeError("The model_potential was already created, you should not create it again.")
+        if hasattr(self, "_model"):
+            raise RuntimeError("The model was already created, you should not create it again.")
 
-        self._model_potential = ModelPotential(
+        self._model = Model(
             self.element,
             self.n,
             self.l,
             self.s,
             self.j,
-            additional_potentials,
+            potential_type,
         )
 
     @property
@@ -231,7 +231,7 @@ class RydbergState:
             if self.l <= 10:
                 z_min = 0.0
             else:
-                z_min = self.model_potential.calc_z_turning_point("hydrogen", dz=1e-2)
+                z_min = self.model.calc_z_turning_point("hydrogen", dz=1e-2)
                 z_min = np.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
             z_min = np.sqrt(x_min)
@@ -261,7 +261,7 @@ class RydbergState:
         if hasattr(self, "_wavefunction"):
             raise RuntimeError("The wavefunction was already created, you should not create it again.")
 
-        self._wavefunction = Wavefunction(self.element, self.grid, self.model_potential)
+        self._wavefunction = Wavefunction(self.element, self.grid, self.model)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
         self._grid = self._wavefunction.grid
 

@@ -15,7 +15,7 @@ class Potassium(BaseElement):
     # https://webbook.nist.gov/cgi/inchi?ID=C7440097&Mask=20
     _ionization_energy = (4.340_66, 0.000_01, "eV")
 
-    additional_potentials_default: ClassVar = ["spin_orbit", "core_corrections", "core_polarization"]
+    potential_type_default = "model_potential_marinescu_1993"
 
     # -- [1] Phys. Scr. 27, 300 (1983)
     # -- [2] Opt. Commun. 39, 370 (1981)
@@ -33,11 +33,9 @@ class Potassium(BaseElement):
     _corrected_rydberg_constant = (109735.774, None, "1/cm")
 
     # Phys. Rev. A 49, 982 (1994)
-    alpha_c = 5.3310
-    # Phys. Rev. A 49, 982 (1994)
-    _r_c_dict: ClassVar = {0: 0.83167545, 1: 0.85235381, 2: 0.83216907, 3: 6.50294371}
-    # Phys. Rev. A 49, 982 (1994)
-    _parametric_model_potential_parameters: ClassVar = {
+    alpha_c_marinescu_1993 = 5.3310
+    r_c_dict_marinescu_1993: ClassVar = {0: 0.83167545, 1: 0.85235381, 2: 0.83216907, 3: 6.50294371}
+    model_potential_parameter_marinescu_1993: ClassVar = {
         0: (3.56079437, 1.83909642, -1.74701102, -1.03237313),
         1: (3.65670429, 1.67520788, -2.07416615, -0.89030421),
         2: (4.12713694, 1.79837462, -1.69935174, -0.98913582),

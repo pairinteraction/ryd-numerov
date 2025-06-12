@@ -11,7 +11,7 @@ import numpy as np
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
-    from ryd_numerov.model.model_potential import ADDITIONAL_POTENTIALS
+    from ryd_numerov.model.model import PotentialType
     from ryd_numerov.units import PintFloat
 
 
@@ -61,7 +61,8 @@ class BaseElement(ABC):
     _ionization_energy: tuple[float, Optional[float], str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
-    additional_potentials_default: ClassVar[list["ADDITIONAL_POTENTIALS"]] = []
+    potential_type_default: Optional["PotentialType"] = None
+    """Default potential type to use for this element. If None, the potential type must be specified explicitly."""
 
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
     _quantum_defects: ClassVar[dict[tuple[int, float], tuple[float, float, float, float, float]]] = {}
@@ -72,17 +73,18 @@ class BaseElement(ABC):
     _corrected_rydberg_constant: tuple[float, Optional[float], str]
     r"""Corrected Rydberg constant stored as (value, uncertainty, unit)"""
 
-    alpha_c: ClassVar[float] = 0
+    # Model Potential Parameters for marinescu_1993
+    alpha_c_marinescu_1993: ClassVar[float]
     """Static dipole polarizability in atomic units (a.u.), used for the parametric model potential.
     See also: Phys. Rev. A 49, 982 (1994)
     """
-    _r_c_dict: ClassVar[dict[int, float]] = {0: np.inf}
+    r_c_dict_marinescu_1993: ClassVar[dict[int, float]]
     """Cutoff radius {l: r_c} to truncate the unphysical short-range contribution of the polarization potential.
     See also: Phys. Rev. A 49, 982 (1994)
     """
-    _parametric_model_potential_parameters: ClassVar[dict[int, tuple[float, float, float, float]]] = {}
+    model_potential_parameter_marinescu_1993: ClassVar[dict[int, tuple[float, float, float, float]]]
     """Parameters {l: (a_1, a_2, a_3, a_4)} for the parametric model potential.
-    See also: Phys. Rev. A 49, 982 (1994)
+    See also: M. Marinescu, Phys. Rev. A 49, 982 (1994), https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982
     """
 
     _nist_energy_levels_file: Optional[Path] = None
@@ -362,35 +364,3 @@ class BaseElement(ABC):
         if unit == "a.u.":
             return energy.magnitude
         return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
-
-    def get_parametric_model_potential_parameters(self, l: int) -> tuple[float, float, float, float]:
-        """Get the parameters for the parametric model potential for the given principal quantum number n.
-
-        Args:
-            l: Orbital angular momentum quantum number.
-
-        Returns:
-            Parameters (a_1, a_2, a_3, a_4) for the parametric model potential.
-
-        """
-        if len(self._parametric_model_potential_parameters) == 0:
-            raise ValueError("No parametric model potential parameters defined for this element.")
-        if l in self._parametric_model_potential_parameters:
-            return self._parametric_model_potential_parameters[l]
-        max_l = max(self._parametric_model_potential_parameters.keys())
-        return self._parametric_model_potential_parameters[max_l]
-
-    def get_r_c(self, l: int) -> float:
-        """Get the cutoff radius for the polarization potential for the given orbital angular momentum quantum number l.
-
-        Args:
-            l: Orbital angular momentum quantum number.
-
-        Returns:
-            Cutoff radius r_c for the polarization potential.
-
-        """
-        if l in self._r_c_dict:
-            return self._r_c_dict[l]
-        max_l = max(self._r_c_dict.keys())
-        return self._r_c_dict[max_l]
