@@ -6,9 +6,9 @@ import numpy as np
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from ryd_numerov.elements import BaseElement
     from ryd_numerov.model import Model
     from ryd_numerov.radial.grid import Grid
+    from ryd_numerov.rydberg import RydbergState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
@@ -27,19 +27,19 @@ class Wavefunction:
 
     def __init__(
         self,
-        element: "BaseElement",
+        state: "RydbergState",
         grid: "Grid",
         model: "Model",
     ) -> None:
         """Create a Wavefunction object.
 
         Args:
-            element: The element object.
+            state: The RydbergState object.
             grid: The grid object.
             model: The model object.
 
         """
-        self.element = element
+        self.state = state
         self.grid = grid
         self.model = model
 
@@ -104,13 +104,16 @@ class Wavefunction:
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
-        n, l, j = self.model.n, self.model.l, self.model.j
+        n, l, j = self.state.n, self.state.l, self.state.j
         glist = (
             8
-            * self.element.reduced_mass_factor
+            * self.state.element.reduced_mass_factor
             * grid.z_list
             * grid.z_list
-            * (self.element.calc_energy(n, l, j, unit="a.u.") - self.model.calc_total_effective_potential(grid.x_list))
+            * (
+                self.state.element.calc_energy(n, l, j, unit="a.u.")
+                - self.model.calc_total_effective_potential(grid.x_list)
+            )
         )
 
         if run_backward:
@@ -122,14 +125,20 @@ class Wavefunction:
             # We set x_min to the classical turning point
             # after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again
             # or it reaches a local minimum (thus going away from the x-axis)
-            x_min = self.model.calc_z_turning_point("classical", dz=grid.dz)
+            # the reason for this is that the second derivative of the wavefunction d^2/dz^2 w(z) (= concavity)
+            # can only vanish at either
+            # i) where w(z) = 0 or ii) where the potential is equal to the energy (-> classical turning point)
+            # If we further assume, that the wavefunction converges to zero at the inner boundary,
+            # we know that after the inner classical turning point
+            # the wavefunction should never increase the distance from the x-axis again.
+            x_min = self.model.calc_turning_point_z(self.state.n, self.state.l, self.state.j)
             x_min = max(x_min, 5 * abs(dx), self.get_x_min())
 
         else:  # forward
             y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
-            x_min = np.sqrt(self.model.n * (self.model.n + 15))
+            x_min = np.sqrt(self.state.n * (self.state.n + 15))
 
         if _use_njit:
             w_list_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
@@ -155,7 +164,7 @@ class Wavefunction:
 
     def get_x_min(self) -> float:
         """Implement a few special cases for the x_min point of the integration."""
-        species, n, l = self.element.species, self.model.n, self.model.l
+        species, n, l = self.state.species, self.state.n, self.state.l
         if species in ["Rb", "Cs"] and n == 4 and l == 3:
             return 2
         if species == "Sr_singlet" and n == 5 and l == 0:
@@ -176,8 +185,8 @@ class Wavefunction:
         warning_msgs = []
 
         grid = self.grid
-        n = self.model.n
-        l = self.model.l
+        n = self.state.n
+        l = self.state.l
 
         # Check and Correct if divergence of the wavefunction
         w_list_abs = np.abs(self.w_list)
@@ -267,7 +276,7 @@ class Wavefunction:
                 )
 
         if warning_msgs:
-            species, j = self.element.species, self.model.j
+            species, j = self.state.species, self.state.j
             msg = f"The wavefunction (species={species} n={n}, l={l}, j={j:.1f}) has some issues:"
             msg += "\n      ".join(["", *warning_msgs])
             logger.warning(msg)

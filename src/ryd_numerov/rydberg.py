@@ -186,9 +186,7 @@ class RydbergState:
 
         self._model = Model(
             self.element,
-            self.n,
             self.l,
-            self.j,
             potential_type,
         )
 
@@ -230,7 +228,7 @@ class RydbergState:
             if self.l <= 10:
                 z_min = 0.0
             else:
-                z_min = self.model.calc_z_turning_point("hydrogen", dz=1e-2)
+                z_min = self.model.calc_turning_point_z(self.n, self.l, self.j)
                 z_min = np.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
             z_min = np.sqrt(x_min)
@@ -260,7 +258,7 @@ class RydbergState:
         if hasattr(self, "_wavefunction"):
             raise RuntimeError("The wavefunction was already created, you should not create it again.")
 
-        self._wavefunction = Wavefunction(self.element, self.grid, self.model)
+        self._wavefunction = Wavefunction(self, self.grid, self.model)
         self._wavefunction.integrate(run_backward, w0, _use_njit)
         self._grid = self._wavefunction.grid
 
