@@ -281,12 +281,15 @@ class Model:
         while z_max - z_min > dz:
             z_list = np.linspace(z_min, z_max, 1_000, endpoint=True)
             v_list = self.calc_total_effective_potential(z_list**2) - energy
-            inds = np.argwhere(v_list < 0)[:, 0]
+
+            inds = np.argwhere(np.diff(np.sign(v_list)) < 0).flatten()
             if len(inds) == 0:
                 raise ValueError("Effective potential is always above energy, this should not happen!")
-            z_max = z_list[inds[0]]
-            if inds[0] > 0:
-                z_min = z_list[inds[0] - 1]
-                v_min = v_list[inds[0] - 1]
+            ind = inds[-1]  # take the last index, where a sign change from positive to negative occurs
+            # because for some potentials, the for small distances get negative again,
+            # but the classical forbidden region was already reached for a larger distance
 
-        return z_min + (z_max - z_min) * v_min / (v_min - v_list[inds[0]])  # type: ignore [no-any-return]
+            z_min = z_list[ind]
+            z_max = z_list[ind + 1]
+
+        return z_min + (z_max - z_min) * v_list[ind] / (v_list[ind] - v_list[ind + 1])  # type: ignore [no-any-return]
