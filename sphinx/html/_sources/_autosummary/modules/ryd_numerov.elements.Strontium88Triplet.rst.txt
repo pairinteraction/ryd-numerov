@@ -1,0 +1,44 @@
+Strontium88Triplet
+==================
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Strontium88Triplet.__init__
+      ~Strontium88Triplet.calc_energy
+      ~Strontium88Triplet.calc_n_star
+      ~Strontium88Triplet.from_species
+      ~Strontium88Triplet.get_available_species
+      ~Strontium88Triplet.get_corrected_rydberg_constant
+      ~Strontium88Triplet.get_ionization_energy
+      ~Strontium88Triplet.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Strontium88Triplet.Z
+   ~Strontium88Triplet.alpha_c_marinescu_1993
+   ~Strontium88Triplet.ground_state_shell
+   ~Strontium88Triplet.model_potential_parameter_fei_2009
+   ~Strontium88Triplet.model_potential_parameter_marinescu_1993
+   ~Strontium88Triplet.potential_type_default
+   ~Strontium88Triplet.r_c_dict_marinescu_1993
+   ~Strontium88Triplet.reduced_mass_factor
+   ~Strontium88Triplet.s
+   ~Strontium88Triplet.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Strontium88Triplet
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init
