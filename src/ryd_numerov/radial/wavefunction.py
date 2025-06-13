@@ -132,7 +132,6 @@ class Wavefunction:
             # we know that after the inner classical turning point
             # the wavefunction should never increase the distance from the x-axis again.
             x_min = self.model.calc_turning_point_z(self.state.n, self.state.l, self.state.j)
-            x_min = max(x_min, 5 * abs(dx), self.get_x_min())
 
         else:  # forward
             y0, y1 = 0, w0
@@ -161,16 +160,6 @@ class Wavefunction:
 
         self.sanity_check(x_stop, run_backward)
         return w_list
-
-    def get_x_min(self) -> float:
-        """Implement a few special cases for the x_min point of the integration."""
-        species, n, l = self.state.species, self.state.n, self.state.l
-        if species in ["Rb", "Cs"] and n == 4 and l == 3:
-            return 2
-        if species == "Sr_singlet" and n == 5 and l == 0:
-            return 2
-
-        return 0
 
     def sanity_check(self, z_stop: float, run_backward: bool) -> bool:  # noqa: C901, PLR0915, PLR0912
         """Do some sanity checks on the wavefunction.
@@ -228,9 +217,11 @@ class Wavefunction:
         inner_weight_scaled_to_whole_grid = inner_weight * grid.steps / inner_ind
 
         tol = 1e-4
-        if n <= 11:
-            # for low n the wavefunction converges not as good and still has more weight at the inner boundary
-            tol = 5e-3
+        # for low n the wavefunction converges not as good and still has more weight at the inner boundary
+        if n <= 10:
+            tol = 8e-3
+        elif n <= 16:
+            tol = 2e-3
 
         if inner_weight_scaled_to_whole_grid > tol:
             warning_msgs.append(
@@ -261,19 +252,13 @@ class Wavefunction:
 
         # Check that numerov stopped and did not run until x_stop
         if l > 0:
-            if run_backward and z_stop > grid.z_list[0] - grid.dz / 2:
+            if run_backward and z_stop > grid.z_list[0] - grid.dz / 2 and inner_weight_scaled_to_whole_grid > 1e-6:
                 warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[0]}, z_stop={z_stop}")
             if not run_backward and z_stop < grid.z_list[-1] + grid.dz / 2:
                 warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[-1]}")
         elif l == 0 and run_backward:
-            if z_stop > 1.5 * grid.dz:
-                warning_msgs.append(f"The integration for l=0 should go until z=dz, but a z_stop={z_stop} was used.")
-            elif grid.z_list[0] > 2.5 * grid.dz:
-                # z_list[0] should be dz, but if it is 2 * dz this is also fine
-                # e.g. this might happen if the integration just stopped at the last step due to a negative y value
-                warning_msgs.append(
-                    f"The integration for l=0 did stop before the z_min boundary, z={grid.z_list[0]}, {grid.dz}"
-                )
+            if grid.z_list[0] > 0.035:  # z_list[0] should run almost to zero for l=0
+                warning_msgs.append(f"The integration for l=0 did stop at {grid.z_list[0]} (should be close to zero).")
 
         if warning_msgs:
             species, j = self.state.species, self.state.j
