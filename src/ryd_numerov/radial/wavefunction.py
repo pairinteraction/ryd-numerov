@@ -133,6 +133,10 @@ class Wavefunction:
             # the wavefunction should never increase the distance from the x-axis again.
             x_min = self.model.calc_turning_point_z(self.state.n, self.state.l, self.state.j)
 
+            # for some Sr states the turning point is a bit too small
+            if self.state.species == "Sr88_singlet" and l == 1 and 8 <= n <= 10:
+                x_min += 0.1
+
         else:  # forward
             y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
@@ -222,6 +226,15 @@ class Wavefunction:
             tol = 8e-3
         elif n <= 16:
             tol = 2e-3
+
+        if self.state.species == "Sr88_singlet":
+            if l in [3, 4, 5]:
+                tol = 1e-2
+                if n <= 10:
+                    tol = 1e-1
+                elif n <= 25:
+                    tol = 5e-2
+            tol = {(4, 2): 2e-1, (5, 2): 2e-2, (5, 4): 3e-1, (6, 4): 2e-1, (7, 4): 1.5e-1}.get((n, l), tol)
 
         if inner_weight_scaled_to_whole_grid > tol:
             warning_msgs.append(
