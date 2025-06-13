@@ -252,8 +252,12 @@ class Model:
         r"""Calculate the classical inner turning point z_i for the given state.
 
         The classical turning point is defined as the point,
-        where the potential of the Rydberg model equals the energy,
-        i.e. V(r_i) + V_l(r_i) = E.
+        where the total effective potential of the Rydberg model equals the energy,
+        i.e. V_eff(r_i) = E.
+
+        Note: Because we use the total effective potential, even for l=0 the turning point is not at r=0.
+        The advantage of this is, that this definition of the turning point should correspond to
+        where w(z) should have its last change of sign in the second derivative.
 
         Args:
             n: Principal quantum number of the state.
@@ -270,23 +274,18 @@ class Model:
         z_guess = self.calc_hydrogen_turning_point_z(n, l)
         z_min, z_max = max(z_guess - 5, dz), z_guess + 5
 
-        v_min = self.calc_total_effective_potential(z_min**2) - energy
-        if v_min < 0:
-            if l == 0 and z_min == dz:
-                return 0
-            raise ValueError(
-                f"Effective potential is below energy at z_min, this should not happen ({l=}, {z_min=:.2f})"
-            )
-
         while z_max - z_min > dz:
             z_list = np.linspace(z_min, z_max, 1_000, endpoint=True)
             v_list = self.calc_total_effective_potential(z_list**2) - energy
-            inds = np.argwhere(v_list < 0)[:, 0]
-            if len(inds) == 0:
-                raise ValueError("Effective potential is always above energy, this should not happen!")
-            z_max = z_list[inds[0]]
-            if inds[0] > 0:
-                z_min = z_list[inds[0] - 1]
-                v_min = v_list[inds[0] - 1]
 
-        return z_min + (z_max - z_min) * v_min / (v_min - v_list[inds[0]])  # type: ignore [no-any-return]
+            inds = np.argwhere(np.diff(np.sign(v_list)) < 0).flatten()
+            if len(inds) == 0:
+                raise ValueError("Effective potential is always above or below the energy, this should not happen!")
+            ind = inds[-1]  # take the last index, where a sign change from positive to negative occurs
+            # because for some potentials, the potential for small distances gets negative again,
+            # but the classical forbidden region was already reached for a larger distance
+
+            z_min = z_list[ind]
+            z_max = z_list[ind + 1]
+
+        return z_min + (z_max - z_min) * v_list[ind] / (v_list[ind] - v_list[ind + 1])  # type: ignore [no-any-return]
