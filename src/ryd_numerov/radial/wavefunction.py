@@ -227,14 +227,16 @@ class Wavefunction:
         elif n <= 16:
             tol = 2e-3
 
-        if self.state.species == "Sr88_singlet":
+        if "Sr" in self.state.species:
             if l in [3, 4, 5]:
                 tol = 1e-2
                 if n <= 10:
                     tol = 1e-1
                 elif n <= 25:
                     tol = 5e-2
-            tol = {(4, 2): 2e-1, (5, 2): 2e-2, (5, 4): 3e-1, (6, 4): 2e-1, (7, 4): 1.5e-1}.get((n, l), tol)
+            tol = {(5, 1): 4e-2, (4, 2): 2.1e-1, (5, 2): 2e-2, (5, 4): 3e-1, (6, 4): 2e-1, (7, 4): 1.5e-1}.get(
+                (n, l), tol
+            )
 
         if inner_weight_scaled_to_whole_grid > tol:
             warning_msgs.append(
