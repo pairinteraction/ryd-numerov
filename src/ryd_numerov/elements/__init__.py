@@ -1,6 +1,5 @@
 from ryd_numerov.elements.cesium import Cesium
 from ryd_numerov.elements.element import Element
-from ryd_numerov.elements.francium import Francium
 from ryd_numerov.elements.helium import HeliumIon
 from ryd_numerov.elements.hydrogen import Hydrogen, HydrogenTextBook
 from ryd_numerov.elements.lithium import Lithium
@@ -19,7 +18,6 @@ __all__ = [  # noqa: RUF022
     "Potassium",
     "Rubidium",
     "Cesium",
-    "Francium",
     "Strontium88Singlet",
     "Strontium88Triplet",
 ]
