@@ -99,7 +99,7 @@ class BaseElement(ABC):
         if use_nist_data and self._nist_energy_levels_file is not None:
             self._setup_nist_energy_levels(self._nist_energy_levels_file)
 
-    def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901
+    def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901, PLR0912
         """Set up NIST energy levels from a file.
 
         This method should be called in the constructor to load the NIST energy levels
@@ -122,35 +122,42 @@ class BaseElement(ABC):
                 f"NIST energy data file {file} not given in Hartree, please download the data in units of Hartree."
             )
 
-        l_str2int = {"s": 0, "p": 1, "d": 2, "f": 3, "g": 4, "h": 5, "i": 6, "k": 7, "l": 8, "m": 9}
-
         data = np.loadtxt(file, skiprows=1, dtype=str, quotechar='"', delimiter="\t")
         # data[i] := (Configuration, Term, J, Prefix, Energy, Suffix, Uncertainty, Reference)
+        core_config_parts = convert_electron_configuration(self._core_electron_configuration)
 
         for row in data:
             if re.match(r"^([A-Z])", row[0]):
                 # Skip rows, where the first column starts with an element symbol
                 continue
 
-            config: str = row[0]
-            parts = config.split(".")
-            if self._core_electron_configuration not in parts[0]:
-                continue  # Skip configurations, where the inner electrons are not in the ground state configuration
+            try:
+                config_parts = convert_electron_configuration(row[0])
+            except ValueError:
+                # Skip rows with invalid electron configuration format
+                # (they usually correspond to core configurations, that are not the ground state configuration)
+                # e.g. strontium "4d.(2D<3/2>).4f"
+                continue
+            if sum(part[2] for part in config_parts) != sum(part[2] for part in core_config_parts) + 1:
+                # Skip configurations, where the number of electrons does not match the core configuration + 1
+                continue
+
+            for part in core_config_parts:
+                if part in config_parts:
+                    config_parts.remove(part)
+                elif (part[0], part[1], part[2] + 1) in config_parts:
+                    config_parts.remove((part[0], part[1], part[2] + 1))
+                    config_parts.append((part[0], part[1], 1))
+                else:
+                    break
+            if sum(part[2] for part in config_parts) != 1:
+                # Skip configurations, where the inner electrons are not in the ground state configuration
+                continue
+            n, l = config_parts[0][:2]
 
             multiplicity = int(row[1][0])
             if (multiplicity - 1) / 2 != self.s:
                 continue
-
-            match = None
-            if len(parts) == 1:
-                match = re.match(r"^(\d+)([a-z])2$", parts[0])
-            elif len(parts) == 2:
-                match = re.match(r"^(\d+)([a-z])$", parts[1])
-            if match is None:
-                raise ValueError(f"Invalid configuration format: {config}.")
-
-            n = int(match.group(1))
-            l = l_str2int[match.group(2)]
 
             j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
             for j in j_list:
@@ -359,3 +366,24 @@ class BaseElement(ABC):
         if unit == "a.u.":
             return energy.magnitude
         return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+
+
+def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:
+    """Convert an electron configuration string to a list of tuples [(n, l, number), ...].
+
+    This means convert a string representing the outermost electrons
+    like "4f14.6s" to [(4, 2, 14), (6, 0, 1)].
+    """
+    l_str2int = {"s": 0, "p": 1, "d": 2, "f": 3, "g": 4, "h": 5, "i": 6, "k": 7, "l": 8, "m": 9}
+    parts = config.split(".")
+    converted_parts = []
+    for part in parts:
+        match = re.match(r"^(\d+)([a-z])(\d*)$", part)
+        if match is None:
+            raise ValueError(f"Invalid configuration format: {config}.")
+        n = int(match.group(1))
+        l = l_str2int[match.group(2)]
+        number = int(match.group(3)) if match.group(3) else 1
+        converted_parts.append((n, l, number))
+
+    return converted_parts
