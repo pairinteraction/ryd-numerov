@@ -1,4 +1,5 @@
 import inspect
+import logging
 import re
 from abc import ABC
 from fractions import Fraction
@@ -13,6 +14,8 @@ from ryd_numerov.units import ureg
 if TYPE_CHECKING:
     from ryd_numerov.model.model import PotentialType
     from ryd_numerov.units import PintFloat
+
+logger = logging.getLogger(__name__)
 
 
 class BaseElement(ABC):
@@ -91,10 +94,12 @@ class BaseElement(ABC):
 
         """
         self._nist_energy_levels: dict[tuple[int, int, float], float] = {}
+        self._nist_n_max = nist_n_max
+        self.use_nist_data = use_nist_data
         if use_nist_data and self._nist_energy_levels_file is not None:
-            self._setup_nist_energy_levels(self._nist_energy_levels_file, nist_n_max)
+            self._setup_nist_energy_levels(self._nist_energy_levels_file)
 
-    def _setup_nist_energy_levels(self, file: Path, n_max: int) -> None:  # noqa: C901
+    def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901
         """Set up NIST energy levels from a file.
 
         This method should be called in the constructor to load the NIST energy levels
@@ -145,8 +150,6 @@ class BaseElement(ABC):
                 raise ValueError(f"Invalid configuration format: {config}.")
 
             n = int(match.group(1))
-            if n > n_max:
-                continue
             l = l_str2int[match.group(2)]
 
             j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
@@ -339,9 +342,15 @@ class BaseElement(ABC):
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
-        if (n, l, j) in self._nist_energy_levels:
-            energy_au = self._nist_energy_levels[(n, l, j)]
-            energy_au -= self.get_ionization_energy("hartree")
+        if n <= self._nist_n_max and self.use_nist_data:
+            if (n, l, j) in self._nist_energy_levels:
+                energy_au = self._nist_energy_levels[(n, l, j)]
+                energy_au -= self.get_ionization_energy("hartree")
+            else:
+                logger.debug(
+                    "NIST energy levels for (n=%d, l=%d, j=%s) not found, using quantum defect theory.", n, l, j
+                )
+                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
         else:
             energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
