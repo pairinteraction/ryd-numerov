@@ -1,4 +1,5 @@
 import inspect
+import logging
 import re
 from abc import ABC
 from fractions import Fraction
@@ -14,30 +15,7 @@ if TYPE_CHECKING:
     from ryd_numerov.model.model import PotentialType
     from ryd_numerov.units import PintFloat
 
-
-# List of energetically sorted shells
-SORTED_SHELLS = [  # (n, l)
-    (1, 0),  # H
-    (2, 0),  # Li, Be
-    (2, 1),
-    (3, 0),  # Na, Mg
-    (3, 1),
-    (4, 0),  # K, Ca
-    (3, 2),
-    (4, 1),
-    (5, 0),  # Rb, Sr
-    (4, 2),
-    (5, 1),
-    (6, 0),  # Cs, Ba
-    (4, 3),
-    (5, 2),
-    (6, 1),
-    (7, 0),  # Fr, Ra
-    (5, 3),
-    (6, 2),
-    (7, 1),
-    (8, 0),
-]
+logger = logging.getLogger(__name__)
 
 
 class BaseElement(ABC):
@@ -56,6 +34,9 @@ class BaseElement(ABC):
     """Total spin quantum number."""
     ground_state_shell: ClassVar[tuple[int, int]]
     """Shell (n, l) describing the electronic ground state configuration."""
+    _additional_allowed_shells: ClassVar[list[tuple[int, int]]] = []
+    """Additional allowed shells (n, l), which (n, l) is smaller than the ground state shell."""
+
     _core_electron_configuration: ClassVar[str]
     """Electron configuration of the core electrons, e.g. 4p6 for Rb or 5s for Sr."""
     _ionization_energy: tuple[float, Optional[float], str]
@@ -113,10 +94,12 @@ class BaseElement(ABC):
 
         """
         self._nist_energy_levels: dict[tuple[int, int, float], float] = {}
+        self._nist_n_max = nist_n_max
+        self.use_nist_data = use_nist_data
         if use_nist_data and self._nist_energy_levels_file is not None:
-            self._setup_nist_energy_levels(self._nist_energy_levels_file, nist_n_max)
+            self._setup_nist_energy_levels(self._nist_energy_levels_file)
 
-    def _setup_nist_energy_levels(self, file: Path, n_max: int) -> None:  # noqa: C901
+    def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901, PLR0912
         """Set up NIST energy levels from a file.
 
         This method should be called in the constructor to load the NIST energy levels
@@ -139,37 +122,40 @@ class BaseElement(ABC):
                 f"NIST energy data file {file} not given in Hartree, please download the data in units of Hartree."
             )
 
-        l_str2int = {"s": 0, "p": 1, "d": 2, "f": 3, "g": 4, "h": 5, "i": 6, "k": 7, "l": 8, "m": 9}
-
         data = np.loadtxt(file, skiprows=1, dtype=str, quotechar='"', delimiter="\t")
         # data[i] := (Configuration, Term, J, Prefix, Energy, Suffix, Uncertainty, Reference)
+        core_config_parts = convert_electron_configuration(self._core_electron_configuration)
 
         for row in data:
             if re.match(r"^([A-Z])", row[0]):
                 # Skip rows, where the first column starts with an element symbol
                 continue
 
-            config: str = row[0]
-            parts = config.split(".")
-            if self._core_electron_configuration not in parts[0]:
-                continue  # Skip configurations, where the inner electrons are not in the ground state configuration
+            try:
+                config_parts = convert_electron_configuration(row[0])
+            except ValueError as e:
+                logger.debug("Skipping invalid configuration '%s' in file %s: %s", row[0], file, e)
+                continue
+            if sum(part[2] for part in config_parts) != sum(part[2] for part in core_config_parts) + 1:
+                # Skip configurations, where the number of electrons does not match the core configuration + 1
+                continue
+
+            for part in core_config_parts:
+                if part in config_parts:
+                    config_parts.remove(part)
+                elif (part[0], part[1], part[2] + 1) in config_parts:
+                    config_parts.remove((part[0], part[1], part[2] + 1))
+                    config_parts.append((part[0], part[1], 1))
+                else:
+                    break
+            if sum(part[2] for part in config_parts) != 1:
+                # Skip configurations, where the inner electrons are not in the ground state configuration
+                continue
+            n, l = config_parts[0][:2]
 
             multiplicity = int(row[1][0])
             if (multiplicity - 1) / 2 != self.s:
                 continue
-
-            match = None
-            if len(parts) == 1:
-                match = re.match(r"^(\d+)([a-z])2$", parts[0])
-            elif len(parts) == 2:
-                match = re.match(r"^(\d+)([a-z])$", parts[1])
-            if match is None:
-                raise ValueError(f"Invalid configuration format: {config}.")
-
-            n = int(match.group(1))
-            if n > n_max:
-                continue
-            l = l_str2int[match.group(2)]
 
             j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
             for j in j_list:
@@ -242,9 +228,9 @@ class BaseElement(ABC):
         """
         if n < 1 or l < 0 or l >= n:
             raise ValueError(f"Invalid shell: (n={n}, l={l}). Must be n >= 1 and 0 <= l < n.")
-        if (n, l) not in SORTED_SHELLS:
+        if (n, l) >= self.ground_state_shell:
             return True
-        return SORTED_SHELLS.index((n, l)) >= SORTED_SHELLS.index(self.ground_state_shell)
+        return (n, l) in self._additional_allowed_shells
 
     @overload
     def get_ionization_energy(self, unit: None = None) -> "PintFloat": ...
@@ -361,9 +347,15 @@ class BaseElement(ABC):
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
-        if (n, l, j) in self._nist_energy_levels:
-            energy_au = self._nist_energy_levels[(n, l, j)]
-            energy_au -= self.get_ionization_energy("hartree")
+        if n <= self._nist_n_max and self.use_nist_data:
+            if (n, l, j) in self._nist_energy_levels:
+                energy_au = self._nist_energy_levels[(n, l, j)]
+                energy_au -= self.get_ionization_energy("hartree")
+            else:
+                logger.debug(
+                    "NIST energy levels for (n=%d, l=%d, j=%s) not found, using quantum defect theory.", n, l, j
+                )
+                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
         else:
             energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
@@ -372,3 +364,23 @@ class BaseElement(ABC):
         if unit == "a.u.":
             return energy.magnitude
         return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+
+
+def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:
+    """Convert an electron configuration string to a list of tuples (n, l, number).
+
+    This means convert a string like "4f14.6s" to [(4, 2, 14), (6, 0, 1)].
+    """
+    l_str2int = {"s": 0, "p": 1, "d": 2, "f": 3, "g": 4, "h": 5, "i": 6, "k": 7, "l": 8, "m": 9}
+    parts = config.split(".")
+    converted_parts = []
+    for part in parts:
+        match = re.match(r"^(\d+)([a-z])(\d*)$", part)
+        if match is None:
+            raise ValueError(f"Invalid configuration format: {config}.")
+        n = int(match.group(1))
+        l = l_str2int[match.group(2)]
+        number = int(match.group(3)) if match.group(3) else 1
+        converted_parts.append((n, l, number))
+
+    return converted_parts

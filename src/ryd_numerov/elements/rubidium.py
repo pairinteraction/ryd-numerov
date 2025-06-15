@@ -8,6 +8,8 @@ class _RubidiumAbstract(BaseElement):
     Z = 37
     s = 1 / 2
     ground_state_shell = (5, 0)
+    _additional_allowed_shells: ClassVar = [(4, 2), (4, 3)]
+
     _core_electron_configuration = "4p6"
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "rubidium.txt"
 
