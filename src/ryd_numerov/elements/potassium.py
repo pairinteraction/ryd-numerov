@@ -9,6 +9,7 @@ class Potassium(BaseElement):
     Z = 19
     s = 1 / 2
     ground_state_shell = (4, 0)
+    _additional_allowed_shells: ClassVar = [(3, 2)]
     _core_electron_configuration = "3p6"
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "potassium.txt"
 

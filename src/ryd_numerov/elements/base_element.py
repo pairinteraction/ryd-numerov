@@ -15,31 +15,6 @@ if TYPE_CHECKING:
     from ryd_numerov.units import PintFloat
 
 
-# List of energetically sorted shells
-SORTED_SHELLS = [  # (n, l)
-    (1, 0),  # H
-    (2, 0),  # Li, Be
-    (2, 1),
-    (3, 0),  # Na, Mg
-    (3, 1),
-    (4, 0),  # K, Ca
-    (3, 2),
-    (4, 1),
-    (5, 0),  # Rb, Sr
-    (4, 2),
-    (5, 1),
-    (6, 0),  # Cs, Ba
-    (4, 3),
-    (5, 2),
-    (6, 1),
-    (7, 0),  # Fr, Ra
-    (5, 3),
-    (6, 2),
-    (7, 1),
-    (8, 0),
-]
-
-
 class BaseElement(ABC):
     """Abstract base class for all elements.
 
@@ -56,6 +31,9 @@ class BaseElement(ABC):
     """Total spin quantum number."""
     ground_state_shell: ClassVar[tuple[int, int]]
     """Shell (n, l) describing the electronic ground state configuration."""
+    _additional_allowed_shells: ClassVar[list[tuple[int, int]]] = []
+    """Additional allowed shells (n, l), which (n, l) is smaller than the ground state shell."""
+
     _core_electron_configuration: ClassVar[str]
     """Electron configuration of the core electrons, e.g. 4p6 for Rb or 5s for Sr."""
     _ionization_energy: tuple[float, Optional[float], str]
@@ -242,9 +220,9 @@ class BaseElement(ABC):
         """
         if n < 1 or l < 0 or l >= n:
             raise ValueError(f"Invalid shell: (n={n}, l={l}). Must be n >= 1 and 0 <= l < n.")
-        if (n, l) not in SORTED_SHELLS:
+        if (n, l) >= self.ground_state_shell:
             return True
-        return SORTED_SHELLS.index((n, l)) >= SORTED_SHELLS.index(self.ground_state_shell)
+        return (n, l) in self._additional_allowed_shells
 
     @overload
     def get_ionization_energy(self, unit: None = None) -> "PintFloat": ...

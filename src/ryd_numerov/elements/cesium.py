@@ -9,6 +9,7 @@ class Cesium(BaseElement):
     Z = 55
     s = 1 / 2
     ground_state_shell = (6, 0)
+    _additional_allowed_shells: ClassVar = [(4, 3), (5, 2), (5, 3), (5, 4)]
     _core_electron_configuration = "5p6"
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "cesium.txt"
 
