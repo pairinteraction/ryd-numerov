@@ -6,6 +6,7 @@ from ryd_numerov.elements.base_element import BaseElement
 
 class _StrontiumAbstract(BaseElement):
     Z = 38
+    _additional_allowed_shells: ClassVar = [(4, 2), (4, 3)]
 
     _core_electron_configuration = "5s"
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "strontium.txt"
@@ -51,7 +52,7 @@ class Strontium88Singlet(_StrontiumAbstract):
 class Strontium88Triplet(_StrontiumAbstract):
     species = "Sr88_triplet"
     s = 1
-    ground_state_shell = (4, 2)
+    ground_state_shell = (5, 1)
 
     # -- [1] Comput. Phys. Commun. 45, 107814 (2021)
     _quantum_defects: ClassVar = {
