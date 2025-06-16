@@ -328,7 +328,7 @@ class BaseElement(ABC):
             - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
 
         """
-        assert j % 1 in [0, 0.5], f"j must be integer or half-integer, but is {j}"
+        assert j % 1 == (l + self.s) % 1, f"j % 1 must be same as (l + s) % 1, (s={self.s}, l={l}, j={j})"
         d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j), (0, 0, 0, 0, 0))
         delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
         return n - delta_nlj
@@ -349,6 +349,8 @@ class BaseElement(ABC):
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
+        if j % 1 != (l + self.s) % 1:
+            raise ValueError(f"Invalid quantum numbers: (s={self.s}, l={l}, j={j})")
         if n <= self._nist_n_max and self.use_nist_data:
             if (n, l, j) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j)]
