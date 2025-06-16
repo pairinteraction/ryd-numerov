@@ -34,12 +34,8 @@ def _run_numerov_integration_python(
             2 * (1 - 5 * dx**2 / 12 * g_list[i - 1]) * y_list[i - 1] - (1 + dx**2 / 12 * g_list[i - 2]) * y_list[i - 2]
         ) / (1 + dx**2 / 12 * g_list[i])
 
-        if (run_forward and x > x_min) or (run_backward and x < x_min):
-            if y_list[-1] > 0 and (y < 0 or y > y_list[-1]):
-                if verbose:
-                    print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)  # noqa: T201
-                break
-            if run_forward and y_list[-1] < 0 and (y > 0 or y < y_list[-1]):
+        if (run_forward and x > x_min) or (run_backward and x < x_min):  # noqa: SIM102
+            if (y > 0 and y_list[-1] < 0) or (y < 0 and y_list[-1] > 0) or (y > y_list[-1] > 0) or (y < y_list[-1] < 0):
                 if verbose:
                     print("INFO: Stopping integration at x=", x, " y[-1]=", y_list[-1], " y=", y)  # noqa: T201
                 break
