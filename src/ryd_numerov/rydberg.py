@@ -228,7 +228,7 @@ class RydbergState:
             if self.l <= 10:
                 z_min = 0.0
             else:
-                z_min = self.model.calc_turning_point_z(self.n, self.l, self.j)
+                z_min = self.model.calc_turning_point_z(self.get_energy("a.u."))
                 z_min = np.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
             z_min = np.sqrt(x_min)

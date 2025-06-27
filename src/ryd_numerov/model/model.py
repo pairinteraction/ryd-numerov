@@ -248,7 +248,7 @@ class Model:
         """
         return np.sqrt(n * n - n * np.sqrt(n * n - l * (l + 1)))  # type: ignore [no-any-return]
 
-    def calc_turning_point_z(self, n: int, l: int, j: float, dz: float = 1e-3) -> float:
+    def calc_turning_point_z(self, energy_au: float, dz: float = 1e-3) -> float:
         r"""Calculate the classical inner turning point z_i for the given state.
 
         The classical turning point is defined as the point,
@@ -260,23 +260,23 @@ class Model:
         where w(z) should have its last change of sign in the second derivative.
 
         Args:
-            n: Principal quantum number of the state.
-            l: Orbital angular momentum quantum number of the state.
-            j: Total angular momentum quantum number of the state.
+            energy_au: The energy, for which to calculate the classical turning point in atomic units.
             dz: The precision of the turning point calculation.
 
         Returns:
             z_i: The inner turning point z_i in the scaled dimensionless coordinate z_i = sqrt{r_i / a_0}.
 
         """
-        energy = self.element.calc_energy(n, l, j, unit="a.u.")
+        # for a given hydrogen turning point z_hyd, the classical turning point usually lies within z_hyd \pm 5
+        # for a given l, the hydrogen turning point is bound by
+        # z_lower = z_hyd(n=inf, l)  = \sqrt{l * (l+1) / 2} <= z_hyd(n, l) <= z_hyd(n=l+1, l) = z_upper
+        z_lower = np.sqrt(self.l * (self.l + 1) / 2)
+        z_upper = self.calc_hydrogen_turning_point_z(n=self.l + 1, l=self.l)
 
-        z_guess = self.calc_hydrogen_turning_point_z(n, l)
-        z_min, z_max = max(z_guess - 5, dz), z_guess + 5
-
+        z_min, z_max = max(z_lower - 5, dz), z_upper + 5
         while z_max - z_min > dz:
             z_list = np.linspace(z_min, z_max, 1_000, endpoint=True)
-            v_list = self.calc_total_effective_potential(z_list**2) - energy
+            v_list = self.calc_total_effective_potential(z_list**2) - energy_au
 
             inds = np.argwhere(np.diff(np.sign(v_list)) < 0).flatten()
             if len(inds) == 0:
