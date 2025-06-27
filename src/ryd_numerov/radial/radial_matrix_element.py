@@ -44,10 +44,15 @@ def calc_radial_matrix_element(
 
     """
     # Special cases for the overlap integral (k_radial = 0)
-    if k_radial == 0 and (state1.l, state1.j) == (state2.l, state2.j):
+    if (
+        k_radial == 0
+        and (state1.l, state1.j) == (state2.l, state2.j)
+        and state1.get_energy("a.u.") == state2.get_energy("a.u.")
+    ):
         if state1.n == state2.n:
             return 1
-        return 0
+        if isinstance(state1.n, int) and isinstance(state2.n, int):
+            return 0
 
     # Ensure wavefunctions are integrated before accessing the grid
     wf1 = state1.wavefunction
