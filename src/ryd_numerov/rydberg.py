@@ -256,12 +256,19 @@ class RydbergState:
         """The list of w values for the wavefunction."""
         return self.wavefunction.w_list
 
-    def create_wavefunction(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
+    def create_wavefunction(
+        self,
+        run_backward: bool = True,
+        w0: float = 1e-10,
+        *,
+        positive_at: Literal["outer_bound", "inner_bound"] = "inner_bound",
+        _use_njit: bool = True,
+    ) -> None:
         if hasattr(self, "_wavefunction"):
             raise RuntimeError("The wavefunction was already created, you should not create it again.")
 
         self._wavefunction = Wavefunction(self, self.grid, self.model)
-        self._wavefunction.integrate(run_backward, w0, _use_njit)
+        self._wavefunction.integrate(run_backward, w0, positive_at=positive_at, _use_njit=_use_njit)
         self._grid = self._wavefunction.grid
 
     def set_energy(self, energy_au: float) -> None:

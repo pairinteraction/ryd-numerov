@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import numpy as np
 
@@ -62,7 +62,14 @@ class Wavefunction:
         r"""The radial wavefunction R(r) in atomic units."""
         return self.u_list / self.grid.x_list
 
-    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> "NDArray":
+    def integrate(
+        self,
+        run_backward: bool = True,
+        w0: float = 1e-10,
+        *,
+        positive_at: Literal["outer_bound", "inner_bound"] = "inner_bound",
+        _use_njit: bool = True,
+    ) -> "NDArray":
         r"""Run the Numerov integration of the radial Schrödinger equation.
 
         The resulting radial wavefunctions are then stored as attributes, where
@@ -94,6 +101,8 @@ class Wavefunction:
             w0 (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.
                 For forward integration we set w[0] = 0 and w[1] = w0,
                 for backward integration we set w[-1] = 0 and w[-2] = (-1)^{(n - l - 1) % 2} * w0.
+            positive_at (default: "outer_bound"): Whether the wavefunction should be positive at the outer boundary,
+                or at the inner boundary.
             _use_njit (default: True): Whether to use the fast njit version of the Numerov integration.
 
         """
@@ -113,8 +122,11 @@ class Wavefunction:
         )
 
         if run_backward:
+            # During the Numerov integration we define the wavefunction such that it should always stop
+            # at the inner boundary with positive weight
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
+            # The "correct" sign (depending on your convention) is set by the parameter positive_at afterwards.
             y0, y1 = 0, (-1) ** ((self.state.n - self.state.l - 1) % 2) * w0
             x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
@@ -152,8 +164,15 @@ class Wavefunction:
         norm = np.sqrt(2 * np.sum(w_list * w_list * grid.z_list * grid.z_list) * grid.dz)
         w_list /= norm
 
-        self._w_list = w_list
+        # set the correct sign of the wavefunction
+        if positive_at == "outer_bound" and w_list[-1] < 0:
+            w_list = -w_list
+        elif positive_at == "inner_bound" and w_list[0] < 0:
+            # should be correct, if not this is likely a numerical error of the Numerov integration
+            # and not a problem of the wavefunction, thus we do not correct it
+            pass
 
+        self._w_list = w_list
         self.sanity_check(x_stop, run_backward)
         return w_list
 
