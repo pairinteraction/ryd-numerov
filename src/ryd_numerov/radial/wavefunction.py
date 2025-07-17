@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Optional
 
 import numpy as np
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Wavefunction:
+class Wavefunction(ABC):
     r"""An object containing all the relevant information about the radial wavefunction."""
 
     def __init__(
@@ -40,7 +41,8 @@ class Wavefunction:
     def w_list(self) -> "NDArray":
         r"""The dimensionless scaled wavefunction w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r)."""
         if self._w_list is None:
-            return self.integrate()
+            self.integrate()
+            assert self._w_list is not None
         return self._w_list
 
     @property
@@ -53,8 +55,9 @@ class Wavefunction:
         r"""The radial wavefunction \tilde{R}(r) in atomic units \tilde{R}(r) = a_0^{-3/2} R(r)."""
         return self.u_list / self.grid.x_list
 
-    def integrate(self) -> "NDArray":
-        raise NotImplementedError("This method should be implemented by the subclass.")
+    @abstractmethod
+    def integrate(self) -> None:
+        """Integrate the radial Schrödinger equation and store the wavefunction in the w_list attribute."""
 
 
 class WavefunctionNumerov(Wavefunction):
@@ -75,7 +78,7 @@ class WavefunctionNumerov(Wavefunction):
         super().__init__(state, grid)
         self.model = model
 
-    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> "NDArray":
+    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation.
 
         The resulting radial wavefunctions are then stored as attributes, where
@@ -172,7 +175,6 @@ class WavefunctionNumerov(Wavefunction):
         self._w_list = w_list
 
         self.sanity_check(x_stop, run_backward)
-        return w_list
 
     def sanity_check(self, z_stop: float, run_backward: bool) -> bool:  # noqa: C901, PLR0915, PLR0912
         """Do some sanity checks on the wavefunction.
@@ -284,7 +286,7 @@ class WavefunctionNumerov(Wavefunction):
 
 
 class WavefunctionWhittaker(Wavefunction):
-    def integrate(self) -> "NDArray":
+    def integrate(self) -> None:
         logger.warning("Using Whittaker to get the wavefunction is not recommended! Use this only for comparison.")
         n, l, j = self.state.n, self.state.l, self.state.j
         nu = self.state.element.calc_n_star(n, l, j)
@@ -296,4 +298,3 @@ class WavefunctionWhittaker(Wavefunction):
         w_list: NDArray = u_list / np.sqrt(self.grid.z_list)
 
         self._w_list = w_list
-        return w_list
