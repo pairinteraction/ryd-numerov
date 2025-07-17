@@ -320,8 +320,8 @@ class WavefunctionNumerov(Wavefunction):
 class WavefunctionWhittaker(Wavefunction):
     def integrate(self) -> None:
         logger.warning("Using Whittaker to get the wavefunction is not recommended! Use this only for comparison.")
-        n, l, j = self.state.n, self.state.l, self.state.j
-        nu = self.state.element.calc_n_star(n, l, j)
+        l = self.state.l
+        nu = self.state.get_n_star()
 
         whitw_vectorized = np.vectorize(whitw, otypes=[float])
         whitw_list = whitw_vectorized(nu, l + 0.5, 2 * self.grid.x_list / nu)
