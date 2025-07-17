@@ -73,6 +73,8 @@ class RydbergState:
         self.j = j
         self.m = m
 
+        self._energy_au: Optional[float] = None
+
         self.sanity_check()
 
     def __repr__(self) -> str:
@@ -303,6 +305,10 @@ class RydbergState:
         self._wavefunction.apply_sign_convention(sign_convention)
         self._grid = self._wavefunction.grid
 
+    def set_energy(self, energy_au: float) -> None:
+        """Set the energy of the Rydberg state in atomic units."""
+        self._energy_au = energy_au
+
     @overload
     def get_energy(self, unit: None = None) -> "PintFloat": ...
 
@@ -310,7 +316,10 @@ class RydbergState:
     def get_energy(self, unit: str) -> float: ...
 
     def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
-        energy_au = self.element.calc_energy(self.n, self.l, self.j, unit="a.u.")
+        if self._energy_au is not None:
+            energy_au = self._energy_au
+        else:
+            energy_au = self.element.calc_energy(self.n, self.l, self.j, unit="a.u.")
         if unit == "a.u.":
             return energy_au
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
