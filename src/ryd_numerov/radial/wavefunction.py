@@ -153,16 +153,12 @@ class WavefunctionNumerov(Wavefunction):
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
-        n, l, j = self.state.n, self.state.l, self.state.j
         glist = (
             8
             * self.state.element.reduced_mass_factor
             * grid.z_list
             * grid.z_list
-            * (
-                self.state.element.calc_energy(n, l, j, unit="a.u.")
-                - self.model.calc_total_effective_potential(grid.x_list)
-            )
+            * (self.state.get_energy(unit="a.u.") - self.model.calc_total_effective_potential(grid.x_list))
         )
 
         if run_backward:
@@ -171,7 +167,7 @@ class WavefunctionNumerov(Wavefunction):
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
             # You can choose a different sign convention by calling the method apply_sign_convention() afterwards.
-            y0, y1 = 0, (-1) ** ((n - l - 1) % 2) * w0
+            y0, y1 = 0, (-1) ** ((self.state.n - self.state.l - 1) % 2) * w0
             x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
@@ -183,7 +179,7 @@ class WavefunctionNumerov(Wavefunction):
             # If we further assume, that the wavefunction converges to zero at the inner boundary,
             # we know that after the inner classical turning point
             # the wavefunction should never increase the distance from the x-axis again.
-            x_min = self.model.calc_turning_point_z(self.state.n, self.state.l, self.state.j)
+            x_min = self.model.calc_turning_point_z(self.state.get_energy("a.u."))
 
         else:  # forward
             y0, y1 = 0, w0
