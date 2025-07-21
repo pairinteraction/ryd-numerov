@@ -273,7 +273,9 @@ class Model:
         z_lower = np.sqrt(self.l * (self.l + 1) / 2)
         z_upper = self.calc_hydrogen_turning_point_z(n=self.l + 1, l=self.l)
 
-        z_min, z_max = max(z_lower - 5, dz), z_upper + 5
+        z_min_orig, z_max_orig = max(z_lower - 5, dz), z_upper + 5
+        z_min, z_max = z_min_orig, z_max_orig
+
         while z_max - z_min > dz:
             z_list = np.linspace(z_min, z_max, 1_000, endpoint=True)
             v_list = self.calc_total_effective_potential(z_list**2) - energy_au
@@ -287,5 +289,11 @@ class Model:
 
             z_min = z_list[ind]
             z_max = z_list[ind + 1]
+
+        if z_min == z_min_orig or z_max == z_max_orig:
+            logger.warning(
+                "The turning point calculation did converge to the original z_min or z_max. "
+                "This should not happen and is probably a bug!"
+            )
 
         return z_min + (z_max - z_min) * v_list[ind] / (v_list[ind] - v_list[ind + 1])  # type: ignore [no-any-return]
