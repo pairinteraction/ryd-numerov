@@ -26,6 +26,7 @@ Some comparisons to pairinteraction and ARC
    examples/comparisons/compare_z_min_cutoff.ipynb
    examples/comparisons/compare_nist_energy_levels_data.ipynb
    examples/comparisons/compare_model_potentials.ipynb
+   examples/comparisons/compare_whittaker.ipynb
 
 
 .. rubric:: Benchmark
