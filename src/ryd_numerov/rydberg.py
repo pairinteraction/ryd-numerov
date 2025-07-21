@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ryd_numerov.model.model import PotentialType
+    from ryd_numerov.radial.wavefunction import WavefunctionSignConvention
     from ryd_numerov.units import NDArray, PintArray, PintFloat
 
 
@@ -262,12 +263,13 @@ class RydbergState:
         return self.wavefunction.w_list
 
     @overload
-    def create_wavefunction(self) -> None: ...
+    def create_wavefunction(self, *, sign_convention: "WavefunctionSignConvention" = "n_l_1") -> None: ...
 
     @overload
     def create_wavefunction(
         self,
         method: Literal["numerov"],
+        sign_convention: "WavefunctionSignConvention" = "n_l_1",
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -275,11 +277,14 @@ class RydbergState:
     ) -> None: ...
 
     @overload
-    def create_wavefunction(self, method: Literal["whittaker"]) -> None: ...
+    def create_wavefunction(
+        self, method: Literal["whittaker"], sign_convention: "WavefunctionSignConvention" = "n_l_1"
+    ) -> None: ...
 
     def create_wavefunction(
         self,
         method: Literal["numerov", "whittaker"] = "numerov",
+        sign_convention: "WavefunctionSignConvention" = "n_l_1",
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -294,6 +299,8 @@ class RydbergState:
         elif method == "whittaker":
             self._wavefunction = WavefunctionWhittaker(self, self.grid)
             self._wavefunction.integrate()
+
+        self._wavefunction.apply_sign_convention(sign_convention)
         self._grid = self._wavefunction.grid
 
     @overload

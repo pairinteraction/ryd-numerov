@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import numpy as np
 from mpmath import whitw
@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
+
+WavefunctionSignConvention = Literal[None, "positive_at_outer_bound", "n_l_1"]
 
 
 class Wavefunction(ABC):
@@ -59,6 +61,37 @@ class Wavefunction(ABC):
     def integrate(self) -> None:
         """Integrate the radial Schrödinger equation and store the wavefunction in the w_list attribute."""
 
+    def apply_sign_convention(self, sign_convention: WavefunctionSignConvention) -> None:
+        """Set the sign of the wavefunction according to the sign convention.
+
+        Args:
+            sign_convention: The sign convention for the wavefunction.
+                - None: Leave the wavefunction as it is.
+                - "n_l_1": The wavefunction is defined to have the sign of (-1)^{(n - l - 1)} at the outer boundary.
+                - "positive_at_outer_bound": The wavefunction is defined to be positive at the outer boundary.
+
+        """
+        if self._w_list is None:
+            raise ValueError("The wavefunction has not been integrated yet.")
+
+        if sign_convention is None:
+            return
+
+        current_outer_sign = 1
+        for w in self._w_list[::-1]:
+            if w != 0 and not np.isnan(w):
+                current_outer_sign = np.sign(w)
+                break
+
+        if sign_convention == "n_l_1":
+            if current_outer_sign != (-1) ** (self.state.n - self.state.l - 1):
+                self._w_list = -self._w_list
+        elif sign_convention == "positive_at_outer_bound":
+            if current_outer_sign != 1:
+                self._w_list = -self._w_list
+        else:
+            raise ValueError(f"Unknown sign convention: {sign_convention}")
+
 
 class WavefunctionNumerov(Wavefunction):
     def __init__(
@@ -78,7 +111,7 @@ class WavefunctionNumerov(Wavefunction):
         super().__init__(state, grid)
         self.model = model
 
-    def integrate(self, run_backward: bool = True, w0: float = 1e-10, _use_njit: bool = True) -> None:
+    def integrate(self, run_backward: bool = True, w0: float = 1e-10, *, _use_njit: bool = True) -> None:
         r"""Run the Numerov integration of the radial Schrödinger equation.
 
         The resulting radial wavefunctions are then stored as attributes, where
@@ -133,8 +166,11 @@ class WavefunctionNumerov(Wavefunction):
         )
 
         if run_backward:
+            # During the Numerov integration we define the wavefunction such that it should always stop
+            # at the inner boundary with positive weight
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
+            # You can choose a different sign convention by calling the method apply_sign_convention() afterwards.
             y0, y1 = 0, (-1) ** ((n - l - 1) % 2) * w0
             x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
