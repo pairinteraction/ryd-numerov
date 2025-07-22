@@ -1,0 +1,6 @@
+minus\_one\_pow
+===============
+
+.. currentmodule:: ryd_numerov.angular
+
+.. autofunction:: minus_one_pow
