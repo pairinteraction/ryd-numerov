@@ -6,6 +6,7 @@ from ryd_numerov.elements.base_element import BaseElement
 
 class _StrontiumAbstract(BaseElement):
     Z = 38
+    number_valence_electrons = 2
     _additional_allowed_shells: ClassVar = [(4, 2), (4, 3)]
 
     _core_electron_configuration = "5s"
@@ -32,7 +33,6 @@ class _StrontiumAbstract(BaseElement):
 
 class Strontium88Singlet(_StrontiumAbstract):
     species = "Sr88_singlet"
-    s = 0
     ground_state_shell = (5, 0)
 
     # -- [1] Phys. Rev. A 108, 022815 (2023)
@@ -51,7 +51,6 @@ class Strontium88Singlet(_StrontiumAbstract):
 
 class Strontium88Triplet(_StrontiumAbstract):
     species = "Sr88_triplet"
-    s = 1
     ground_state_shell = (5, 1)
 
     # -- [1] Comput. Phys. Commun. 45, 107814 (2021)

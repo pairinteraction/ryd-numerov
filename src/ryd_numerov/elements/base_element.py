@@ -30,8 +30,8 @@ class BaseElement(ABC):
     """Atomic species."""
     Z: ClassVar[int]
     """Atomic number of the element."""
-    s: ClassVar[Union[int, float]]
-    """Total spin quantum number."""
+    number_valence_electrons: ClassVar[int]
+    """Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms)."""
     ground_state_shell: ClassVar[tuple[int, int]]
     """Shell (n, l) describing the electronic ground state configuration."""
     _additional_allowed_shells: ClassVar[list[tuple[int, int]]] = []
@@ -93,7 +93,7 @@ class BaseElement(ABC):
             nist_n_max: Maximum principal quantum number for which to load the NIST energy levels. Default is 15.
 
         """
-        self._nist_energy_levels: dict[tuple[int, int, float], float] = {}
+        self._nist_energy_levels: dict[tuple[int, int, float, float], float] = {}
         self._nist_n_max = nist_n_max
         self.use_nist_data = use_nist_data
         if use_nist_data and self._nist_energy_levels_file is not None:
@@ -156,13 +156,12 @@ class BaseElement(ABC):
             n, l = config_parts[0][:2]
 
             multiplicity = int(row[1][0])
-            if (multiplicity - 1) / 2 != self.s:
-                continue
+            s = (multiplicity - 1) / 2
 
             j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
             for j in j_list:
                 energy = float(row[4])
-                self._nist_energy_levels[(n, l, j)] = energy
+                self._nist_energy_levels[(n, l, j, s)] = energy
 
         if len(self._nist_energy_levels) == 0:
             raise ValueError(f"No NIST energy levels found for element {self.species} in file {file}.")
@@ -328,18 +327,18 @@ class BaseElement(ABC):
             - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
 
         """
-        assert j % 1 == (l + self.s) % 1, f"j % 1 must be same as (l + s) % 1, (s={self.s}, l={l}, j={j})"
+        assert j % 1 == (l + self.number_valence_electrons / 2) % 1, "j % 1 must be same as (l + s) % 1"
         d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j), (0, 0, 0, 0, 0))
         delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
         return n - delta_nlj
 
     @overload
-    def calc_energy(self, n: int, l: int, j: float, unit: None = None) -> "PintFloat": ...
+    def calc_energy(self, n: int, l: int, j: float, s: float, unit: None = None) -> "PintFloat": ...
 
     @overload
-    def calc_energy(self, n: int, l: int, j: float, unit: str) -> float: ...
+    def calc_energy(self, n: int, l: int, j: float, s: float, unit: str) -> float: ...
 
-    def calc_energy(self, n: int, l: int, j: float, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
+    def calc_energy(self, n: int, l: int, j: float, s: float, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
         r"""Calculate the energy of a Rydberg state with for the given n, l and j.
 
         is the quantum defect. The energy of the Rydberg state is then given by
@@ -349,15 +348,17 @@ class BaseElement(ABC):
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
-        if j % 1 != (l + self.s) % 1:
-            raise ValueError(f"Invalid quantum numbers: (s={self.s}, l={l}, j={j})")
+        if j % 1 != (l + s) % 1:
+            raise ValueError(f"Invalid quantum numbers: (l={l}, j={j}, s={s}")
+        if (s % 1) != ((self.number_valence_electrons / 2) % 1):
+            raise ValueError(f"Invalid spin s={s} for element with {self.number_valence_electrons} valence electrons.")
         if n <= self._nist_n_max and self.use_nist_data:
-            if (n, l, j) in self._nist_energy_levels:
-                energy_au = self._nist_energy_levels[(n, l, j)]
+            if (n, l, j, s) in self._nist_energy_levels:
+                energy_au = self._nist_energy_levels[(n, l, j, s)]
                 energy_au -= self.get_ionization_energy("hartree")
             else:
                 logger.debug(
-                    "NIST energy levels for (n=%d, l=%d, j=%s) not found, using quantum defect theory.", n, l, j
+                    "NIST energy levels for (n=%d, l=%d, j=%s, s=%s) not found, using quantum defect theory.", n, l, j, s
                 )
                 energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
         else:

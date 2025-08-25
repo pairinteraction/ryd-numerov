@@ -7,7 +7,7 @@ from ryd_numerov.elements.base_element import BaseElement
 class Sodium(BaseElement):
     species = "Na"
     Z = 11
-    s = 1 / 2
+    number_valence_electrons = 1
     ground_state_shell = (3, 0)
     _core_electron_configuration = "2p6"
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "sodium.txt"

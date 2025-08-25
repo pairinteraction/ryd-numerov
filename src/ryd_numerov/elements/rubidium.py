@@ -6,7 +6,7 @@ from ryd_numerov.elements.base_element import BaseElement
 
 class _RubidiumAbstract(BaseElement):
     Z = 37
-    s = 1 / 2
+    number_valence_electrons = 1
     ground_state_shell = (5, 0)
     _additional_allowed_shells: ClassVar = [(4, 2), (4, 3)]
 

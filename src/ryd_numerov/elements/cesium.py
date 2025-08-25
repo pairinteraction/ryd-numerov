@@ -7,7 +7,7 @@ from ryd_numerov.elements.base_element import BaseElement
 class Cesium(BaseElement):
     species = "Cs"
     Z = 55
-    s = 1 / 2
+    number_valence_electrons = 1
     ground_state_shell = (6, 0)
     _additional_allowed_shells: ClassVar = [(4, 3), (5, 2), (5, 3), (5, 4)]
     _core_electron_configuration = "5p6"
