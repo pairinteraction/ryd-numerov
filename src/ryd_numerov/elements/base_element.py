@@ -43,9 +43,9 @@ class BaseElement(ABC):
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
-    _quantum_defects: ClassVar[dict[tuple[int, float], tuple[float, float, float, float, float]]] = {}
-    """Dictionary containing the quantum defects for each (l, j) combination, i.e.
-    _quantum_defects[(l,j)] = (d0, d2, d4, d6, d8)
+    _quantum_defects: ClassVar[dict[tuple[int, float, float], tuple[float, float, float, float, float]]] = {}
+    """Dictionary containing the quantum defects for each (l, j, s) combination, i.e.
+    _quantum_defects[(l,j,s)] = (d0, d2, d4, d6, d8)
     """
 
     _corrected_rydberg_constant: tuple[float, Optional[float], str]
@@ -312,7 +312,7 @@ class BaseElement(ABC):
             / ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy").magnitude
         )
 
-    def calc_n_star(self, n: int, l: int, j: float) -> float:
+    def calc_n_star(self, n: int, l: int, j: float, s: float) -> float:
         r"""Calculate the effective principal quantum number for the given n, l and j.
 
         The effective principal quantum number in quantum defect theory
@@ -328,7 +328,7 @@ class BaseElement(ABC):
 
         """
         assert j % 1 == (l + self.number_valence_electrons / 2) % 1, "j % 1 must be same as (l + s) % 1"
-        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j), (0, 0, 0, 0, 0))
+        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j, s), (0, 0, 0, 0, 0))
         delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
         return n - delta_nlj
 
@@ -338,7 +338,9 @@ class BaseElement(ABC):
     @overload
     def calc_energy(self, n: int, l: int, j: float, s: float, unit: str) -> float: ...
 
-    def calc_energy(self, n: int, l: int, j: float, s: float, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
+    def calc_energy(
+        self, n: int, l: int, j: float, s: float, unit: Optional[str] = "hartree"
+    ) -> Union["PintFloat", float]:
         r"""Calculate the energy of a Rydberg state with for the given n, l and j.
 
         is the quantum defect. The energy of the Rydberg state is then given by
@@ -358,11 +360,15 @@ class BaseElement(ABC):
                 energy_au -= self.get_ionization_energy("hartree")
             else:
                 logger.debug(
-                    "NIST energy levels for (n=%d, l=%d, j=%s, s=%s) not found, using quantum defect theory.", n, l, j, s
+                    "NIST energy levels for (n=%d, l=%d, j=%s, s=%s) not found, using quantum defect theory.",
+                    n,
+                    l,
+                    j,
+                    s,
                 )
-                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
+                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j, s) ** 2
         else:
-            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
+            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j, s) ** 2
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
             return energy

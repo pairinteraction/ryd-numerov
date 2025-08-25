@@ -5,7 +5,7 @@ from ryd_numerov.elements.lithium import Lithium
 from ryd_numerov.elements.potassium import Potassium
 from ryd_numerov.elements.rubidium import Rubidium
 from ryd_numerov.elements.sodium import Sodium
-from ryd_numerov.elements.strontium import Strontium88Singlet, Strontium88Triplet
+from ryd_numerov.elements.strontium import Strontium88
 
 __all__ = [
     "BaseElement",
@@ -16,6 +16,5 @@ __all__ = [
     "Potassium",
     "Rubidium",
     "Sodium",
-    "Strontium88Singlet",
-    "Strontium88Triplet",
+    "Strontium88",
 ]
