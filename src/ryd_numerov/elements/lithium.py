@@ -7,7 +7,7 @@ from ryd_numerov.elements.base_element import BaseElement
 class Lithium(BaseElement):
     species = "Li"
     Z = 3
-    s = 1 / 2
+    number_valence_electrons = 1
     ground_state_shell = (2, 0)
     _core_electron_configuration = "1s2"
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "lithium.txt"

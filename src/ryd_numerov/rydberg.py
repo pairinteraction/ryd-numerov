@@ -50,6 +50,7 @@ class RydbergState:
         l: int,
         j: Optional[float] = None,
         m: Optional[float] = None,
+        s: Optional[float] = None,
     ) -> None:
         r"""Initialize the Rydberg state.
 
@@ -60,12 +61,23 @@ class RydbergState:
             j: Total angular momentum quantum number
             m: Magnetic quantum number
               Optional, only needed for concrete angular matrix elements.
+            s: Total spin quantum number
+              Optional, only needed for alkaline earth atoms, where it can be 0 (singlet) or 1 (triplet).
 
         """
         self.species = species
 
         self.n = n
         self.l = l
+        if s is not None:
+            self.s = s
+        else:
+            _element = BaseElement.from_species(self.species, use_nist_data=False)
+            if _element.number_valence_electrons == 1:
+                self.s = 0.5
+            else:
+                raise ValueError("No spin quantum number given but needed for alkaline earth atoms.")
+
         if j is None:
             if self.l != 0 and self.s != 0:
                 raise ValueError("j must be given for non-zero s and non-zero l")
@@ -168,14 +180,6 @@ class RydbergState:
         if hasattr(self, "_element"):
             raise RuntimeError("The element was already created, you should not create it again.")
         self._element = BaseElement.from_species(self.species, use_nist_data=use_nist_data)
-
-    @property
-    def s(self) -> float:
-        """The total spin quantum number."""
-        if not hasattr(self, "_s"):
-            _element = BaseElement.from_species(self.species, use_nist_data=False)
-            self._s = _element.s
-        return self._s
 
     @property
     def model(self) -> Model:
@@ -319,7 +323,7 @@ class RydbergState:
         if self._energy_au is not None:
             energy_au = self._energy_au
         else:
-            energy_au = self.element.calc_energy(self.n, self.l, self.j, unit="a.u.")
+            energy_au = self.element.calc_energy(self.n, self.l, self.j, self.s, unit="a.u.")
         if unit == "a.u.":
             return energy_au
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
