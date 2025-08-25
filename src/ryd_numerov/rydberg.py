@@ -335,7 +335,7 @@ class RydbergState:
         """Calculate the effective quantum number n* for the Rydberg state."""
         if self._energy_au is not None:
             return np.sqrt(-0.5 * self.element.reduced_mass_factor / self._energy_au)  # type: ignore [no-any-return]
-        return self.element.calc_n_star(self.n, self.l, self.j)
+        return self.element.calc_n_star(self.n, self.l, self.j, self.s)
 
     @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PintFloat": ...
