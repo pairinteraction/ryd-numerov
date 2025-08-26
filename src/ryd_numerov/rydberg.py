@@ -202,7 +202,7 @@ class RydbergState:
 
         if n is None:
             msgs.append("n must be specified for alkali atoms.")
-        elif not self.element.is_allowed_shell(n, l):
+        elif self.s is not None and not self.element.is_allowed_shell(n, l, self.s):
             msgs.append(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
         return msgs
@@ -735,7 +735,7 @@ class RydbergState:
                             not 0 <= l < n
                             or not -j <= m <= j
                             or not abs(l - self.s) <= j <= l + self.s
-                            or not self.element.is_allowed_shell(n, l)
+                            or not self.element.is_allowed_shell(n, l, self.s)
                         ):
                             continue
                         other = self.__class__(self.species, n=n, l=l, j=float(j), m=float(m))
@@ -769,7 +769,7 @@ class RydbergState:
                     if (
                         not 0 <= l < n
                         or not abs(l - self.s) <= j <= l + self.s
-                        or not self.element.is_allowed_shell(n, l)
+                        or not self.element.is_allowed_shell(n, l, self.s)
                     ):
                         continue
                     other = self.__class__(self.species, n=n, l=l, j=float(j))
