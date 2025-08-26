@@ -214,7 +214,7 @@ class BaseElement(ABC):
         """
         return sorted([subclass.species for subclass in cls._get_concrete_subclasses()])
 
-    def is_allowed_shell(self, n: int, l: int) -> bool:
+    def is_allowed_shell(self, n: int, l: int, s: float) -> bool:
         """Check if the quantum numbers describe an allowed shell.
 
         I.e. whether the shell is above the ground state shell.
@@ -222,11 +222,14 @@ class BaseElement(ABC):
         Args:
             n: Principal quantum number
             l: Orbital angular momentum quantum number
+            s: Total spin quantum number
 
         Returns:
             True if the quantum numbers specify a shell equal to or above the ground state shell, False otherwise.
 
         """
+        if self.number_valence_electrons == 2 and s == 1 and (n, l) == self.ground_state_shell:
+            return False  # For alkaline earth atoms, the triplet state of the ground state shell is not allowed
         if n < 1 or l < 0 or l >= n:
             raise ValueError(f"Invalid shell: (n={n}, l={l}). Must be n >= 1 and 0 <= l < n.")
         if (n, l) >= self.ground_state_shell:
@@ -313,7 +316,7 @@ class BaseElement(ABC):
         )
 
     def calc_n_star(self, n: int, l: int, j: float, s: float) -> float:
-        r"""Calculate the effective principal quantum number for the given n, l and j.
+        r"""Calculate the effective principal quantum number for the given n, l, j and s.
 
         The effective principal quantum number in quantum defect theory
         is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`
@@ -341,7 +344,7 @@ class BaseElement(ABC):
     def calc_energy(
         self, n: int, l: int, j: float, s: float, unit: Optional[str] = "hartree"
     ) -> Union["PintFloat", float]:
-        r"""Calculate the energy of a Rydberg state with for the given n, l and j.
+        r"""Calculate the energy of a Rydberg state with for the given n, l, j and s.
 
         is the quantum defect. The energy of the Rydberg state is then given by
 

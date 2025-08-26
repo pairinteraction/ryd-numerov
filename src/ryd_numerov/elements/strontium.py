@@ -7,6 +7,7 @@ from ryd_numerov.elements.base_element import BaseElement
 class _StrontiumAbstract(BaseElement):
     Z = 38
     number_valence_electrons = 2
+    ground_state_shell = (5, 0)
     _additional_allowed_shells: ClassVar = [(4, 2), (4, 3)]
 
     _core_electron_configuration = "5s"
@@ -33,9 +34,8 @@ class _StrontiumAbstract(BaseElement):
 
 class Strontium88(_StrontiumAbstract):
     species = "Sr88"
-    ground_state_shell = (5, 0)
-    # TODO for triplet
-    # ground_state_shell = (5, 1)
+
+    _corrected_rydberg_constant = (109736.631, None, "1/cm")
 
     # -- [1] Phys. Rev. A 108, 022815 (2023)
     # -- [2] http://dx.doi.org/10.17169/refubium-34581
@@ -61,4 +61,3 @@ class Strontium88(_StrontiumAbstract):
         (3, 2.0, 1): (0.120, -2.2, 100, 0.0, 0.0),  # [3]
     }
 
-    _corrected_rydberg_constant = (109736.631, None, "1/cm")
