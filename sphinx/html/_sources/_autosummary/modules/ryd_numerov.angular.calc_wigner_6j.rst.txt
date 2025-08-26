@@ -1,0 +1,6 @@
+calc\_wigner\_6j
+================
+
+.. currentmodule:: ryd_numerov.angular
+
+.. autofunction:: calc_wigner_6j

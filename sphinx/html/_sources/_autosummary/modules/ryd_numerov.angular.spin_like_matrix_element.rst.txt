@@ -1,0 +1,6 @@
+spin\_like\_matrix\_element
+===========================
+
+.. currentmodule:: ryd_numerov.angular
+
+.. autofunction:: spin_like_matrix_element

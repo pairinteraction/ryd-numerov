@@ -1,0 +1,30 @@
+Model
+=====
+
+.. currentmodule:: ryd_numerov.model
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Model.__init__
+      ~Model.calc_effective_potential_centrifugal
+      ~Model.calc_effective_potential_sqrt
+      ~Model.calc_hydrogen_turning_point_z
+      ~Model.calc_model_potential_fei_2009
+      ~Model.calc_model_potential_marinescu_1993
+      ~Model.calc_potential_coulomb
+      ~Model.calc_total_effective_potential
+      ~Model.calc_turning_point_z
+
+
+
+
+
+.. autoclass:: ryd_numerov.model.Model
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

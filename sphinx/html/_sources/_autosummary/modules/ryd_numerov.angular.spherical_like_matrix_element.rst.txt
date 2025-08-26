@@ -1,0 +1,6 @@
+spherical\_like\_matrix\_element
+================================
+
+.. currentmodule:: ryd_numerov.angular
+
+.. autofunction:: spherical_like_matrix_element
