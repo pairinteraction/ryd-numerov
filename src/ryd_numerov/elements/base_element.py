@@ -258,7 +258,7 @@ class BaseElement(ABC):
             return ionization_energy
         if unit == "a.u.":
             return ionization_energy.magnitude
-        return ionization_energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return ionization_energy.to(unit, "spectroscopy").magnitude
 
     @overload
     def get_corrected_rydberg_constant(self, unit: None = None) -> "PintFloat": ...
@@ -293,7 +293,7 @@ class BaseElement(ABC):
             return corrected_rydberg_constant
         if unit == "a.u.":
             return corrected_rydberg_constant.magnitude
-        return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude
 
     @cached_property  # don't remove this caching without benchmarking it!!!
     def reduced_mass_factor(self) -> float:
@@ -374,7 +374,7 @@ class BaseElement(ABC):
             return energy
         if unit == "a.u.":
             return energy.magnitude
-        return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return energy.to(unit, "spectroscopy").magnitude
 
 
 def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:
