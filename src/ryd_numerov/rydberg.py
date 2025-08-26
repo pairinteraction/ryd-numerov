@@ -46,46 +46,62 @@ class RydbergState:
     def __init__(
         self,
         species: str,
-        n: int,
-        l: int,
+        n: Optional[int] = None,
+        l: Optional[int] = None,
         j: Optional[float] = None,
+        f: Optional[float] = None,
         m: Optional[float] = None,
         s: Optional[float] = None,
+        energy_au: Optional[float] = None,
     ) -> None:
         r"""Initialize the Rydberg state.
 
         Args:
-            species: Atomic species
-            n: Principal quantum number
-            l: Orbital angular momentum quantum number
-            j: Total angular momentum quantum number
-            m: Magnetic quantum number
+            species: Atomic species.
+            n: Principal quantum number of the rydberg electron.
+            l: Orbital angular momentum quantum number of the rydberg electron.
+            j: Angular momentum quantum number of the rydberg electron.
+            f: Total angular momentum quantum number of entire atom (=j for Alkali atoms).
+            m: Total magnetic quantum number.
               Optional, only needed for concrete angular matrix elements.
             s: Total spin quantum number
               Optional, only needed for alkaline earth atoms, where it can be 0 (singlet) or 1 (triplet).
+            energy_au: The energy of the Rydberg state in atomic units ("hartree").
+                If this is set, we dont use the quantum defects to calculate the energy but directly use this value.
 
         """
         self.species = species
 
         self.n = n
-        self.l = l
-        if s is not None:
-            self.s = s
-        else:
-            _element = BaseElement.from_species(self.species, use_nist_data=False)
-            if _element.number_valence_electrons == 1:
-                self.s = 0.5
-            else:
-                raise ValueError("No spin quantum number given but needed for alkaline earth atoms.")
 
-        if j is None:
-            if self.l != 0 and self.s != 0:
-                raise ValueError("j must be given for non-zero s and non-zero l")
-            j = self.l + self.s
+        if l is None or not isinstance(l, int):
+            raise ValueError("Orbital angular momentum l must be given and must be an integer.")
+        self.l = l
+
+        self.s = s
+        if self.element.number_valence_electrons == 1:
+            if s is not None and s != 0.5:
+                raise ValueError("Spin quantum number must be None or 0.5 for alkali atoms.")
+            self.s = 0.5
+
         self.j = j
+        if j is None:
+            if self.l == 0:
+                self.j = self.s
+            elif self.s == 0:
+                self.j = self.l
+
+        self.f = f
+        if self.element.number_valence_electrons == 1:
+            if f is not None and j is None:
+                raise ValueError("For alkali atoms you probably want to set j and not f")
+            if f is not None and f != self.j:
+                raise ValueError("Total angular momentum quantum number must be None or equal to j for alkali atoms.")
+            self.f = self.j
+
         self.m = m
 
-        self._energy_au: Optional[float] = None
+        self._energy_au = energy_au
 
         self.sanity_check()
 
@@ -110,7 +126,15 @@ class RydbergState:
 
         """
         l_dict = {0: "S", 1: "P", 2: "D", 3: "F", 4: "G", 5: "H"}
-        raw = f"{self.species}:{self.n},{l_dict.get(self.l, self.l)}_{self.j}"
+
+        if self.element.number_valence_electrons == 1:
+            raw = f"{self.species}:{self.n},{l_dict.get(self.l, self.l)}_{self.j}"
+        elif self.element.number_valence_electrons == 2:
+            nu = self.get_n_star()
+            raw = f"{self.species}:{nu},{l_dict.get(self.l, self.l)}"
+        else:
+            raise NotImplementedError("Only implemented atoms with one or two valence electrons.")
+
         if self.m is not None:
             raw += f",{self.m}"
         if fmt == "raw":
@@ -121,52 +145,58 @@ class RydbergState:
             return f"⟨{raw}|"
         raise ValueError(f"Unknown fmt {fmt}")
 
-    def sanity_check(self) -> None:  # noqa: C901
-        good = True
-        if not isinstance(self.n, int):
-            logger.error("n must be an integer, but is %s", self.n)
-            good = False
-        if not isinstance(self.l, int):
-            logger.error("l must be an integer, but is %s", self.l)
-            good = False
-        if not isinstance(self.j, (int, float)):
-            logger.error("j must be an integer or float, but is %s", self.j)
-            good = False
-        if self.m is not None and not isinstance(self.m, (int, float)):
-            logger.error("m must be an integer, float or None, but is %s", self.m)
-            good = False
+    def sanity_check(self) -> None:
+        """Check that the quantum numbers are valid."""
+        msgs: list[str] = []
 
-        if not self.n >= 1:
-            logger.error("n must be larger than 0, but is %s", self.n)
-            good = False
-        if not 0 <= self.l <= self.n - 1:
-            logger.error("l must be between 0 and n - 1, but is %s", self.l)
-            good = False
-        if not abs(self.l - self.s) <= self.j <= self.l + self.s:
-            logger.error("j must be between l - s and l + s, but is %s", self.j)
-            good = False
-        if (self.s + self.j) % 1 != 0:
-            type_ = "integer" if self.s % 1 == 0 else "half-integer"
-            logger.error("j must be %s for %s, but is %s", type_, self.species, self.j)
-            good = False
-        if self.m is not None and not -self.j <= self.m <= self.j:
-            logger.error("m must be between -j and j, but is %s", self.m)
-            good = False
-        if self.m is not None and (self.s + self.m) % 1 != 0:
-            type_ = "integer" if self.s % 1 == 0 else "half-integer"
-            logger.error("m must be %s for %s, but is %s", type_, self.species, self.m)
-            good = False
+        if self.n is not None:
+            if not isinstance(self.n, int):
+                msgs.append(f"n must be an integer (or None), but is n={self.n}")
+            if not self.n >= 1:
+                msgs.append(f"n must be larger than 0, but is n={self.n}")
 
-        _element = BaseElement.from_species(self.species, use_nist_data=False)
-        if not _element.is_allowed_shell(self.n, self.l):
-            logger.error(
-                "The shell (n=%s, l=%s) is not allowed for the species %s.",
-                *(self.n, self.l, self.species),
-            )
-            good = False
+        if self.n is not None and not 0 <= self.l <= self.n - 1:
+            msgs.append(f"l must be between 0 and n - 1, but is l={self.l}")
 
-        if not good:
+        if not (self.m is None or (isinstance(self.m, (int, float)) and 2 * self.m % 1 == 0)):
+            msgs.append(f"m must be an integer, half-int or None, but is {self.m}")
+
+        if self.element.number_valence_electrons == 1:
+            msgs += self._sanity_check_alkali()
+        elif self.element.number_valence_electrons == 2:
+            msgs += self._sanity_check_alkaline_earth()
+
+        for msg in msgs:
+            logger.error(msg)
+        if msgs:
             raise ValueError(f"Invalid Rydberg state {self!r}")
+
+    def _sanity_check_alkali(self) -> list[str]:
+        msgs: list[str] = []
+        n, l, j, s, m = self.n, self.l, self.j, self.s, self.m
+
+        if j is None or s is None:
+            msgs.append("j, and s must be specified for alkali atoms")
+        else:
+            if not abs(l - s) <= j <= l + s:
+                msgs.append(f"j must be between l - s and l + s, but {l=}, {s=}, {j=}")
+            if j % 1 != 1 / 2:
+                msgs.append(f"j must be half-int for alkali atoms but is {j=}")
+            if m is not None:
+                if not -j <= m <= j:
+                    msgs.append(f"m must be between -j and j, but {j=}, {m=}")
+                if m % 1 != 1 / 2:
+                    msgs.append(f"m must be half-int for alkali atoms but is {m=}")
+
+        if n is None:
+            msgs.append("n must be specified for alkali atoms.")
+        elif not self.element.is_allowed_shell(n, l):
+            msgs.append(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
+
+        return msgs
+
+    def _sanity_check_alkaline_earth(self) -> list[str]:
+        return []
 
     @property
     def element(self) -> BaseElement:
@@ -249,9 +279,10 @@ class RydbergState:
         z_min = max(z_min, dz)
 
         if x_max is None:
+            n = self.n if self.n is not None else self.get_n_star() + 5
             # This is an empirical formula for the maximum value of the radial coordinate
             # it takes into account that for large n but small l the wavefunction is very extended
-            x_max = 2 * self.n * (self.n + 15 + (self.n - self.l) / 4)
+            x_max = 2 * n * (n + 15 + (n - self.l) / 4)
         z_max = np.sqrt(x_max)
 
         self._grid = Grid(z_min, z_max, dz)
@@ -309,10 +340,6 @@ class RydbergState:
         self._wavefunction.apply_sign_convention(sign_convention)
         self._grid = self._wavefunction.grid
 
-    def set_energy(self, energy_au: float) -> None:
-        """Set the energy of the Rydberg state in atomic units."""
-        self._energy_au = energy_au
-
     @overload
     def get_energy(self, unit: None = None) -> "PintFloat": ...
 
@@ -323,6 +350,8 @@ class RydbergState:
         if self._energy_au is not None:
             energy_au = self._energy_au
         else:
+            if self.n is None or self.j is None or self.s is None:
+                raise ValueError("energy_au or (n, j, and s) must be given for the state to calculate the energy.")
             energy_au = self.element.calc_energy(self.n, self.l, self.j, self.s, unit="a.u.")
         if unit == "a.u.":
             return energy_au
@@ -335,6 +364,8 @@ class RydbergState:
         """Calculate the effective quantum number n* for the Rydberg state."""
         if self._energy_au is not None:
             return np.sqrt(-0.5 * self.element.reduced_mass_factor / self._energy_au)  # type: ignore [no-any-return]
+        if self.n is None or self.j is None or self.s is None:
+            raise ValueError("energy_au or (n, j, and s) must be given for the state to calculate n_star.")
         return self.element.calc_n_star(self.n, self.l, self.j, self.s)
 
     @overload
@@ -356,8 +387,10 @@ class RydbergState:
 
     def calc_angular_matrix_element(self, other: "Self", operator: "OperatorType", k_angular: int, q: int) -> float:
         """Calculate the dimensionless angular matrix element."""
-        if self.m is None or other.m is None:
-            raise ValueError("m must be set to calculate the angular matrix element.")
+        if (self.s is None or self.l is None or self.j is None or self.m is None) or (
+            other.s is None or other.l is None or other.j is None or other.m is None
+        ):
+            raise ValueError("s, l, j and m must be set to calculate the angular matrix element.")
 
         return calc_angular_matrix_element(
             self.s, self.l, self.j, self.m, other.s, other.l, other.j, other.m, operator, k_angular, q
@@ -531,6 +564,7 @@ class RydbergState:
         method: TransitionRateMethod = "exact",
     ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
         assert which_transitions in ["spontaneous", "black_body"]
+        assert self.n is not None, "n must be given to calculate transition rates."
 
         is_spontaneous = which_transitions == "spontaneous"
         n_max = self.n + 30
@@ -669,6 +703,9 @@ class RydbergState:
     ) -> tuple[list["Self"], "NDArray", "NDArray"]:
         if self.m is None:
             raise ValueError("m must be set to get the dipole coupled states.")
+        assert self.element.number_valence_electrons == 1, "Only implemented for alkali atoms."
+        assert self.j is not None
+        assert self.s is not None
 
         relevant_states = []
         energy_differences = []
@@ -702,6 +739,10 @@ class RydbergState:
     def _get_list_of_radial_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
     ) -> tuple[list["Self"], "NDArray", "NDArray"]:
+        assert self.element.number_valence_electrons == 1, "Only implemented for alkali atoms."
+        assert self.j is not None
+        assert self.s is not None
+
         relevant_states = []
         energy_differences = []
         radial_matrix_elements = []
