@@ -325,7 +325,7 @@ class RydbergState:
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
         if unit is None:
             return energy
-        return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return energy.to(unit, "spectroscopy").magnitude
 
     def get_n_star(self) -> float:
         """Calculate the effective quantum number n* for the Rydberg state."""
@@ -348,7 +348,7 @@ class RydbergState:
         radial_matrix_element: PintFloat = radial_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
         if unit is None:
             return radial_matrix_element
-        return radial_matrix_element.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return radial_matrix_element.to(unit).magnitude
 
     def calc_angular_matrix_element(self, other: "Self", operator: "OperatorType", k_angular: int, q: int) -> float:
         """Calculate the dimensionless angular matrix element."""
@@ -425,7 +425,7 @@ class RydbergState:
 
         if unit is None:
             return matrix_element
-        return matrix_element.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return matrix_element.to(unit).magnitude
 
     @overload
     def get_spontaneous_transition_rates(
@@ -658,7 +658,7 @@ class RydbergState:
         lifetime: PintFloat = lifetime_au * BaseQuantities["TIME"]
         if unit is None:
             return lifetime
-        return lifetime.to(unit).magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return lifetime.to(unit).magnitude
 
     def _get_list_of_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
