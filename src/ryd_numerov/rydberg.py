@@ -43,7 +43,7 @@ class RydbergState:
 
     """
 
-    def __init__(
+    def __init__(  # noqa: C901
         self,
         species: str,
         n: Optional[int] = None,
@@ -52,6 +52,7 @@ class RydbergState:
         f: Optional[float] = None,
         m: Optional[float] = None,
         s: Optional[float] = None,
+        nu: Optional[float] = None,
         energy_au: Optional[float] = None,
     ) -> None:
         r"""Initialize the Rydberg state.
@@ -66,6 +67,8 @@ class RydbergState:
               Optional, only needed for concrete angular matrix elements.
             s: Total spin quantum number
               Optional, only needed for alkaline earth atoms, where it can be 0 (singlet) or 1 (triplet).
+            nu: Effective principal quantum number of the rydberg electron.
+                Either `nu` or `energy_au` can be provided at the same time.
             energy_au: The energy of the Rydberg state in atomic units ("hartree").
                 If this is set, we dont use the quantum defects to calculate the energy but directly use this value.
 
@@ -101,7 +104,16 @@ class RydbergState:
 
         self.m = m
 
-        self._energy_au = energy_au
+        self.nu: Optional[float] = None
+        self._energy_au: Optional[float] = None
+        if nu is not None and energy_au is not None:
+            raise ValueError("Only one of nu or energy_au can be given.")
+        if nu is not None:
+            self.nu = nu
+            self._energy_au = -0.5 * self.element.reduced_mass_factor / nu**2
+        elif energy_au is not None:
+            self._energy_au = energy_au
+            self.nu = np.sqrt(-0.5 * self.element.reduced_mass_factor / self._energy_au)
 
         self.sanity_check()
 
@@ -128,10 +140,10 @@ class RydbergState:
         l_dict = {0: "S", 1: "P", 2: "D", 3: "F", 4: "G", 5: "H"}
 
         if self.element.number_valence_electrons == 1:
-            raw = f"{self.species}:{self.n},{l_dict.get(self.l, self.l)}_{self.j}"
+            raw = f"{self.species}:{self.n},{l_dict.get(self.l, self.l)}_{self.j:.1f}"
         elif self.element.number_valence_electrons == 2:
             nu = self.get_n_star()
-            raw = f"{self.species}:{nu},{l_dict.get(self.l, self.l)}"
+            raw = f"{self.species}:{nu:.3f},{l_dict.get(self.l, self.l)}"
         else:
             raise NotImplementedError("Only implemented atoms with one or two valence electrons.")
 
@@ -351,7 +363,9 @@ class RydbergState:
             energy_au = self._energy_au
         else:
             if self.n is None or self.j is None or self.s is None:
-                raise ValueError("energy_au or (n, j, and s) must be given for the state to calculate the energy.")
+                raise ValueError(
+                    "(energy_au or nu) or (n, j, and s) must be given for the state to calculate the energy."
+                )
             energy_au = self.element.calc_energy(self.n, self.l, self.j, self.s, unit="a.u.")
         if unit == "a.u.":
             return energy_au
@@ -365,7 +379,7 @@ class RydbergState:
         if self._energy_au is not None:
             return np.sqrt(-0.5 * self.element.reduced_mass_factor / self._energy_au)  # type: ignore [no-any-return]
         if self.n is None or self.j is None or self.s is None:
-            raise ValueError("energy_au or (n, j, and s) must be given for the state to calculate n_star.")
+            raise ValueError("(energy_au or nu) or (n, j, and s) must be given for the state to calculate n_star.")
         return self.element.calc_n_star(self.n, self.l, self.j, self.s)
 
     @overload

@@ -310,9 +310,7 @@ class WavefunctionNumerov(Wavefunction):
                 warning_msgs.append(f"The integration for l=0 did stop at {grid.z_list[0]} (should be close to zero).")
 
         if warning_msgs:
-            species = state.species
-            j = f"{state.j:.1f}" if state.j is not None else None
-            msg = f"The wavefunction (species={species} n={state.n}, l={state.l}, j={j}) has some issues:"
+            msg = f"The wavefunction for the state {state} has some issues:"
             msg += "\n      ".join(["", *warning_msgs])
             logger.warning(msg)
             return False

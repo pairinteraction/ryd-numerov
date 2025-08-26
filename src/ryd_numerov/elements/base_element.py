@@ -351,9 +351,9 @@ class BaseElement(ABC):
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
         if j % 1 != (l + s) % 1:
-            raise ValueError(f"Invalid quantum numbers: (l={l}, j={j}, s={s}")
+            raise ValueError(f"Invalid quantum numbers: ({l=}, {j=}, {s=})")
         if (s % 1) != ((self.number_valence_electrons / 2) % 1):
-            raise ValueError(f"Invalid spin s={s} for element with {self.number_valence_electrons} valence electrons.")
+            raise ValueError(f"Invalid spin {s=} for element with {self.number_valence_electrons} valence electrons.")
         if n <= self._nist_n_max and self.use_nist_data:
             if (n, l, j, s) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j, s)]
@@ -361,10 +361,7 @@ class BaseElement(ABC):
             else:
                 logger.debug(
                     "NIST energy levels for (n=%d, l=%d, j=%s, s=%s) not found, using quantum defect theory.",
-                    n,
-                    l,
-                    j,
-                    s,
+                    *(n, l, j, s),
                 )
                 energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j, s) ** 2
         else:
