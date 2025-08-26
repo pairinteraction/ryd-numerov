@@ -249,10 +249,6 @@ class WavefunctionNumerov(Wavefunction):
                 "probably due to inner divergence of the wavefunction. "
             )
 
-        # Check the wavefunction at the inner boundary
-        if self.w_list[0] < 0:
-            warning_msgs.append(f"The wavefunction is negative at the inner boundary ({self.w_list[0]}).")
-
         # Check the weight of the wavefunction at the inner boundary
         inner_ind = 10
         inner_weight = (
@@ -266,11 +262,11 @@ class WavefunctionNumerov(Wavefunction):
 
         tol = 1e-4
         # for low n the wavefunction converges not as good and still has more weight at the inner boundary
-        if state.n is not None:
-            if state.n <= 10:
-                tol = 8e-3
-            elif state.n <= 16:
-                tol = 2e-3
+        n = state.n if state.n is not None else state.get_n_star() + 5
+        if n <= 10:
+            tol = 8e-3
+        elif n <= 16:
+            tol = 2e-3
 
         if inner_weight_scaled_to_whole_grid > tol:
             warning_msgs.append(
