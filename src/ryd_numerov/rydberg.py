@@ -312,13 +312,13 @@ class RydbergState:
         return self.wavefunction.w_list
 
     @overload
-    def create_wavefunction(self, *, sign_convention: "WavefunctionSignConvention" = "n_l_1") -> None: ...
+    def create_wavefunction(self, *, sign_convention: "WavefunctionSignConvention" = None) -> None: ...
 
     @overload
     def create_wavefunction(
         self,
         method: Literal["numerov"],
-        sign_convention: "WavefunctionSignConvention" = "n_l_1",
+        sign_convention: "WavefunctionSignConvention" = None,
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -327,13 +327,13 @@ class RydbergState:
 
     @overload
     def create_wavefunction(
-        self, method: Literal["whittaker"], sign_convention: "WavefunctionSignConvention" = "n_l_1"
+        self, method: Literal["whittaker"], sign_convention: "WavefunctionSignConvention" = None
     ) -> None: ...
 
     def create_wavefunction(
         self,
         method: Literal["numerov", "whittaker"] = "numerov",
-        sign_convention: "WavefunctionSignConvention" = "n_l_1",
+        sign_convention: "WavefunctionSignConvention" = None,
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -348,6 +348,9 @@ class RydbergState:
         elif method == "whittaker":
             self._wavefunction = WavefunctionWhittaker(self, self.grid)
             self._wavefunction.integrate()
+
+        if sign_convention is None:
+            sign_convention = "n_l_1" if self.element.number_valence_electrons == 1 else "positive_at_outer_bound"
 
         self._wavefunction.apply_sign_convention(sign_convention)
         self._grid = self._wavefunction.grid
