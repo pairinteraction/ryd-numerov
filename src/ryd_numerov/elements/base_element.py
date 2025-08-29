@@ -30,8 +30,8 @@ class BaseElement(ABC):
     """Atomic species."""
     Z: ClassVar[int]
     """Atomic number of the element."""
-    s: ClassVar[Union[int, float]]
-    """Total spin quantum number."""
+    number_valence_electrons: ClassVar[int]
+    """Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms)."""
     ground_state_shell: ClassVar[tuple[int, int]]
     """Shell (n, l) describing the electronic ground state configuration."""
     _additional_allowed_shells: ClassVar[list[tuple[int, int]]] = []
@@ -43,9 +43,9 @@ class BaseElement(ABC):
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
-    _quantum_defects: ClassVar[dict[tuple[int, float], tuple[float, float, float, float, float]]] = {}
-    """Dictionary containing the quantum defects for each (l, j) combination, i.e.
-    _quantum_defects[(l,j)] = (d0, d2, d4, d6, d8)
+    _quantum_defects: ClassVar[dict[tuple[int, float, float], tuple[float, float, float, float, float]]] = {}
+    """Dictionary containing the quantum defects for each (l, j_tot, s_tot) combination, i.e.
+    _quantum_defects[(l,j_tot,s_tot)] = (d0, d2, d4, d6, d8)
     """
 
     _corrected_rydberg_constant: tuple[float, Optional[float], str]
@@ -93,7 +93,7 @@ class BaseElement(ABC):
             nist_n_max: Maximum principal quantum number for which to load the NIST energy levels. Default is 15.
 
         """
-        self._nist_energy_levels: dict[tuple[int, int, float], float] = {}
+        self._nist_energy_levels: dict[tuple[int, int, float, float], float] = {}
         self._nist_n_max = nist_n_max
         self.use_nist_data = use_nist_data
         if use_nist_data and self._nist_energy_levels_file is not None:
@@ -156,13 +156,12 @@ class BaseElement(ABC):
             n, l = config_parts[0][:2]
 
             multiplicity = int(row[1][0])
-            if (multiplicity - 1) / 2 != self.s:
-                continue
+            s_tot = (multiplicity - 1) / 2
 
-            j_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
-            for j in j_list:
+            j_tot_list = [float(Fraction(j_str)) for j_str in row[2].split(",")]
+            for j_tot in j_tot_list:
                 energy = float(row[4])
-                self._nist_energy_levels[(n, l, j)] = energy
+                self._nist_energy_levels[(n, l, j_tot, s_tot)] = energy
 
         if len(self._nist_energy_levels) == 0:
             raise ValueError(f"No NIST energy levels found for element {self.species} in file {file}.")
@@ -215,7 +214,7 @@ class BaseElement(ABC):
         """
         return sorted([subclass.species for subclass in cls._get_concrete_subclasses()])
 
-    def is_allowed_shell(self, n: int, l: int) -> bool:
+    def is_allowed_shell(self, n: int, l: int, s_tot: float) -> bool:
         """Check if the quantum numbers describe an allowed shell.
 
         I.e. whether the shell is above the ground state shell.
@@ -223,11 +222,14 @@ class BaseElement(ABC):
         Args:
             n: Principal quantum number
             l: Orbital angular momentum quantum number
+            s_tot: Total spin quantum number
 
         Returns:
             True if the quantum numbers specify a shell equal to or above the ground state shell, False otherwise.
 
         """
+        if self.number_valence_electrons == 2 and s_tot == 1 and (n, l) == self.ground_state_shell:
+            return False  # For alkaline earth atoms, the triplet state of the ground state shell is not allowed
         if n < 1 or l < 0 or l >= n:
             raise ValueError(f"Invalid shell: (n={n}, l={l}). Must be n >= 1 and 0 <= l < n.")
         if (n, l) >= self.ground_state_shell:
@@ -256,7 +258,7 @@ class BaseElement(ABC):
             return ionization_energy
         if unit == "a.u.":
             return ionization_energy.magnitude
-        return ionization_energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return ionization_energy.to(unit, "spectroscopy").magnitude
 
     @overload
     def get_corrected_rydberg_constant(self, unit: None = None) -> "PintFloat": ...
@@ -291,7 +293,7 @@ class BaseElement(ABC):
             return corrected_rydberg_constant
         if unit == "a.u.":
             return corrected_rydberg_constant.magnitude
-        return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude
 
     @cached_property  # don't remove this caching without benchmarking it!!!
     def reduced_mass_factor(self) -> float:
@@ -313,8 +315,19 @@ class BaseElement(ABC):
             / ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy").magnitude
         )
 
-    def calc_n_star(self, n: int, l: int, j: float) -> float:
-        r"""Calculate the effective principal quantum number for the given n, l and j.
+    @overload
+    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: None = None) -> "PintFloat": ...
+
+    @overload
+    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: str) -> float: ...
+
+    def calc_energy(
+        self, n: int, l: int, j_tot: float, s_tot: float, unit: Optional[str] = "hartree"
+    ) -> Union["PintFloat", float]:
+        r"""Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.
+
+        I.e. either look up the energy for low lying states in the nist data,
+        or calculate it via the quantum defect theory.
 
         The effective principal quantum number in quantum defect theory
         is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`
@@ -323,24 +336,6 @@ class BaseElement(ABC):
         .. math::
             \delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...
 
-        References:
-            - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
-            - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
-
-        """
-        assert j % 1 == (l + self.s) % 1, f"j % 1 must be same as (l + s) % 1, (s={self.s}, l={l}, j={j})"
-        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j), (0, 0, 0, 0, 0))
-        delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
-        return n - delta_nlj
-
-    @overload
-    def calc_energy(self, n: int, l: int, j: float, unit: None = None) -> "PintFloat": ...
-
-    @overload
-    def calc_energy(self, n: int, l: int, j: float, unit: str) -> float: ...
-
-    def calc_energy(self, n: int, l: int, j: float, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
-        r"""Calculate the energy of a Rydberg state with for the given n, l and j.
 
         is the quantum defect. The energy of the Rydberg state is then given by
 
@@ -348,26 +343,40 @@ class BaseElement(ABC):
             E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
+
+        References:
+            - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
+            - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
+
         """
-        if j % 1 != (l + self.s) % 1:
-            raise ValueError(f"Invalid quantum numbers: (s={self.s}, l={l}, j={j})")
+        if (s_tot % 1) != ((self.number_valence_electrons / 2) % 1):
+            raise ValueError(f"Invalid spin {s_tot=} for {self.species}.")
+        if j_tot % 1 != (l + s_tot) % 1:
+            raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
+
+        energy_au: Optional[float] = None
         if n <= self._nist_n_max and self.use_nist_data:
-            if (n, l, j) in self._nist_energy_levels:
-                energy_au = self._nist_energy_levels[(n, l, j)]
+            if (n, l, j_tot, s_tot) in self._nist_energy_levels:
+                energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]
                 energy_au -= self.get_ionization_energy("hartree")
             else:
                 logger.debug(
-                    "NIST energy levels for (n=%d, l=%d, j=%s) not found, using quantum defect theory.", n, l, j
+                    "NIST energy levels for (n=%d, l=%d, j_tot=%s, s_tot=%s) not found, using quantum defect theory.",
+                    *(n, l, j_tot, s_tot),
                 )
-                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
-        else:
-            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j) ** 2
+
+        if energy_au is None:
+            d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
+            delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
+            n_star = n - delta_nlj
+            energy_au = -0.5 * self.reduced_mass_factor / n_star**2
+
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
             return energy
         if unit == "a.u.":
             return energy.magnitude
-        return energy.to(unit, "spectroscopy").magnitude  # type: ignore [no-any-return]  # pint typing .to(unit)
+        return energy.to(unit, "spectroscopy").magnitude
 
 
 def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:

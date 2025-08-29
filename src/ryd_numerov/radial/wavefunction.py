@@ -11,7 +11,7 @@ from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_nume
 if TYPE_CHECKING:
     from ryd_numerov.model import Model
     from ryd_numerov.radial.grid import Grid
-    from ryd_numerov.rydberg import RydbergState
+    from ryd_numerov.rydberg import _CommonRydbergState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class Wavefunction(ABC):
 
     def __init__(
         self,
-        state: "RydbergState",
+        state: "_CommonRydbergState",
         grid: "Grid",
     ) -> None:
         """Create a Wavefunction object.
@@ -84,6 +84,7 @@ class Wavefunction(ABC):
                 break
 
         if sign_convention == "n_l_1":
+            assert self.state.n is not None, "n must be given to apply the n_l_1 sign convention."
             if current_outer_sign != (-1) ** (self.state.n - self.state.l - 1):
                 self._w_list = -self._w_list
         elif sign_convention == "positive_at_outer_bound":
@@ -96,7 +97,7 @@ class Wavefunction(ABC):
 class WavefunctionNumerov(Wavefunction):
     def __init__(
         self,
-        state: "RydbergState",
+        state: "_CommonRydbergState",
         grid: "Grid",
         model: "Model",
     ) -> None:
@@ -167,7 +168,7 @@ class WavefunctionNumerov(Wavefunction):
             # Note: n - l - 1 is the number of nodes of the radial wavefunction
             # Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}
             # You can choose a different sign convention by calling the method apply_sign_convention() afterwards.
-            y0, y1 = 0, (-1) ** ((self.state.n - self.state.l - 1) % 2) * w0
+            y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_max, grid.z_min, -grid.dz
             g_list_directed = glist[::-1]
             # We set x_min to the classical turning point
@@ -185,7 +186,8 @@ class WavefunctionNumerov(Wavefunction):
             y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
-            x_min = np.sqrt(self.state.n * (self.state.n + 15))
+            n = self.state.n if self.state.n is not None else self.state.get_n_star()
+            x_min = np.sqrt(n * (n + 15))
 
         if _use_njit:
             w_list_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
@@ -218,11 +220,10 @@ class WavefunctionNumerov(Wavefunction):
         - The wavefunction has exactly (n - l - 1) nodes.
         - The integration stopped before z_stop (for l>0)
         """
-        warning_msgs = []
+        warning_msgs: list[str] = []
 
         grid = self.grid
-        n = self.state.n
-        l = self.state.l
+        state = self.state
 
         # Check and Correct if divergence of the wavefunction
         w_list_abs = np.abs(self.w_list)
@@ -248,10 +249,6 @@ class WavefunctionNumerov(Wavefunction):
                 "probably due to inner divergence of the wavefunction. "
             )
 
-        # Check the wavefunction at the inner boundary
-        if self.w_list[0] < 0:
-            warning_msgs.append(f"The wavefunction is negative at the inner boundary ({self.w_list[0]}).")
-
         # Check the weight of the wavefunction at the inner boundary
         inner_ind = 10
         inner_weight = (
@@ -265,6 +262,7 @@ class WavefunctionNumerov(Wavefunction):
 
         tol = 1e-4
         # for low n the wavefunction converges not as good and still has more weight at the inner boundary
+        n = state.n if state.n is not None else state.get_n_star() + 5
         if n <= 10:
             tol = 8e-3
         elif n <= 16:
@@ -294,22 +292,21 @@ class WavefunctionNumerov(Wavefunction):
 
         # Check the number of nodes
         nodes = np.sum(np.abs(np.diff(np.sign(self.w_list)))) // 2
-        if nodes != n - l - 1:
-            warning_msgs.append(f"The wavefunction has {nodes} nodes, but should have {n - l - 1} nodes.")
+        if state.n is not None and nodes != state.n - state.l - 1:
+            warning_msgs.append(f"The wavefunction has {nodes} nodes, but should have {state.n - state.l - 1} nodes.")
 
         # Check that numerov stopped and did not run until x_stop
-        if l > 0:
+        if state.l > 0:
             if run_backward and z_stop > grid.z_list[0] - grid.dz / 2 and inner_weight_scaled_to_whole_grid > 1e-6:
                 warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[0]}, z_stop={z_stop}")
             if not run_backward and z_stop < grid.z_list[-1] + grid.dz / 2:
                 warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[-1]}")
-        elif l == 0 and run_backward:
+        elif state.l == 0 and run_backward:
             if grid.z_list[0] > 0.035:  # z_list[0] should run almost to zero for l=0
                 warning_msgs.append(f"The integration for l=0 did stop at {grid.z_list[0]} (should be close to zero).")
 
         if warning_msgs:
-            species, j = self.state.species, self.state.j
-            msg = f"The wavefunction (species={species} n={n}, l={l}, j={j:.1f}) has some issues:"
+            msg = f"The wavefunction for the state {state} has some issues:"
             msg += "\n      ".join(["", *warning_msgs])
             logger.warning(msg)
             return False

@@ -154,30 +154,29 @@ def calc_reduced_angular_matrix_element(
         )
     if value == 0 and not should_be_zero:
         raise ValueError(
-            f"The reduced angular matrix element for {(s1, l1, j1)}, {(s2, l2, j2)}, {operator}, {kappa}"
+            f"The reduced angular matrix element for {(s1, l1, j1)}, {(s2, l2, j2)}, {operator}, {kappa} "
             "is zero (but should not be zero)."
         )
 
     return value
 
 
-def check_reduced_angular_matrix_element_should_be_zero(
+def check_reduced_angular_matrix_element_should_be_zero(  # noqa: PLR0911
     s1: float, l1: int, j1: float, s2: float, l2: int, j2: float, operator: OperatorType, kappa: int
 ) -> bool:
-    should_be_zero = False
     if not check_triangular(j2, j1, kappa):
-        should_be_zero = True
-    elif operator in ["SPHERICAL", "ELECTRIC", "MAGNETIC_L"] and not check_triangular(l2, l1, kappa):
-        should_be_zero = True
-    elif operator in ["MAGNETIC_S"] and not check_triangular(s2, s1, kappa):
-        should_be_zero = True
-    elif operator in ["SPHERICAL", "ELECTRIC"] and (l2 + l1 + kappa) % 2 != 0:
-        should_be_zero = True
-    elif operator in ["MAGNETIC_L", "MAGNETIC_S", "MAGNETIC"] and (l2 != l1 or s2 != s1):
-        should_be_zero = True
-    elif (operator == "MAGNETIC_S" and s2 == 0) or (operator == "MAGNETIC_L" and l2 == 0):
-        should_be_zero = True
-    return should_be_zero
+        return True
+    if operator in ["SPHERICAL", "ELECTRIC", "MAGNETIC_L"] and not check_triangular(l2, l1, kappa):
+        return True
+    if operator in ["SPHERICAL", "ELECTRIC"] and (l2 + l1 + kappa) % 2 != 0:
+        return True
+    if operator in ["MAGNETIC_L", "MAGNETIC_S", "MAGNETIC"] and l2 != l1:
+        return True
+    if (operator == "MAGNETIC_S" and s2 == 0) or (operator == "MAGNETIC_L" and l2 == 0):
+        return True
+    if s2 != s1:  # noqa: SIM103
+        return True
+    return False
 
 
 def spin_like_matrix_element(x1: float, x2: float, kappa: int) -> float:

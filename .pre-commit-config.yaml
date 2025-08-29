@@ -25,5 +25,5 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
-        additional_dependencies: ["numpy >= 2.0", "pint >= 0.24"]
+        additional_dependencies: ["numpy >= 2.0", "pint >= 0.25"]
         args: ["--ignore-missing-imports"]
