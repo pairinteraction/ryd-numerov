@@ -13,7 +13,7 @@ def test_magnetic(l: int) -> None:
 
     ket = RydbergState("Rb", n=max(l + 1, 10), l=l, j_tot=l + 0.5, m=l + 0.5)
 
-    # Check that for m = j = l + s the magnetic matrix element is - mu_B * (g_l * l + g_s * s)
+    # Check that for m = j_tot = l + s_tot the magnetic matrix element is - mu_B * (g_l * l + g_s * s_tot)
     mu = ket.calc_matrix_element(ket, "MAGNETIC", 0, 1, 0)
     mu = mu.to("bohr_magneton")
     assert np.isclose(mu.magnitude, -(g_l * l + g_s * 0.5)), f"{mu.magnitude} != {-(g_l * l + g_s * 0.5)}"

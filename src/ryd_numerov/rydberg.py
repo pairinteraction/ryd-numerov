@@ -401,7 +401,7 @@ class RydbergStateSQDT(_CommonRydbergState):
         if (self.s_tot is None or self.l is None or self.j_tot is None or self.m is None) or (
             other.s_tot is None or other.l is None or other.j_tot is None or other.m is None
         ):
-            raise ValueError("s, l, j and m must be set to calculate the angular matrix element.")
+            raise ValueError("l, j_tot, s_tot and m must be set to calculate the angular matrix element.")
 
         return calc_angular_matrix_element(
             self.s_tot, self.l, self.j_tot, self.m, other.s_tot, other.l, other.j_tot, other.m, operator, k_angular, q
@@ -423,16 +423,16 @@ class RydbergStateSQDT(_CommonRydbergState):
         r"""Calculate the matrix element.
 
         Calculate the matrix element between two Rydberg states
-        \ket{self}=\ket{n',l',j',m'} and \ket{other}= \ket{n,l,j,m}.
+        \ket{self}=\ket{n',l',j_tot',s_tot',m'} and \ket{other}= \ket{n,l,j_tot,s_tot,m}.
 
         .. math::
-            \langle n,l,j,m,s | r^k_radial \hat{O}_{k_angular,q} | n',l',j',m',s' \rangle
+            \langle n,l,j_tot,s_tot,m | r^k_radial \hat{O}_{k_angular,q} | n',l',j_tot',s_tot',m' \rangle
 
         where \hat{O}_{k_angular,q} is the operators of rank k_angular and component q,
         for which to calculate the matrix element.
 
         Args:
-            other: The other Rydberg state \ket{n,l,j,m,s} to which to calculate the matrix element.
+            other: The other Rydberg state \ket{n,l,j_tot,s_tot,m} to which to calculate the matrix element.
             operator: The operator type for which to calculate the matrix element.
                 Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
             k_radial: The radial matrix element power k.
@@ -467,7 +467,7 @@ class RydbergStateSQDT(_CommonRydbergState):
         elif operator == "MAGNETIC":
             # 2 mu_B = hbar e / m_e = 1 a.u. = 1 atomic_unit_of_current * bohr ** 2
             # Note: we use the convention, that the magnetic dipole moments are given
-            # as the same dimensionality as the Bohr magneton (mu = - mu_B (g_l l + g_s s))
+            # as the same dimensionality as the Bohr magneton (mu = - mu_B (g_l l + g_s s_tot))
             # such that - mu * B (where the magnetic field B is given in dimension Tesla) is an energy
             matrix_element *= ureg.Quantity(2, "bohr_magneton")
 
