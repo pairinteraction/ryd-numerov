@@ -315,26 +315,6 @@ class BaseElement(ABC):
             / ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy").magnitude
         )
 
-    def calc_n_star(self, n: int, l: int, j_tot: float, s_tot: float) -> float:
-        r"""Calculate the effective principal quantum number for the given n, l, j and s.
-
-        The effective principal quantum number in quantum defect theory
-        is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`
-        where
-
-        .. math::
-            \delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...
-
-        References:
-            - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
-            - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
-
-        """
-        assert j_tot % 1 == (l + self.number_valence_electrons / 2) % 1, "j_tot % 1 must be same as (l + s_tot) % 1"
-        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
-        delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
-        return n - delta_nlj
-
     @overload
     def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: None = None) -> "PintFloat": ...
 
@@ -346,19 +326,35 @@ class BaseElement(ABC):
     ) -> Union["PintFloat", float]:
         r"""Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.
 
+        I.e. either look up the energy for low lying states in the nist data,
+        or calculate it via the quantum defect theory.
+
+        The effective principal quantum number in quantum defect theory
+        is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`
+        where
+
+        .. math::
+            \delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...
+
+
         is the quantum defect. The energy of the Rydberg state is then given by
 
         .. math::
             E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
+
+        References:
+            - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
+            - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
+
         """
+        if (s_tot % 1) != ((self.number_valence_electrons / 2) % 1):
+            raise ValueError(f"Invalid spin {s_tot=} for {self.species}.")
         if j_tot % 1 != (l + s_tot) % 1:
             raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
-        if (s_tot % 1) != ((self.number_valence_electrons / 2) % 1):
-            raise ValueError(
-                f"Invalid spin {s_tot=} for element with {self.number_valence_electrons} valence electrons."
-            )
+
+        energy_au: Optional[float] = None
         if n <= self._nist_n_max and self.use_nist_data:
             if (n, l, j_tot, s_tot) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]
@@ -368,9 +364,13 @@ class BaseElement(ABC):
                     "NIST energy levels for (n=%d, l=%d, j_tot=%s, s_tot=%s) not found, using quantum defect theory.",
                     *(n, l, j_tot, s_tot),
                 )
-                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j_tot, s_tot) ** 2
-        else:
-            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j_tot, s_tot) ** 2
+
+        if energy_au is None:
+            d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
+            delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
+            n_star = n - delta_nlj
+            energy_au = -0.5 * self.reduced_mass_factor / n_star**2
+
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
             return energy
