@@ -315,7 +315,7 @@ class BaseElement(ABC):
             / ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy").magnitude
         )
 
-    def calc_n_star(self, n: int, l: int, j: float, s: float) -> float:
+    def calc_n_star(self, n: int, l: int, j_tot: float, s_tot: float) -> float:
         r"""Calculate the effective principal quantum number for the given n, l, j and s.
 
         The effective principal quantum number in quantum defect theory
@@ -330,8 +330,8 @@ class BaseElement(ABC):
             - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
 
         """
-        assert j % 1 == (l + self.number_valence_electrons / 2) % 1, "j % 1 must be same as (l + s) % 1"
-        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j, s), (0, 0, 0, 0, 0))
+        assert j_tot % 1 == (l + self.number_valence_electrons / 2) % 1, "j_tot % 1 must be same as (l + s_tot) % 1"
+        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
         delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
         return n - delta_nlj
 
