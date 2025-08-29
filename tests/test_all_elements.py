@@ -12,10 +12,10 @@ def test_magnetic(species: str) -> None:
     if element.number_valence_electrons == 1:
         ket = RydbergState(species, n=50, l=0)
         ket.create_wavefunction()
-        with pytest.raises(ValueError, match="Invalid Rydberg state"):
+        with pytest.raises(AssertionError, match="j_tot must be set"):
             RydbergState(species, n=50, l=1)
 
     elif element.number_valence_electrons == 2:
-        for s in [0, 1]:
-            ket = RydbergState(species, n=50, l=1, j=1 + s, s=s)
+        for s_tot in [0, 1]:
+            ket = RydbergState(species, n=50, l=1, j_tot=1 + s_tot, s_tot=s_tot)
             ket.create_wavefunction()

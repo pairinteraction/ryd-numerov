@@ -336,13 +336,13 @@ class BaseElement(ABC):
         return n - delta_nlj
 
     @overload
-    def calc_energy(self, n: int, l: int, j: float, s: float, unit: None = None) -> "PintFloat": ...
+    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: None = None) -> "PintFloat": ...
 
     @overload
-    def calc_energy(self, n: int, l: int, j: float, s: float, unit: str) -> float: ...
+    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: str) -> float: ...
 
     def calc_energy(
-        self, n: int, l: int, j: float, s: float, unit: Optional[str] = "hartree"
+        self, n: int, l: int, j_tot: float, s_tot: float, unit: Optional[str] = "hartree"
     ) -> Union["PintFloat", float]:
         r"""Calculate the energy of a Rydberg state with for the given n, l, j and s.
 
@@ -353,22 +353,24 @@ class BaseElement(ABC):
 
         where :math:`E_H` is the Hartree energy (the atomic unit of energy).
         """
-        if j % 1 != (l + s) % 1:
-            raise ValueError(f"Invalid quantum numbers: ({l=}, {j=}, {s=})")
-        if (s % 1) != ((self.number_valence_electrons / 2) % 1):
-            raise ValueError(f"Invalid spin {s=} for element with {self.number_valence_electrons} valence electrons.")
+        if j_tot % 1 != (l + s_tot) % 1:
+            raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
+        if (s_tot % 1) != ((self.number_valence_electrons / 2) % 1):
+            raise ValueError(
+                f"Invalid spin {s_tot=} for element with {self.number_valence_electrons} valence electrons."
+            )
         if n <= self._nist_n_max and self.use_nist_data:
-            if (n, l, j, s) in self._nist_energy_levels:
-                energy_au = self._nist_energy_levels[(n, l, j, s)]
+            if (n, l, j_tot, s_tot) in self._nist_energy_levels:
+                energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]
                 energy_au -= self.get_ionization_energy("hartree")
             else:
                 logger.debug(
-                    "NIST energy levels for (n=%d, l=%d, j=%s, s=%s) not found, using quantum defect theory.",
-                    *(n, l, j, s),
+                    "NIST energy levels for (n=%d, l=%d, j_tot=%s, s_tot=%s) not found, using quantum defect theory.",
+                    *(n, l, j_tot, s_tot),
                 )
-                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j, s) ** 2
+                energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j_tot, s_tot) ** 2
         else:
-            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j, s) ** 2
+            energy_au = -0.5 * self.reduced_mass_factor / self.calc_n_star(n, l, j_tot, s_tot) ** 2
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
             return energy

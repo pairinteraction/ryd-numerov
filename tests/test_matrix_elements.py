@@ -11,7 +11,7 @@ def test_magnetic(l: int) -> None:
     g_s = 2.002319304363
     g_l = 1
 
-    ket = RydbergState("Rb", n=max(l + 1, 10), l=l, j=l + 0.5, m=l + 0.5)
+    ket = RydbergState("Rb", n=max(l + 1, 10), l=l, j_tot=l + 0.5, m=l + 0.5)
 
     # Check that for m = j = l + s the magnetic matrix element is - mu_B * (g_l * l + g_s * s)
     mu = ket.calc_matrix_element(ket, "MAGNETIC", 0, 1, 0)

@@ -83,7 +83,7 @@ This package relies on quantum defects provided by the community. Consider citin
 ## Using custom quantum defects
 To use custom quantum defects (or quantum defects for a new element), you can simply create a subclass of `ryd_numerov.elements.base_element.BaseElement` (e.g. `class CustomRubidium(BaseElement):`) with a custom species name (e.g. `species = "Custom_Rb"`).
 Then, similarly to `ryd_numerov.elements.rubidium.py` you can define the quantum defects (and model potential parameters, ...) for your element.
-Finally, you can use the custom element by simply calling `ryd_numerov.RydbergState("Custom_Rb", n=50, l=0, j=1/2, m=1/2)` (the code will look for all subclasses of `BaseElement` until it finds one with the species name "Custom_Rb").
+Finally, you can use the custom element by simply calling `ryd_numerov.RydbergState("Custom_Rb", n=50, l=0, j_tot=1/2, m=1/2)` (the code will look for all subclasses of `BaseElement` until it finds one with the species name "Custom_Rb").
 
 
 ## License
