@@ -11,7 +11,7 @@ from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_nume
 if TYPE_CHECKING:
     from ryd_numerov.model import Model
     from ryd_numerov.radial.grid import Grid
-    from ryd_numerov.rydberg import RydbergState
+    from ryd_numerov.rydberg import _CommonRydbergState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class Wavefunction(ABC):
 
     def __init__(
         self,
-        state: "RydbergState",
+        state: "_CommonRydbergState",
         grid: "Grid",
     ) -> None:
         """Create a Wavefunction object.
@@ -97,7 +97,7 @@ class Wavefunction(ABC):
 class WavefunctionNumerov(Wavefunction):
     def __init__(
         self,
-        state: "RydbergState",
+        state: "_CommonRydbergState",
         grid: "Grid",
         model: "Model",
     ) -> None:
