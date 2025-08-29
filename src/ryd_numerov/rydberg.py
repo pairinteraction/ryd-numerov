@@ -1,4 +1,5 @@
 import logging
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
 
 import numpy as np
@@ -29,163 +30,33 @@ logger = logging.getLogger(__name__)
 TransitionRateMethod = Literal["exact", "approximation"]
 
 
-class RydbergState:
-    r"""Create a Rydberg state, for which the radial Schrödinger equation is solved using the Numerov method.
+class _CommonRydbergState(ABC):
+    species: str
+    n: Optional[int]
+    l: int
 
-    This class is meant as single-channel quantum defect theory description,
-    for which all quantum numbers are well defined.
+    @overload
+    def get_energy(self, unit: None = None) -> "PintFloat": ...
 
-    Integrate the radial Schrödinger equation for the Rydberg state using the Numerov method.
+    @overload
+    def get_energy(self, unit: str) -> float: ...
 
-    We solve the radial dimensionless Schrödinger equation for the Rydberg state
+    @abstractmethod
+    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]: ...
 
-    .. math::
-        \frac{d^2}{dx^2} u(x) = - \left[ E - V_{eff}(x) \right] u(x)
+    def get_n_star(self) -> float:
+        r"""Calculate the effective quantum number n* for the Rydberg state.
 
-    using the Numerov method, see `integration.run_numerov_integration`.
+        We define n* as
 
-    """
+        .. math::
+            n^* = \sqrt{-\frac{1}{2} \frac{\mu}{E} }
 
-    def __init__(
-        self,
-        species: str,
-        n: int,
-        l: int,
-        j_tot: Optional[float] = None,
-        s_tot: Optional[float] = None,
-        m: Optional[float] = None,
-    ) -> None:
-        r"""Initialize the Rydberg state.
-
-        Args:
-            species: Atomic species.
-            n: Principal quantum number of the rydberg electron.
-            l: Orbital angular momentum quantum number of the rydberg electron.
-            j_tot: Angular momentum quantum number of the rydberg electron.
-            s_tot: Total spin quantum number
-              Optional, only needed for alkaline earth atoms, where it can be 0 (singlet) or 1 (triplet).
-            m: Total magnetic quantum number.
-              Optional, only needed for concrete angular matrix elements.
+        where `\mu = R_M/R_\infty` is the reduced mass and `E` the energy of the state.
 
         """
-        self.species = species
-
-        self.n = n
-        self.l = l
-
-        self.s_tot: float = s_tot  # type: ignore [assignment] # assert not None below
-        if s_tot is None and self.element.number_valence_electrons == 1:
-            self.s_tot = 1 / 2
-        assert self.s_tot is not None, "s_tot must be set"
-
-        self.j_tot: float = j_tot  # type: ignore [assignment] # assert not None below
-        if j_tot is None:
-            if self.l == 0:
-                self.j_tot = self.s_tot
-            elif self.s_tot == 0:
-                self.j_tot = self.l
-        assert self.j_tot is not None, "j_tot must be set"
-
-        self.m = m
-
-        self.sanity_check()
-
-    def __repr__(self) -> str:
-        species, n, l, j_tot, s_tot, m = self.species, self.n, self.l, self.j_tot, self.s_tot, self.m
-        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {j_tot=}, {s_tot=}, {m=})"
-
-    def __str__(self) -> str:
-        return self.get_label("ket")
-
-    def copy(self) -> "Self":
-        """Create a copy of the Rydberg state."""
-        return self.__class__(self.species, n=self.n, l=self.l, j_tot=self.j_tot, s_tot=self.s_tot, m=self.m)
-
-    def get_label(self, fmt: Literal["raw", "ket", "bra"]) -> str:
-        """Label representing the ket.
-
-        Args:
-            fmt: The format of the label, i.e. whether to return the raw label, or the label in ket or bra notation.
-
-        Returns:
-            The label of the ket in the given format.
-
-        """
-        l_dict = {0: "S", 1: "P", 2: "D", 3: "F", 4: "G", 5: "H"}
-        l_str = l_dict.get(self.l, self.l)
-        j_str = f"{self.j_tot:.1f}" if self.j_tot % 1 != 0 else f"{int(self.j_tot)}"
-
-        raw = f"{self.species}:{self.n},{l_str}_{j_str}"
-        if self.m is not None:
-            raw += f",m={self.m}"
-
-        if fmt == "raw":
-            return raw
-        if fmt == "ket":
-            return f"|{raw}⟩"
-        if fmt == "bra":
-            return f"⟨{raw}|"
-        raise ValueError(f"Unknown fmt {fmt}")
-
-    def sanity_check(self) -> None:  # noqa: C901
-        """Check that the quantum numbers are valid."""
-        msgs: list[str] = []
-        n, l, j_tot, s_tot, m = self.n, self.l, self.j_tot, self.s_tot, self.m
-
-        if not isinstance(n, int):
-            msgs.append(f"n must be an integer, but {n=}")
-        if not n >= 1:
-            msgs.append(f"n must be larger than 0, but is {n=}")
-
-        if not isinstance(l, int):
-            msgs.append(f"l must be an integer, but {l=}")
-        if not 0 <= l <= n - 1:
-            msgs.append(f"l must be between 0 and n - 1, but {l=}, {n=}")
-
-        if not abs(l - s_tot) <= j_tot <= l + s_tot:
-            msgs.append(f"j_tot must be between |l - s_tot| and |l + s_tot|, but {l=}, {s_tot=}, {j_tot=}")
-
-        if m is not None and not -j_tot <= m <= j_tot:
-            msgs.append(f"m must be between -j_tot and j_tot, but {j_tot=}, {m=}")
-
-        if self.element.number_valence_electrons == 1:
-            msgs += self._sanity_check_alkali()
-        elif self.element.number_valence_electrons == 2:
-            msgs += self._sanity_check_alkaline_earth()
-
-        if not self.element.is_allowed_shell(n, l, s_tot):
-            msgs.append(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
-
-        for msg in msgs:
-            logger.error(msg)
-        if msgs:
-            raise ValueError(f"Invalid Rydberg state {self!r}")
-
-    def _sanity_check_alkali(self) -> list[str]:
-        msgs: list[str] = []
-        j_tot, s_tot, m = self.j_tot, self.s_tot, self.m
-
-        if s_tot != 1 / 2:
-            msgs.append("Spin quantum number s_tot must be 1 / 2 for alkali atoms.")
-        if j_tot % 1 != 1 / 2:
-            msgs.append("Total angular momentum quantum number j_tot must be half-int for alkali atoms.")
-        if m is not None and m % 1 != 1 / 2:
-            msgs.append("Total magnetic quantum number m must be half-int for alkali atoms.")
-
-        return msgs
-
-    def _sanity_check_alkaline_earth(self) -> list[str]:
-        msgs: list[str] = []
-        j_tot, s_tot, m = self.j_tot, self.s_tot, self.m
-
-        if s_tot not in [0, 1]:
-            msgs.append("Spin quantum number s_tot must be given and 0 or 1 for alkaline earth atoms.")
-        if j_tot % 1 != 0:
-            msgs.append("Total angular momentum quantum number j_tot must be integer for alkaline earth atoms.")
-        if m is not None and m % 1 != 0:
-            msgs.append("Total magnetic quantum number m must be integer for alkaline earth atoms.")
-
-        return msgs
+        energy_au = self.get_energy("a.u.")
+        return np.sqrt(-0.5 * self.element.reduced_mass_factor / energy_au)  # type: ignore [no-any-return] # numpy
 
     @property
     def element(self) -> BaseElement:
@@ -333,25 +204,6 @@ class RydbergState:
         self._grid = self._wavefunction.grid
 
     @overload
-    def get_energy(self, unit: None = None) -> "PintFloat": ...
-
-    @overload
-    def get_energy(self, unit: str) -> float: ...
-
-    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
-        energy_au = self.element.calc_energy(self.n, self.l, self.j_tot, self.s_tot, unit="a.u.")
-        if unit == "a.u.":
-            return energy_au
-        energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
-        if unit is None:
-            return energy
-        return energy.to(unit, "spectroscopy").magnitude
-
-    def get_n_star(self) -> float:
-        """Calculate the effective quantum number n* for the Rydberg state."""
-        return self.element.calc_n_star(self.n, self.l, self.j_tot, self.s_tot)
-
-    @overload
     def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PintFloat": ...
 
     @overload
@@ -367,6 +219,182 @@ class RydbergState:
         if unit is None:
             return radial_matrix_element
         return radial_matrix_element.to(unit).magnitude
+
+
+class RydbergStateSQDT(_CommonRydbergState):
+    r"""Create a Rydberg state, for which the radial Schrödinger equation is solved using the Numerov method.
+
+    This class is meant as single-channel quantum defect theory description,
+    for which all quantum numbers are well defined.
+
+    Integrate the radial Schrödinger equation for the Rydberg state using the Numerov method.
+
+    We solve the radial dimensionless Schrödinger equation for the Rydberg state
+
+    .. math::
+        \frac{d^2}{dx^2} u(x) = - \left[ E - V_{eff}(x) \right] u(x)
+
+    using the Numerov method, see `integration.run_numerov_integration`.
+
+    """
+
+    n: int
+
+    def __init__(
+        self,
+        species: str,
+        n: int,
+        l: int,
+        j_tot: Optional[float] = None,
+        s_tot: Optional[float] = None,
+        m: Optional[float] = None,
+    ) -> None:
+        r"""Initialize the Rydberg state.
+
+        Args:
+            species: Atomic species.
+            n: Principal quantum number of the rydberg electron.
+            l: Orbital angular momentum quantum number of the rydberg electron.
+            j_tot: Angular momentum quantum number of the rydberg electron.
+            s_tot: Total spin quantum number
+              Optional, only needed for alkaline earth atoms, where it can be 0 (singlet) or 1 (triplet).
+            m: Total magnetic quantum number.
+              Optional, only needed for concrete angular matrix elements.
+
+        """
+        self.species = species
+
+        self.n = n
+        self.l = l
+
+        self.s_tot: float = s_tot  # type: ignore [assignment] # assert not None below
+        if s_tot is None and self.element.number_valence_electrons == 1:
+            self.s_tot = 1 / 2
+        assert self.s_tot is not None, "s_tot must be set"
+
+        self.j_tot: float = j_tot  # type: ignore [assignment] # assert not None below
+        if j_tot is None:
+            if self.l == 0:
+                self.j_tot = self.s_tot
+            elif self.s_tot == 0:
+                self.j_tot = self.l
+        assert self.j_tot is not None, "j_tot must be set"
+
+        self.m = m
+
+        self.sanity_check()
+
+    def __repr__(self) -> str:
+        species, n, l, j_tot, s_tot, m = self.species, self.n, self.l, self.j_tot, self.s_tot, self.m
+        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {j_tot=}, {s_tot=}, {m=})"
+
+    def __str__(self) -> str:
+        return self.get_label("ket")
+
+    def copy(self) -> "Self":
+        """Create a copy of the Rydberg state."""
+        return self.__class__(self.species, n=self.n, l=self.l, j_tot=self.j_tot, s_tot=self.s_tot, m=self.m)
+
+    def get_label(self, fmt: Literal["raw", "ket", "bra"]) -> str:
+        """Label representing the ket.
+
+        Args:
+            fmt: The format of the label, i.e. whether to return the raw label, or the label in ket or bra notation.
+
+        Returns:
+            The label of the ket in the given format.
+
+        """
+        l_dict = {0: "S", 1: "P", 2: "D", 3: "F", 4: "G", 5: "H"}
+        l_str = l_dict.get(self.l, self.l)
+        j_str = f"{self.j_tot:.1f}" if self.j_tot % 1 != 0 else f"{int(self.j_tot)}"
+
+        raw = f"{self.species}:{self.n},{l_str}_{j_str}"
+        if self.m is not None:
+            raw += f",m={self.m}"
+
+        if fmt == "raw":
+            return raw
+        if fmt == "ket":
+            return f"|{raw}⟩"
+        if fmt == "bra":
+            return f"⟨{raw}|"
+        raise ValueError(f"Unknown fmt {fmt}")
+
+    def sanity_check(self) -> None:  # noqa: C901
+        """Check that the quantum numbers are valid."""
+        msgs: list[str] = []
+        n, l, j_tot, s_tot, m = self.n, self.l, self.j_tot, self.s_tot, self.m
+
+        if not isinstance(n, int):
+            msgs.append(f"n must be an integer, but {n=}")
+        if not n >= 1:
+            msgs.append(f"n must be larger than 0, but is {n=}")
+
+        if not isinstance(l, int):
+            msgs.append(f"l must be an integer, but {l=}")
+        if not 0 <= l <= n - 1:
+            msgs.append(f"l must be between 0 and n - 1, but {l=}, {n=}")
+
+        if not abs(l - s_tot) <= j_tot <= l + s_tot:
+            msgs.append(f"j_tot must be between |l - s_tot| and |l + s_tot|, but {l=}, {s_tot=}, {j_tot=}")
+
+        if m is not None and not -j_tot <= m <= j_tot:
+            msgs.append(f"m must be between -j_tot and j_tot, but {j_tot=}, {m=}")
+
+        if self.element.number_valence_electrons == 1:
+            msgs += self._sanity_check_alkali()
+        elif self.element.number_valence_electrons == 2:
+            msgs += self._sanity_check_alkaline_earth()
+
+        if not self.element.is_allowed_shell(n, l, s_tot):
+            msgs.append(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
+
+        for msg in msgs:
+            logger.error(msg)
+        if msgs:
+            raise ValueError(f"Invalid Rydberg state {self!r}")
+
+    def _sanity_check_alkali(self) -> list[str]:
+        msgs: list[str] = []
+        j_tot, s_tot, m = self.j_tot, self.s_tot, self.m
+
+        if s_tot != 1 / 2:
+            msgs.append("Spin quantum number s_tot must be 1 / 2 for alkali atoms.")
+        if j_tot % 1 != 1 / 2:
+            msgs.append("Total angular momentum quantum number j_tot must be half-int for alkali atoms.")
+        if m is not None and m % 1 != 1 / 2:
+            msgs.append("Total magnetic quantum number m must be half-int for alkali atoms.")
+
+        return msgs
+
+    def _sanity_check_alkaline_earth(self) -> list[str]:
+        msgs: list[str] = []
+        j_tot, s_tot, m = self.j_tot, self.s_tot, self.m
+
+        if s_tot not in [0, 1]:
+            msgs.append("Spin quantum number s_tot must be given and 0 or 1 for alkaline earth atoms.")
+        if j_tot % 1 != 0:
+            msgs.append("Total angular momentum quantum number j_tot must be integer for alkaline earth atoms.")
+        if m is not None and m % 1 != 0:
+            msgs.append("Total magnetic quantum number m must be integer for alkaline earth atoms.")
+
+        return msgs
+
+    @overload
+    def get_energy(self, unit: None = None) -> "PintFloat": ...
+
+    @overload
+    def get_energy(self, unit: str) -> float: ...
+
+    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
+        energy_au = self.element.calc_energy(self.n, self.l, self.j_tot, self.s_tot, unit="a.u.")
+        if unit == "a.u.":
+            return energy_au
+        energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
+        if unit is None:
+            return energy
+        return energy.to(unit, "spectroscopy").magnitude
 
     def calc_angular_matrix_element(self, other: "Self", operator: "OperatorType", k_angular: int, q: int) -> float:
         """Calculate the dimensionless angular matrix element."""
@@ -742,3 +770,6 @@ class RydbergState:
                         )
 
         return relevant_states, np.array(energy_differences), np.array(radial_matrix_elements)
+
+
+RydbergState = RydbergStateSQDT
