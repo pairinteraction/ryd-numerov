@@ -43,7 +43,9 @@ class BaseElement(ABC):
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
-    _quantum_defects: ClassVar[dict[tuple[int, float, float], tuple[float, float, float, float, float]]] = {}
+    _quantum_defects: ClassVar[Optional[dict[tuple[int, float, float], tuple[float, float, float, float, float]]]] = (
+        None
+    )
     """Dictionary containing the quantum defects for each (l, j_tot, s_tot) combination, i.e.
     _quantum_defects[(l,j_tot,s_tot)] = (d0, d2, d4, d6, d8)
     """
@@ -366,6 +368,8 @@ class BaseElement(ABC):
                 )
 
         if energy_au is None:
+            if self._quantum_defects is None:
+                raise ValueError(f"No quantum defect data available for element {self.species}.")
             d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
             delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
             n_star = n - delta_nlj
