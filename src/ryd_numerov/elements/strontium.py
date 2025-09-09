@@ -2,6 +2,10 @@ from pathlib import Path
 from typing import ClassVar, Optional
 
 from ryd_numerov.elements.base_element import BaseElement
+from ryd_numerov.units import ureg
+
+RydbergConstant = ureg.Quantity(1, "rydberg_constant").to("cm^-1", "spectroscopy").magnitude
+electron_mass = ureg.Quantity(1, "electron_mass").to("u").magnitude
 
 
 class _StrontiumAbstract(BaseElement):
@@ -35,7 +39,9 @@ class _StrontiumAbstract(BaseElement):
 class Strontium88(_StrontiumAbstract):
     species = "Sr88"
 
-    _corrected_rydberg_constant = (109736.631, None, "1/cm")
+    # https://physics.nist.gov/PhysRefData/Handbook/Tables/strontiumtable1.htm
+    _isotope_mass = 87.905619  # u
+    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
 
     # -- [1] Phys. Rev. A 108, 022815 (2023)
     # -- [2] http://dx.doi.org/10.17169/refubium-34581
@@ -60,3 +66,11 @@ class Strontium88(_StrontiumAbstract):
         (3, 3.0, 1): (0.119, -2.0, 100, 0.0, 0.0),  # [3]
         (3, 2.0, 1): (0.120, -2.2, 100, 0.0, 0.0),  # [3]
     }
+
+
+class Strontium87(_StrontiumAbstract):
+    species = "Sr87"
+
+    # https://physics.nist.gov/PhysRefData/Handbook/Tables/strontiumtable1.htm
+    _isotope_mass = 86.908884  # u
+    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
