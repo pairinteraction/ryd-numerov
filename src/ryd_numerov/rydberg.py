@@ -310,6 +310,8 @@ class RydbergStateSQDT(_CommonRydbergState):
         j_str = f"{self.j_tot:.1f}" if self.j_tot % 1 != 0 else f"{int(self.j_tot)}"
 
         raw = f"{self.species}:{self.n},{l_str}_{j_str}"
+        if self.s_tot != 1 / 2:
+            raw += f",s={self.s_tot}"
         if self.m is not None:
             raw += f",m={self.m}"
 
