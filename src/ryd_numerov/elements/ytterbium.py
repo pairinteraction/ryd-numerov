@@ -2,6 +2,10 @@ from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
+from ryd_numerov.units import ureg
+
+RydbergConstant = ureg.Quantity(1, "rydberg_constant").to("cm^-1", "spectroscopy").magnitude
+electron_mass = ureg.Quantity(1, "electron_mass").to("u").magnitude
 
 
 class _YtterbiumAbstract(BaseElement):
@@ -22,10 +26,25 @@ class _YtterbiumAbstract(BaseElement):
     model_potential_parameter_fei_2009 = (0.8704, 22.0040, 0.1513, 0.3306)
 
 
+class Ytterbium171(_YtterbiumAbstract):
+    species = "Yb171"
+
+    # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
+    _isotope_mass = 170.936323  # u
+    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
+
+
+class Ytterbium173(_YtterbiumAbstract):
+    species = "Yb173"
+
+    # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
+    _isotope_mass = 172.938208  # u
+    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
+
+
 class Ytterbium174(_YtterbiumAbstract):
     species = "Yb174"
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
-    # _isotope_mass = 173.938859  # u  # noqa: ERA001
-    # _corrected_rydberg_constant = Ry_inf / (1 + electron_mass / _isotope_mass)  # noqa: ERA001
-    _corrected_rydberg_constant = (109736.96958583764, None, "1/cm")
+    _isotope_mass = 173.938859  # u
+    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
