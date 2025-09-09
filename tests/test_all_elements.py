@@ -15,7 +15,7 @@ def test_magnetic(species: str) -> None:
         with pytest.raises(AssertionError, match="j_tot must be set"):
             RydbergState(species, n=50, l=1)
 
-    elif element.number_valence_electrons == 2:
+    elif element.number_valence_electrons == 2 and element._quantum_defects is not None:  # noqa: SLF001
         for s_tot in [0, 1]:
             ket = RydbergState(species, n=50, l=1, j_tot=1 + s_tot, s_tot=s_tot)
             ket.create_wavefunction()

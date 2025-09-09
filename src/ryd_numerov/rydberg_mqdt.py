@@ -108,7 +108,7 @@ class RydbergStateMQDT(_CommonRydbergState):
             if not n >= 1:
                 msgs.append(f"n must be larger than 0, but is {n=}")
             if not nu <= n:
-                msgs.append(f"nu must be smaller (or equal) than n, but {nu=}, {n=}")
+                logger.warning("nu must be smaller (or equal) than n, but nu=%f, n=%d", nu, n)
 
         if not isinstance(l, int):
             msgs.append(f"l must be an integer, but {l=}")

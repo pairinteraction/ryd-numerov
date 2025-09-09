@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.units import ureg
 
@@ -15,6 +17,8 @@ class Hydrogen(BaseElement):
 
     potential_type_default = "coulomb"
 
+    _quantum_defects: ClassVar = {}
+
     _corrected_rydberg_constant = (109677.58340280356, None, "1/cm")
 
 
@@ -28,5 +32,7 @@ class HydrogenTextBook(BaseElement):
     _ionization_energy = (RydbergConstant.magnitude, 0, str(RydbergConstant.units))
 
     potential_type_default = "coulomb"
+
+    _quantum_defects: ClassVar = {}
 
     _corrected_rydberg_constant = (109737.31568160003, None, "1/cm")
