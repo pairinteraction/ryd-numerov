@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
 
 import numpy as np
 
-from ryd_numerov.units import ureg
+from ryd_numerov.units import rydberg_constant, ureg
 
 if TYPE_CHECKING:
     from ryd_numerov.model.model import PotentialType
@@ -313,8 +313,7 @@ class BaseElement(ABC):
 
         """
         return (  # type: ignore [no-any-return]  # pint typing .to(unit)
-            self.get_corrected_rydberg_constant("hartree")
-            / ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy").magnitude
+            self.get_corrected_rydberg_constant("hartree") / rydberg_constant.to("hartree").m
         )
 
     @overload

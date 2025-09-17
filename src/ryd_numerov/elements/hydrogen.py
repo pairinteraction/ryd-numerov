@@ -1,9 +1,7 @@
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
-from ryd_numerov.units import ureg
-
-RydbergConstant = ureg.Quantity(1, "rydberg_constant").to("eV", "spectroscopy")
+from ryd_numerov.units import rydberg_constant
 
 
 class Hydrogen(BaseElement):
@@ -29,7 +27,7 @@ class HydrogenTextBook(BaseElement):
     number_valence_electrons = 1
     ground_state_shell = (1, 0)
 
-    _ionization_energy = (RydbergConstant.magnitude, 0, str(RydbergConstant.units))
+    _ionization_energy = (rydberg_constant.m, 0, str(rydberg_constant.u))
 
     potential_type_default = "coulomb"
 

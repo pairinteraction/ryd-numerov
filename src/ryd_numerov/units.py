@@ -76,3 +76,7 @@ BaseContexts: dict[Dimension, Context] = {
     "MAGNETIC_FIELD": "Gaussian",
     "ENERGY": "spectroscopy",
 }
+
+
+rydberg_constant = ureg.Quantity(1, "rydberg_constant").to("hartree", "spectroscopy")
+electron_mass = ureg.Quantity(1, "electron_mass").to("u")
