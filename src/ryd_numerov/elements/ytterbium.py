@@ -2,10 +2,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
-from ryd_numerov.units import ureg
-
-RydbergConstant = ureg.Quantity(1, "rydberg_constant").to("cm^-1", "spectroscopy").magnitude
-electron_mass = ureg.Quantity(1, "electron_mass").to("u").magnitude
+from ryd_numerov.units import electron_mass, rydberg_constant
 
 
 class _YtterbiumAbstract(BaseElement):
@@ -31,7 +28,11 @@ class Ytterbium171(_YtterbiumAbstract):
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
     _isotope_mass = 170.936323  # u
-    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
+    _corrected_rydberg_constant = (
+        rydberg_constant.m / (1 + electron_mass.to("u").m / _isotope_mass),
+        None,
+        str(rydberg_constant.u),
+    )
 
 
 class Ytterbium173(_YtterbiumAbstract):
@@ -39,7 +40,11 @@ class Ytterbium173(_YtterbiumAbstract):
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
     _isotope_mass = 172.938208  # u
-    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
+    _corrected_rydberg_constant = (
+        rydberg_constant.m / (1 + electron_mass.to("u").m / _isotope_mass),
+        None,
+        str(rydberg_constant.u),
+    )
 
 
 class Ytterbium174(_YtterbiumAbstract):
@@ -47,4 +52,8 @@ class Ytterbium174(_YtterbiumAbstract):
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
     _isotope_mass = 173.938859  # u
-    _corrected_rydberg_constant = (RydbergConstant / (1 + electron_mass / _isotope_mass), None, "1/cm")
+    _corrected_rydberg_constant = (
+        rydberg_constant.m / (1 + electron_mass.to("u").m / _isotope_mass),
+        None,
+        str(rydberg_constant.u),
+    )
