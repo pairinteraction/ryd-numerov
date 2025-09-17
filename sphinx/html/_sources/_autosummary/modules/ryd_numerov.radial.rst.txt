@@ -1,0 +1,57 @@
+radial
+======
+Full module path: ryd\_numerov.radial
+
+.. workaround to ignore generic classes like AtomSQDT[int]
+
+
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+
+
+.. currentmodule:: ryd_numerov.radial
+
+
+
+
+.. rubric:: Functions
+
+.. autosummary::
+   :toctree: .
+   
+      calc_radial_matrix_element
+      run_numerov_integration
+
+
+
+.. rubric:: Classes
+
+.. .. inheritance-diagram:: ryd_numerov.radial
+..     :parts: 1
+
+.. autosummary::
+   :toctree: .
+   
+      Grid
+      Wavefunction
+      WavefunctionNumerov
+      WavefunctionWhittaker
+
+
+
+
+
+
+.. rubric:: Module description
+
+.. automodule:: ryd_numerov.radial

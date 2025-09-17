@@ -1,0 +1,37 @@
+model
+=====
+Full module path: ryd\_numerov.model
+
+.. workaround to ignore generic classes like AtomSQDT[int]
+
+
+   
+      
+   
+
+
+.. currentmodule:: ryd_numerov.model
+
+
+
+
+
+
+.. rubric:: Classes
+
+.. .. inheritance-diagram:: ryd_numerov.model
+..     :parts: 1
+
+.. autosummary::
+   :toctree: .
+   
+      Model
+
+
+
+
+
+
+.. rubric:: Module description
+
+.. automodule:: ryd_numerov.model

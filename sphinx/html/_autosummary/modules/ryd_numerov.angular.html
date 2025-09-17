@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>angular &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="calc_angular_matrix_element" href="ryd_numerov.angular.calc_angular_matrix_element.html" />
+    <link rel="prev" title="RydbergStateSQDT" href="ryd_numerov.RydbergStateSQDT.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ryd_numerov.html">ryd_numerov</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergState.html">RydbergState</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateMQDT.html">RydbergStateMQDT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateSQDT.html">RydbergStateSQDT</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">angular</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.calc_angular_matrix_element.html">calc_angular_matrix_element</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.calc_reduced_angular_matrix_element.html">calc_reduced_angular_matrix_element</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.calc_wigner_3j.html">calc_wigner_3j</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.calc_wigner_6j.html">calc_wigner_6j</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.check_triangular.html">check_triangular</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.minus_one_pow.html">minus_one_pow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.spherical_like_matrix_element.html">spherical_like_matrix_element</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.angular.spin_like_matrix_element.html">spin_like_matrix_element</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.elements.html">elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.radial.html">radial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.html">ryd_numerov</a></li>
+      <li class="breadcrumb-item active">angular</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/_autosummary/modules/ryd_numerov.angular.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="angular">
+<h1>angular<a class="headerlink" href="#angular" title="Link to this heading"></a></h1>
+<p>Full module path: ryd_numerov.angular</p>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.angular.calc_angular_matrix_element.html#ryd_numerov.angular.calc_angular_matrix_element" title="ryd_numerov.angular.calc_angular_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_angular_matrix_element</span></code></a>(s1, l1, j1, m1, ...)</p></td>
+<td><p>Calculate the angular matrix element $bra{state_2} hat{O}_{kq} ket{state_1}$.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.angular.calc_reduced_angular_matrix_element.html#ryd_numerov.angular.calc_reduced_angular_matrix_element" title="ryd_numerov.angular.calc_reduced_angular_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_reduced_angular_matrix_element</span></code></a>(s1, l1, ...)</p></td>
+<td><p>Calculate the reduced matrix element <span class="math notranslate nohighlight">\(\langle j2 || \hat{O}_{k0} || j1 \rangle\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.angular.calc_wigner_3j.html#ryd_numerov.angular.calc_wigner_3j" title="ryd_numerov.angular.calc_wigner_3j"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_wigner_3j</span></code></a>(j_1, j_2, j_3, m_1, m_2, m_3)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.angular.calc_wigner_6j.html#ryd_numerov.angular.calc_wigner_6j" title="ryd_numerov.angular.calc_wigner_6j"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_wigner_6j</span></code></a>(j_1, j_2, j_3, j_4, j_5, j_6)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.angular.check_triangular.html#ryd_numerov.angular.check_triangular" title="ryd_numerov.angular.check_triangular"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_triangular</span></code></a>(j1, j2, j3)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.angular.minus_one_pow.html#ryd_numerov.angular.minus_one_pow" title="ryd_numerov.angular.minus_one_pow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">minus_one_pow</span></code></a>(n)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.angular.spherical_like_matrix_element.html#ryd_numerov.angular.spherical_like_matrix_element" title="ryd_numerov.angular.spherical_like_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spherical_like_matrix_element</span></code></a>(l1, l2, ...)</p></td>
+<td><p>Calculate the reduced spherical-like matrix element $(l2||hat{Y}_{k0}||l1)$.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.angular.spin_like_matrix_element.html#ryd_numerov.angular.spin_like_matrix_element" title="ryd_numerov.angular.spin_like_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spin_like_matrix_element</span></code></a>(x1, x2, kappa)</p></td>
+<td><p>Calculate the reduced spin-like matrix element $(x2||hat{x}_{10}||x1)$ for a spin-like operator.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Module description</p>
+<span class="target" id="module-ryd_numerov.angular"></span></section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ryd_numerov.RydbergStateSQDT.html" class="btn btn-neutral float-left" title="RydbergStateSQDT" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ryd_numerov.angular.calc_angular_matrix_element.html" class="btn btn-neutral float-right" title="calc_angular_matrix_element" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

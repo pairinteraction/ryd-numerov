@@ -1,0 +1,184 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ryd_numerov.elements.sodium &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">API Reference</a></li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ryd_numerov.elements.sodium</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ryd_numerov.elements.sodium</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.elements.base_element</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseElement</span>
+
+
+<div class="viewcode-block" id="Sodium">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.Sodium.html#ryd_numerov.elements.Sodium">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Sodium</span><span class="p">(</span><span class="n">BaseElement</span><span class="p">):</span>
+    <span class="n">species</span> <span class="o">=</span> <span class="s2">&quot;Na&quot;</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">number_valence_electrons</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">ground_state_shell</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">_core_electron_configuration</span> <span class="o">=</span> <span class="s2">&quot;2p6&quot;</span>
+    <span class="n">_nist_energy_levels_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;nist_energy_levels&quot;</span> <span class="o">/</span> <span class="s2">&quot;sodium.txt&quot;</span>
+
+    <span class="c1"># https://webbook.nist.gov/cgi/inchi?ID=C7440235&amp;Mask=20</span>
+    <span class="n">_ionization_energy</span> <span class="o">=</span> <span class="p">(</span><span class="mf">5.139_08</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;eV&quot;</span><span class="p">)</span>
+
+    <span class="n">potential_type_default</span> <span class="o">=</span> <span class="s2">&quot;model_potential_marinescu_1993&quot;</span>
+
+    <span class="c1"># -- [1] Phys. Rev. A 45, 4720 (1992)</span>
+    <span class="c1"># -- [2] Quantum Electron. 25 914 (1995)</span>
+    <span class="c1"># -- [3] J. Phys. B: At. Mol. Opt. Phys. 30 2345 (1997)</span>
+    <span class="n">_quantum_defects</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">1.34796938</span><span class="p">,</span> <span class="mf">0.0609892</span><span class="p">,</span> <span class="mf">0.0196743</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.001045</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [1,2]</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.85544502</span><span class="p">,</span> <span class="mf">0.112067</span><span class="p">,</span> <span class="mf">0.0479</span><span class="p">,</span> <span class="mf">0.0457</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [2]</span>
+        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.85462615</span><span class="p">,</span> <span class="mf">0.112344</span><span class="p">,</span> <span class="mf">0.0497</span><span class="p">,</span> <span class="mf">0.0406</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [2]</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.014909286</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.042506</span><span class="p">,</span> <span class="mf">0.00840</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [2,3]</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.01492422</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.042585</span><span class="p">,</span> <span class="mf">0.00840</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [2,3]</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.001632977</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0069906</span><span class="p">,</span> <span class="mf">0.00423</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [3]</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.001630875</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0069824</span><span class="p">,</span> <span class="mf">0.00352</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [3]</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.00043825</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00283</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [3]</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.00043740</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00297</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [3]</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">4.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.00016114</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00185</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [3]</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mf">5.5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="mf">0.00015796</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00148</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># [3]</span>
+    <span class="p">}</span>
+
+    <span class="n">_corrected_rydberg_constant</span> <span class="o">=</span> <span class="p">(</span><span class="mf">109734.69</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;1/cm&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Phys. Rev. A 49, 982 (1994)</span>
+    <span class="n">alpha_c_marinescu_1993</span> <span class="o">=</span> <span class="mf">0.9448</span>
+    <span class="n">r_c_dict_marinescu_1993</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="mf">0.45489422</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mf">0.45798739</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mf">0.71875312</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">28.6735059</span><span class="p">}</span>
+    <span class="n">model_potential_parameter_marinescu_1993</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">0</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.82223117</span><span class="p">,</span> <span class="mf">2.45449865</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.12255048</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.42631393</span><span class="p">),</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="mf">5.08382502</span><span class="p">,</span> <span class="mf">2.18226881</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.19534623</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.03142861</span><span class="p">),</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="mf">3.53324124</span><span class="p">,</span> <span class="mf">2.48697936</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.75688448</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.27852357</span><span class="p">),</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.11056646</span><span class="p">,</span> <span class="mf">1.05458759</span><span class="p">,</span> <span class="mf">1.73203428</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09265696</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="c1"># https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025</span>
+    <span class="n">model_potential_parameter_fei_2009</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.9729</span><span class="p">,</span> <span class="mf">2.5434</span><span class="p">,</span> <span class="mf">1.0406</span><span class="p">,</span> <span class="mf">0.4685</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
