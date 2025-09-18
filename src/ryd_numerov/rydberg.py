@@ -328,12 +328,12 @@ class RydbergStateSQDT(_CommonRydbergState):
         msgs: list[str] = []
         n, l, j_tot, s_tot, m = self.n, self.l, self.j_tot, self.s_tot, self.m
 
-        if not isinstance(n, int):
+        if not isinstance(n, (int, np.integer)):
             msgs.append(f"n must be an integer, but {n=}")
         if not n >= 1:
             msgs.append(f"n must be larger than 0, but is {n=}")
 
-        if not isinstance(l, int):
+        if not isinstance(l, (int, np.integer)):
             msgs.append(f"l must be an integer, but {l=}")
         if not 0 <= l <= n - 1:
             msgs.append(f"l must be between 0 and n - 1, but {l=}, {n=}")

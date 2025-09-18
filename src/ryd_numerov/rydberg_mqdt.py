@@ -2,6 +2,8 @@ import logging
 from functools import cached_property
 from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
+import numpy as np
+
 from ryd_numerov.rydberg import _CommonRydbergState
 from ryd_numerov.units import BaseQuantities
 
@@ -103,15 +105,15 @@ class RydbergStateMQDT(_CommonRydbergState):
             msgs.append(f"nu must be larger than 0, but is {nu=}")
 
         if n is not None:
-            if not isinstance(n, int):
+            if not isinstance(n, (int, np.integer)):
                 msgs.append(f"n must be an integer, but {n=}")
             if not n >= 1:
                 msgs.append(f"n must be larger than 0, but is {n=}")
             if not nu <= n:
                 logger.warning("n should be larger (or equal) than nu, but n=%d, nu=%f for %r", n, nu, self)
 
-        if not isinstance(l, int):
-            msgs.append(f"l must be an integer, but {l=}")
+        if not isinstance(l, (int, np.integer)):
+            msgs.append(f"l must be an integer, but {l=}, {type(l)=}")
         if n is not None and not 0 <= l <= n - 1:
             msgs.append(f"l must be between 0 and n - 1, but {l=}, {n=}")
 
