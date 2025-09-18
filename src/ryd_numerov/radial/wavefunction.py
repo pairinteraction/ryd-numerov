@@ -57,6 +57,11 @@ class Wavefunction(ABC):
         r"""The radial wavefunction \tilde{R}(r) in atomic units \tilde{R}(r) = a_0^{-3/2} R(r)."""
         return self.u_list / self.grid.x_list
 
+    @property
+    def nodes(self) -> int:
+        """The number of nodes (i.e. zero-crossings) of the wavefunction."""
+        return int(np.sum(np.abs(np.diff(np.sign(self.w_list)))) // 2)
+
     @abstractmethod
     def integrate(self) -> None:
         """Integrate the radial Schrödinger equation and store the wavefunction in the w_list attribute."""
@@ -291,7 +296,7 @@ class WavefunctionNumerov(Wavefunction):
             )
 
         # Check the number of nodes
-        nodes = np.sum(np.abs(np.diff(np.sign(self.w_list)))) // 2
+        nodes = self.nodes
         if state.n is not None and nodes != state.n - state.l - 1:
             warning_msgs.append(f"The wavefunction has {nodes} nodes, but should have {state.n - state.l - 1} nodes.")
 
