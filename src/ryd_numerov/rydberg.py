@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 TransitionRateMethod = Literal["exact", "approximation"]
 
 
-class _CommonRydbergState(ABC):
+class RydbergStateBase(ABC):
     species: str
     n: Optional[int]
     l: int
@@ -204,13 +204,13 @@ class _CommonRydbergState(ABC):
         self._grid = self._wavefunction.grid
 
     @overload
-    def calc_radial_matrix_element(self, other: "Self", k_radial: int) -> "PintFloat": ...
+    def calc_radial_matrix_element(self, other: "RydbergStateBase", k_radial: int) -> "PintFloat": ...
 
     @overload
-    def calc_radial_matrix_element(self, other: "Self", k_radial: int, unit: str) -> float: ...
+    def calc_radial_matrix_element(self, other: "RydbergStateBase", k_radial: int, unit: str) -> float: ...
 
     def calc_radial_matrix_element(
-        self, other: "Self", k_radial: int, unit: Optional[str] = None
+        self, other: "RydbergStateBase", k_radial: int, unit: Optional[str] = None
     ) -> Union["PintFloat", float]:
         radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
         if unit == "a.u.":
@@ -221,7 +221,7 @@ class _CommonRydbergState(ABC):
         return radial_matrix_element.to(unit).magnitude
 
 
-class RydbergStateSQDT(_CommonRydbergState):
+class RydbergStateSQDT(RydbergStateBase):
     r"""Create a Rydberg state, for which the radial Schrödinger equation is solved using the Numerov method.
 
     This class is meant as single-channel quantum defect theory description,
