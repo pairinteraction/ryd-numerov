@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Literal, Optional, Union, overload
 
 import numpy as np
 
-from ryd_numerov.rydberg import _CommonRydbergState
+from ryd_numerov.rydberg import RydbergStateBase
 from ryd_numerov.units import BaseQuantities
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class RydbergStateMQDT(_CommonRydbergState):
+class RydbergStateMQDT(RydbergStateBase):
     def __init__(
         self,
         species: str,
