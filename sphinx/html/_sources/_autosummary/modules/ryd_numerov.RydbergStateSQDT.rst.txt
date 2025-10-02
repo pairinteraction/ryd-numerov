@@ -1,0 +1,51 @@
+RydbergStateSQDT
+================
+
+.. currentmodule:: ryd_numerov
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~RydbergStateSQDT.__init__
+      ~RydbergStateSQDT.calc_angular_matrix_element
+      ~RydbergStateSQDT.calc_matrix_element
+      ~RydbergStateSQDT.calc_radial_matrix_element
+      ~RydbergStateSQDT.copy
+      ~RydbergStateSQDT.create_element
+      ~RydbergStateSQDT.create_grid
+      ~RydbergStateSQDT.create_model
+      ~RydbergStateSQDT.create_wavefunction
+      ~RydbergStateSQDT.get_black_body_transition_rates
+      ~RydbergStateSQDT.get_energy
+      ~RydbergStateSQDT.get_label
+      ~RydbergStateSQDT.get_lifetime
+      ~RydbergStateSQDT.get_n_star
+      ~RydbergStateSQDT.get_spontaneous_transition_rates
+      ~RydbergStateSQDT.sanity_check
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~RydbergStateSQDT.element
+   ~RydbergStateSQDT.grid
+   ~RydbergStateSQDT.model
+   ~RydbergStateSQDT.w_list
+   ~RydbergStateSQDT.wavefunction
+   ~RydbergStateSQDT.z_list
+   ~RydbergStateSQDT.n
+   ~RydbergStateSQDT.species
+   ~RydbergStateSQDT.l
+
+
+
+.. autoclass:: ryd_numerov.RydbergStateSQDT
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

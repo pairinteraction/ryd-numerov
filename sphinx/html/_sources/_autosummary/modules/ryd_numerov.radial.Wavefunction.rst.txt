@@ -1,0 +1,33 @@
+Wavefunction
+============
+
+.. currentmodule:: ryd_numerov.radial
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Wavefunction.__init__
+      ~Wavefunction.apply_sign_convention
+      ~Wavefunction.integrate
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Wavefunction.nodes
+   ~Wavefunction.r_list
+   ~Wavefunction.u_list
+   ~Wavefunction.w_list
+
+
+
+.. autoclass:: ryd_numerov.radial.Wavefunction
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

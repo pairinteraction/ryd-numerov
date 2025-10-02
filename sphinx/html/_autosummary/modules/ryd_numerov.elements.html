@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elements &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="BaseElement" href="ryd_numerov.elements.BaseElement.html" />
+    <link rel="prev" title="spin_like_matrix_element" href="ryd_numerov.angular.spin_like_matrix_element.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ryd_numerov.html">ryd_numerov</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergState.html">RydbergState</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateMQDT.html">RydbergStateMQDT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateSQDT.html">RydbergStateSQDT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.angular.html">angular</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">elements</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.BaseElement.html">BaseElement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Cesium.html">Cesium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Hydrogen.html">Hydrogen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.HydrogenTextBook.html">HydrogenTextBook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Lithium.html">Lithium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Potassium.html">Potassium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Rubidium.html">Rubidium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Sodium.html">Sodium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Strontium87.html">Strontium87</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Strontium88.html">Strontium88</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Ytterbium171.html">Ytterbium171</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Ytterbium173.html">Ytterbium173</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Ytterbium174.html">Ytterbium174</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.radial.html">radial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.html">ryd_numerov</a></li>
+      <li class="breadcrumb-item active">elements</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/_autosummary/modules/ryd_numerov.elements.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="elements">
+<h1>elements<a class="headerlink" href="#elements" title="Link to this heading"></a></h1>
+<p>Full module path: ryd_numerov.elements</p>
+<p class="rubric">Classes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement" title="ryd_numerov.elements.BaseElement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseElement</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p>Abstract base class for all elements.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.elements.Cesium.html#ryd_numerov.elements.Cesium" title="ryd_numerov.elements.Cesium"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Cesium</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.Hydrogen.html#ryd_numerov.elements.Hydrogen" title="ryd_numerov.elements.Hydrogen"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Hydrogen</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.elements.HydrogenTextBook.html#ryd_numerov.elements.HydrogenTextBook" title="ryd_numerov.elements.HydrogenTextBook"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HydrogenTextBook</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p>Hydrogen from QM textbook with infinite nucleus mass and no spin orbit coupling.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.Lithium.html#ryd_numerov.elements.Lithium" title="ryd_numerov.elements.Lithium"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Lithium</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.elements.Potassium.html#ryd_numerov.elements.Potassium" title="ryd_numerov.elements.Potassium"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Potassium</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.Rubidium.html#ryd_numerov.elements.Rubidium" title="ryd_numerov.elements.Rubidium"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Rubidium</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.elements.Sodium.html#ryd_numerov.elements.Sodium" title="ryd_numerov.elements.Sodium"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Sodium</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.Strontium87.html#ryd_numerov.elements.Strontium87" title="ryd_numerov.elements.Strontium87"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Strontium87</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.elements.Strontium88.html#ryd_numerov.elements.Strontium88" title="ryd_numerov.elements.Strontium88"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Strontium88</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.Ytterbium171.html#ryd_numerov.elements.Ytterbium171" title="ryd_numerov.elements.Ytterbium171"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Ytterbium171</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ryd_numerov.elements.Ytterbium173.html#ryd_numerov.elements.Ytterbium173" title="ryd_numerov.elements.Ytterbium173"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Ytterbium173</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ryd_numerov.elements.Ytterbium174.html#ryd_numerov.elements.Ytterbium174" title="ryd_numerov.elements.Ytterbium174"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Ytterbium174</span></code></a>([use_nist_data, nist_n_max])</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Module description</p>
+<span class="target" id="module-ryd_numerov.elements"></span></section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ryd_numerov.angular.spin_like_matrix_element.html" class="btn btn-neutral float-left" title="spin_like_matrix_element" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ryd_numerov.elements.BaseElement.html" class="btn btn-neutral float-right" title="BaseElement" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
