@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING, Literal
 
@@ -14,8 +16,8 @@ INTEGRATION_METHODS = Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapez
 
 
 def calc_radial_matrix_element(
-    state1: "RydbergStateBase",
-    state2: "RydbergStateBase",
+    state1: RydbergStateBase,
+    state2: RydbergStateBase,
     k_radial: int = 0,
     integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
@@ -52,10 +54,10 @@ def calc_radial_matrix_element(
 
 
 def _calc_radial_matrix_element_from_w_z(
-    z1: "NDArray",
-    w1: "NDArray",
-    z2: "NDArray",
-    w2: "NDArray",
+    z1: NDArray,
+    w1: NDArray,
+    z2: NDArray,
+    w2: NDArray,
     k_radial: int = 0,
     integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:
@@ -120,7 +122,7 @@ def _calc_radial_matrix_element_from_w_z(
     return _integrate(integrand, dz, integration_method)
 
 
-def _multiply_by_powers(result: "NDArray", base: "NDArray", exponent: int) -> "NDArray":
+def _multiply_by_powers(result: NDArray, base: NDArray, exponent: int) -> NDArray:
     """Calculate result * base**(exponent) in an optimized way."""
     base_powers = {0: base}
     for i in range(exponent):
@@ -133,7 +135,7 @@ def _multiply_by_powers(result: "NDArray", base: "NDArray", exponent: int) -> "N
     return result
 
 
-def _sanity_check_integration(z1: "NDArray", z2: "NDArray") -> None:
+def _sanity_check_integration(z1: NDArray, z2: NDArray) -> None:
     tol = 1e-10
     assert len(z1) == len(z2), f"Length mismatch: {len(z1)=} != {len(z2)=}"
     assert z1[0] - z2[0] < tol, f"First point mismatch: {z1[0]=} != {z2[0]=}"
@@ -142,7 +144,7 @@ def _sanity_check_integration(z1: "NDArray", z2: "NDArray") -> None:
     assert z1[-1] - z2[-1] < tol, f"Last point mismatch: {z1[-1]=} != {z2[-1]=}"
 
 
-def _integrate(integrand: "NDArray", dz: float, method: INTEGRATION_METHODS) -> float:
+def _integrate(integrand: NDArray, dz: float, method: INTEGRATION_METHODS) -> float:
     """Integrate the given integrand using the specified method."""
     if method == "sum":
         value = np.sum(integrand) * dz

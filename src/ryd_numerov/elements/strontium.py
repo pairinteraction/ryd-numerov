@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.units import electron_mass, rydberg_constant
@@ -15,7 +17,7 @@ class _StrontiumAbstract(BaseElement):
     _nist_energy_levels_file = Path(__file__).parent / "nist_energy_levels" / "strontium.txt"
 
     # https://webbook.nist.gov/cgi/inchi?ID=C7440246&Mask=20
-    _ionization_energy: tuple[float, Optional[float], str] = (5.694_84, 0.000_02, "eV")
+    _ionization_energy: tuple[float, float | None, str] = (5.694_84, 0.000_02, "eV")
 
     potential_type_default = "model_potential_fei_2009"
 

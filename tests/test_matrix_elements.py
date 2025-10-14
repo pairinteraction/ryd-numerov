@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from ryd_numerov.rydberg import RydbergState
 from ryd_numerov.units import BaseUnits, ureg
 

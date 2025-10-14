@@ -1,17 +1,20 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import re
 from abc import ABC
 from fractions import Fraction
 from functools import cache, cached_property
-from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Optional, Union, overload
+from typing import TYPE_CHECKING, ClassVar, overload
 
 import numpy as np
 
 from ryd_numerov.units import rydberg_constant, ureg
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from ryd_numerov.model.model import PotentialType
     from ryd_numerov.units import PintFloat
 
@@ -39,21 +42,19 @@ class BaseElement(ABC):
 
     _core_electron_configuration: ClassVar[str]
     """Electron configuration of the core electrons, e.g. 4p6 for Rb or 5s for Sr."""
-    _ionization_energy: tuple[float, Optional[float], str]
+    _ionization_energy: tuple[float, float | None, str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
     # Parameters for the extended Rydberg Ritz formula, see calc_n_star
-    _quantum_defects: ClassVar[Optional[dict[tuple[int, float, float], tuple[float, float, float, float, float]]]] = (
-        None
-    )
+    _quantum_defects: ClassVar[dict[tuple[int, float, float], tuple[float, float, float, float, float]] | None] = None
     """Dictionary containing the quantum defects for each (l, j_tot, s_tot) combination, i.e.
     _quantum_defects[(l,j_tot,s_tot)] = (d0, d2, d4, d6, d8)
     """
 
-    _corrected_rydberg_constant: tuple[float, Optional[float], str]
+    _corrected_rydberg_constant: tuple[float, float | None, str]
     r"""Corrected Rydberg constant stored as (value, uncertainty, unit)"""
 
-    potential_type_default: Optional["PotentialType"] = None
+    potential_type_default: PotentialType | None = None
     """Default potential type to use for this element. If None, the potential type must be specified explicitly.
     In general, it looks like marinescu_1993 is better for alkali atoms, and fei_2009 is better for alkaline earth atoms
     """
@@ -78,7 +79,7 @@ class BaseElement(ABC):
     defined in: Y. Fei et al., Chin. Phys. B 18, 4349 (2009), https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025
     """
 
-    _nist_energy_levels_file: Optional[Path] = None
+    _nist_energy_levels_file: Path | None = None
     """Path to the NIST energy levels file for this element.
     The file should be directly downloaded from https://physics.nist.gov/PhysRefData/ASD/levels_form.html
     in the 'Tab-delimited' format and in units of Hartree.
@@ -170,7 +171,7 @@ class BaseElement(ABC):
 
     @classmethod
     @cache
-    def from_species(cls, species: str, use_nist_data: bool = True) -> "BaseElement":
+    def from_species(cls, species: str, use_nist_data: bool = True) -> BaseElement:
         """Create an instance of the element class from the species string.
 
         This method searches through all subclasses of BaseElement until it finds one with a matching species attribute.
@@ -196,7 +197,7 @@ class BaseElement(ABC):
         )
 
     @classmethod
-    def _get_concrete_subclasses(cls) -> list[type["BaseElement"]]:
+    def _get_concrete_subclasses(cls) -> list[type[BaseElement]]:
         subclasses = []
         for subclass in cls.__subclasses__():
             if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
@@ -239,12 +240,12 @@ class BaseElement(ABC):
         return (n, l) in self._additional_allowed_shells
 
     @overload
-    def get_ionization_energy(self, unit: None = None) -> "PintFloat": ...
+    def get_ionization_energy(self, unit: None = None) -> PintFloat: ...
 
     @overload
     def get_ionization_energy(self, unit: str) -> float: ...
 
-    def get_ionization_energy(self, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
+    def get_ionization_energy(self, unit: str | None = "hartree") -> PintFloat | float:
         """Return the ionization energy in the desired unit.
 
         Args:
@@ -263,12 +264,12 @@ class BaseElement(ABC):
         return ionization_energy.to(unit, "spectroscopy").magnitude
 
     @overload
-    def get_corrected_rydberg_constant(self, unit: None = None) -> "PintFloat": ...
+    def get_corrected_rydberg_constant(self, unit: None = None) -> PintFloat: ...
 
     @overload
     def get_corrected_rydberg_constant(self, unit: str) -> float: ...
 
-    def get_corrected_rydberg_constant(self, unit: Optional[str] = "hartree") -> Union["PintFloat", float]:
+    def get_corrected_rydberg_constant(self, unit: str | None = "hartree") -> PintFloat | float:
         r"""Return the corrected Rydberg constant in the desired unit.
 
         The corrected Rydberg constant is defined as
@@ -317,14 +318,14 @@ class BaseElement(ABC):
         )
 
     @overload
-    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: None = None) -> "PintFloat": ...
+    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: None = None) -> PintFloat: ...
 
     @overload
     def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: str) -> float: ...
 
     def calc_energy(
-        self, n: int, l: int, j_tot: float, s_tot: float, unit: Optional[str] = "hartree"
-    ) -> Union["PintFloat", float]:
+        self, n: int, l: int, j_tot: float, s_tot: float, unit: str | None = "hartree"
+    ) -> PintFloat | float:
         r"""Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.
 
         I.e. either look up the energy for low lying states in the nist data,
@@ -355,7 +356,7 @@ class BaseElement(ABC):
         if j_tot % 1 != (l + s_tot) % 1:
             raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
 
-        energy_au: Optional[float] = None
+        energy_au: float | None = None
         if n <= self._nist_n_max and self.use_nist_data:
             if (n, l, j_tot, s_tot) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]

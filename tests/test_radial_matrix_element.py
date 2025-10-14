@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from ryd_numerov.radial import calc_radial_matrix_element
 from ryd_numerov.rydberg import RydbergState
 

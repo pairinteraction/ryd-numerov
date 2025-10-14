@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, TypeVar, get_args
+from typing import TYPE_CHECKING, Literal, TypeVar, get_args
 
 import numpy as np
 
@@ -20,9 +22,9 @@ class Model:
 
     def __init__(
         self,
-        element: "BaseElement",
+        element: BaseElement,
         l: int,
-        potential_type: Optional[PotentialType] = None,
+        potential_type: PotentialType | None = None,
     ) -> None:
         r"""Initialize the model.
 
@@ -43,7 +45,7 @@ class Model:
             raise ValueError(f"Invalid potential type {potential_type}. Must be one of {get_args(PotentialType)}.")
         self.potential_type = potential_type
 
-    def calc_potential_coulomb(self, x: "XType") -> "XType":
+    def calc_potential_coulomb(self, x: XType) -> XType:
         r"""Calculate the Coulomb potential V_Col(x) in atomic units.
 
         The Coulomb potential is given as
@@ -62,7 +64,7 @@ class Model:
         """
         return -1 / x
 
-    def calc_model_potential_marinescu_1993(self, x: "XType") -> "XType":
+    def calc_model_potential_marinescu_1993(self, x: XType) -> XType:
         r"""Calculate the model potential by Marinescu et al. (1994) in atomic units.
 
         The model potential from
@@ -114,7 +116,7 @@ class Model:
 
         return v_c + v_p
 
-    def calc_model_potential_fei_2009(self, x: "XType") -> "XType":
+    def calc_model_potential_fei_2009(self, x: XType) -> XType:
         r"""Calculate the model potential by Fei et al. (2009) in atomic units.
 
         The four parameter potential from Y. Fei et al., Chin. Phys. B 18, 4349 (2009), https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025
@@ -138,7 +140,7 @@ class Model:
             denom: XType = 1 - alpha + alpha * np.exp(beta * x**delta + gamma * x ** (2.0 * delta))
             return -1 / x - (self.element.Z - 1) / (x * denom)
 
-    def calc_effective_potential_centrifugal(self, x: "XType") -> "XType":
+    def calc_effective_potential_centrifugal(self, x: XType) -> XType:
         r"""Calculate the effective centrifugal potential V_l(x) in atomic units.
 
         The effective centrifugal potential is given as
@@ -158,7 +160,7 @@ class Model:
         x2 = x * x
         return (1 / self.element.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
 
-    def calc_effective_potential_sqrt(self, x: "XType") -> "XType":
+    def calc_effective_potential_sqrt(self, x: XType) -> XType:
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
 
         The sqrt transformation potential arises from the transformation from the wavefunction u(x) to w(z),
@@ -179,7 +181,7 @@ class Model:
         x2 = x * x
         return (1 / self.element.reduced_mass_factor) * (3 / 32) / x2
 
-    def calc_total_effective_potential(self, x: "XType") -> "XType":
+    def calc_total_effective_potential(self, x: XType) -> XType:
         r"""Calculate the total effective potential V_eff(x) in atomic units.
 
         The total effective potential includes all physical and effective potentials:

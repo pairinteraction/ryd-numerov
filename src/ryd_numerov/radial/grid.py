@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -65,7 +67,7 @@ class Grid:
         return self.z_list[-1]  # type: ignore [no-any-return]  # FIXME: numpy indexing
 
     @property
-    def z_list(self) -> "NDArray":
+    def z_list(self) -> NDArray:
         """The grid in the scaled dimensionless coordinate z = sqrt{x}.
 
         In this coordinate the grid points are chosen equidistant,
@@ -84,11 +86,11 @@ class Grid:
         return self.z_max**2
 
     @property
-    def x_list(self) -> "NDArray":
+    def x_list(self) -> NDArray:
         """The grid in the dimensionless coordinate x = r/a_0."""
         return self.z_list**2
 
-    def set_grid_range(self, step_start: Optional[int] = None, step_stop: Optional[int] = None) -> None:
+    def set_grid_range(self, step_start: int | None = None, step_stop: int | None = None) -> None:
         """Restrict the grid to the range [step_start, step_stop]."""
         if step_start is None:
             step_start = 0

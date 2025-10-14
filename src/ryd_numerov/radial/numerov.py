@@ -1,9 +1,12 @@
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Callable, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
 
 from numba import njit
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from ryd_numerov.units import NDArray
 
 
@@ -13,7 +16,7 @@ def _run_numerov_integration_python(
     dx: float,
     y0: float,
     y1: float,
-    g_list: Union[Sequence[float], "NDArray"],
+    g_list: Sequence[float] | NDArray,
     x_min: float,
     verbose: bool = False,
 ) -> list[float]:
@@ -58,7 +61,7 @@ def run_numerov_integration(
     dx: float,
     y0: float,
     y1: float,
-    g_list: Union[Sequence[float], "NDArray"],
+    g_list: Sequence[float] | NDArray,
     x_min: float,
     verbose: bool = False,
 ) -> list[float]:

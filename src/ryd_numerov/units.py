@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Literal, Union
 
 from pint import UnitRegistry
@@ -66,10 +68,10 @@ _CommonUnits: dict[Dimension, str] = {
     "ARBITRARY": "",  # 1 dimensionless
     "ZERO": "",  # 1 dimensionless
 }
-BaseUnits: dict[Dimension, "PlainUnit"] = {
+BaseUnits: dict[Dimension, PlainUnit] = {
     k: ureg.Quantity(1, unit).to_base_units().units for k, unit in _CommonUnits.items()
 }
-BaseQuantities: dict[Dimension, "PintFloat"] = {k: ureg.Quantity(1, unit) for k, unit in BaseUnits.items()}
+BaseQuantities: dict[Dimension, PintFloat] = {k: ureg.Quantity(1, unit) for k, unit in BaseUnits.items()}
 
 Context = Literal["spectroscopy", "Gaussian"]
 BaseContexts: dict[Dimension, Context] = {

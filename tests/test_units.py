@@ -1,5 +1,4 @@
 import numpy as np
-
 from ryd_numerov.units import rydberg_constant, ureg
 
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, Optional
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-WavefunctionSignConvention = Literal[None, "positive_at_outer_bound", "n_l_1"]
+WavefunctionSignConvention = Optional[Literal["positive_at_outer_bound", "n_l_1"]]
 
 
 class Wavefunction(ABC):
@@ -24,8 +26,8 @@ class Wavefunction(ABC):
 
     def __init__(
         self,
-        state: "RydbergStateBase",
-        grid: "Grid",
+        state: RydbergStateBase,
+        grid: Grid,
     ) -> None:
         """Create a Wavefunction object.
 
@@ -37,10 +39,10 @@ class Wavefunction(ABC):
         self.state = state
         self.grid = grid
 
-        self._w_list: Optional[NDArray] = None
+        self._w_list: NDArray | None = None
 
     @property
-    def w_list(self) -> "NDArray":
+    def w_list(self) -> NDArray:
         r"""The dimensionless scaled wavefunction w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r)."""
         if self._w_list is None:
             self.integrate()
@@ -48,12 +50,12 @@ class Wavefunction(ABC):
         return self._w_list
 
     @property
-    def u_list(self) -> "NDArray":
+    def u_list(self) -> NDArray:
         r"""The dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r)."""
         return np.sqrt(self.grid.z_list) * self.w_list
 
     @property
-    def r_list(self) -> "NDArray":
+    def r_list(self) -> NDArray:
         r"""The radial wavefunction \tilde{R}(r) in atomic units \tilde{R}(r) = a_0^{-3/2} R(r)."""
         return self.u_list / self.grid.x_list
 
@@ -102,9 +104,9 @@ class Wavefunction(ABC):
 class WavefunctionNumerov(Wavefunction):
     def __init__(
         self,
-        state: "RydbergStateBase",
-        grid: "Grid",
-        model: "Model",
+        state: RydbergStateBase,
+        grid: Grid,
+        model: Model,
     ) -> None:
         """Create a Wavefunction object.
 

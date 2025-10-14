@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Literal, Optional, Union, get_args, overload
+from typing import TYPE_CHECKING, Literal, get_args, overload
 
 import numpy as np
 from scipy.special import exprel
@@ -10,7 +12,6 @@ from ryd_numerov.elements import BaseElement
 from ryd_numerov.model import Model
 from ryd_numerov.radial import (
     Grid,
-    Wavefunction,
     WavefunctionNumerov,
     WavefunctionWhittaker,
     calc_radial_matrix_element,
@@ -21,6 +22,9 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ryd_numerov.model.model import PotentialType
+    from ryd_numerov.radial import (
+        Wavefunction,
+    )
     from ryd_numerov.radial.wavefunction import WavefunctionSignConvention
     from ryd_numerov.units import NDArray, PintArray, PintFloat
 
@@ -32,17 +36,17 @@ TransitionRateMethod = Literal["exact", "approximation"]
 
 class RydbergStateBase(ABC):
     species: str
-    n: Optional[int]
+    n: int | None
     l: int
 
     @overload
-    def get_energy(self, unit: None = None) -> "PintFloat": ...
+    def get_energy(self, unit: None = None) -> PintFloat: ...
 
     @overload
     def get_energy(self, unit: str) -> float: ...
 
     @abstractmethod
-    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]: ...
+    def get_energy(self, unit: str | None = None) -> PintFloat | float: ...
 
     def get_n_star(self) -> float:
         r"""Calculate the effective quantum number n* for the Rydberg state.
@@ -77,7 +81,7 @@ class RydbergStateBase(ABC):
             self.create_model()
         return self._model
 
-    def create_model(self, potential_type: Optional["PotentialType"] = None) -> None:
+    def create_model(self, potential_type: PotentialType | None = None) -> None:
         """Create the model for the Rydberg state.
 
         Args:
@@ -101,14 +105,14 @@ class RydbergStateBase(ABC):
         return self._grid
 
     @property
-    def z_list(self) -> "NDArray":
+    def z_list(self) -> NDArray:
         """The list of z values for the grid."""
         return self.grid.z_list
 
     def create_grid(
         self,
-        x_min: Optional[float] = None,
-        x_max: Optional[float] = None,
+        x_min: float | None = None,
+        x_max: float | None = None,
         dz: float = 1e-2,
     ) -> None:
         """Create the grid object for the integration of the radial Schrödinger equation.
@@ -155,18 +159,18 @@ class RydbergStateBase(ABC):
         return self._wavefunction
 
     @property
-    def w_list(self) -> "NDArray":
+    def w_list(self) -> NDArray:
         """The list of w values for the wavefunction."""
         return self.wavefunction.w_list
 
     @overload
-    def create_wavefunction(self, *, sign_convention: "WavefunctionSignConvention" = None) -> None: ...
+    def create_wavefunction(self, *, sign_convention: WavefunctionSignConvention = None) -> None: ...
 
     @overload
     def create_wavefunction(
         self,
         method: Literal["numerov"],
-        sign_convention: "WavefunctionSignConvention" = None,
+        sign_convention: WavefunctionSignConvention = None,
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -175,13 +179,13 @@ class RydbergStateBase(ABC):
 
     @overload
     def create_wavefunction(
-        self, method: Literal["whittaker"], sign_convention: "WavefunctionSignConvention" = None
+        self, method: Literal["whittaker"], sign_convention: WavefunctionSignConvention = None
     ) -> None: ...
 
     def create_wavefunction(
         self,
         method: Literal["numerov", "whittaker"] = "numerov",
-        sign_convention: "WavefunctionSignConvention" = None,
+        sign_convention: WavefunctionSignConvention = None,
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -204,14 +208,14 @@ class RydbergStateBase(ABC):
         self._grid = self._wavefunction.grid
 
     @overload
-    def calc_radial_matrix_element(self, other: "RydbergStateBase", k_radial: int) -> "PintFloat": ...
+    def calc_radial_matrix_element(self, other: RydbergStateBase, k_radial: int) -> PintFloat: ...
 
     @overload
-    def calc_radial_matrix_element(self, other: "RydbergStateBase", k_radial: int, unit: str) -> float: ...
+    def calc_radial_matrix_element(self, other: RydbergStateBase, k_radial: int, unit: str) -> float: ...
 
     def calc_radial_matrix_element(
-        self, other: "RydbergStateBase", k_radial: int, unit: Optional[str] = None
-    ) -> Union["PintFloat", float]:
+        self, other: RydbergStateBase, k_radial: int, unit: str | None = None
+    ) -> PintFloat | float:
         radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
         if unit == "a.u.":
             return radial_matrix_element_au
@@ -245,9 +249,9 @@ class RydbergStateSQDT(RydbergStateBase):
         species: str,
         n: int,
         l: int,
-        j_tot: Optional[float] = None,
-        s_tot: Optional[float] = None,
-        m: Optional[float] = None,
+        j_tot: float | None = None,
+        s_tot: float | None = None,
+        m: float | None = None,
     ) -> None:
         r"""Initialize the Rydberg state.
 
@@ -291,7 +295,7 @@ class RydbergStateSQDT(RydbergStateBase):
     def __str__(self) -> str:
         return self.get_label("ket")
 
-    def copy(self) -> "Self":
+    def copy(self) -> Self:
         """Create a copy of the Rydberg state."""
         return self.__class__(self.species, n=self.n, l=self.l, j_tot=self.j_tot, s_tot=self.s_tot, m=self.m)
 
@@ -384,12 +388,12 @@ class RydbergStateSQDT(RydbergStateBase):
         return msgs
 
     @overload
-    def get_energy(self, unit: None = None) -> "PintFloat": ...
+    def get_energy(self, unit: None = None) -> PintFloat: ...
 
     @overload
     def get_energy(self, unit: str) -> float: ...
 
-    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
+    def get_energy(self, unit: str | None = None) -> PintFloat | float:
         energy_au = self.element.calc_energy(self.n, self.l, self.j_tot, self.s_tot, unit="a.u.")
         if unit == "a.u.":
             return energy_au
@@ -398,7 +402,7 @@ class RydbergStateSQDT(RydbergStateBase):
             return energy
         return energy.to(unit, "spectroscopy").magnitude
 
-    def calc_angular_matrix_element(self, other: "Self", operator: "OperatorType", k_angular: int, q: int) -> float:
+    def calc_angular_matrix_element(self, other: Self, operator: OperatorType, k_angular: int, q: int) -> float:
         """Calculate the dimensionless angular matrix element."""
         if (self.s_tot is None or self.l is None or self.j_tot is None or self.m is None) or (
             other.s_tot is None or other.l is None or other.j_tot is None or other.m is None
@@ -411,17 +415,17 @@ class RydbergStateSQDT(RydbergStateBase):
 
     @overload
     def calc_matrix_element(
-        self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int
-    ) -> "PintFloat": ...
+        self, other: Self, operator: OperatorType, k_radial: int, k_angular: int, q: int
+    ) -> PintFloat: ...
 
     @overload
     def calc_matrix_element(
-        self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int, unit: str
+        self, other: Self, operator: OperatorType, k_radial: int, k_angular: int, q: int, unit: str
     ) -> float: ...
 
     def calc_matrix_element(
-        self, other: "Self", operator: "OperatorType", k_radial: int, k_angular: int, q: int, unit: Optional[str] = None
-    ) -> Union["PintFloat", float]:
+        self, other: Self, operator: OperatorType, k_radial: int, k_angular: int, q: int, unit: str | None = None
+    ) -> PintFloat | float:
         r"""Calculate the matrix element.
 
         Calculate the matrix element between two Rydberg states
@@ -480,18 +484,18 @@ class RydbergStateSQDT(RydbergStateBase):
     @overload
     def get_spontaneous_transition_rates(
         self, *, method: TransitionRateMethod = "exact"
-    ) -> tuple[list["Self"], "PintArray"]: ...
+    ) -> tuple[list[Self], PintArray]: ...
 
     @overload
     def get_spontaneous_transition_rates(
         self, unit: str, method: TransitionRateMethod = "exact"
-    ) -> tuple[list["Self"], "NDArray"]: ...
+    ) -> tuple[list[Self], NDArray]: ...
 
     def get_spontaneous_transition_rates(
         self,
-        unit: Optional[str] = None,
+        unit: str | None = None,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
+    ) -> tuple[list[Self], PintArray | NDArray]:
         """Calculate the spontaneous transition rates for the Rydberg state.
 
         The spontaneous transition rates are given by the Einstein A coefficients.
@@ -513,20 +517,20 @@ class RydbergStateSQDT(RydbergStateBase):
     @overload
     def get_black_body_transition_rates(
         self,
-        temperature: Union[float, "PintFloat"],
-        temperature_unit: Optional[str] = None,
+        temperature: float | PintFloat,
+        temperature_unit: str | None = None,
         *,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], "PintArray"]: ...
+    ) -> tuple[list[Self], PintArray]: ...
 
     @overload
     def get_black_body_transition_rates(
         self,
-        temperature: "PintFloat",
+        temperature: PintFloat,
         *,
         unit: str,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], "NDArray"]: ...
+    ) -> tuple[list[Self], NDArray]: ...
 
     @overload
     def get_black_body_transition_rates(
@@ -535,15 +539,15 @@ class RydbergStateSQDT(RydbergStateBase):
         temperature_unit: str,
         unit: str,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], "NDArray"]: ...
+    ) -> tuple[list[Self], NDArray]: ...
 
     def get_black_body_transition_rates(
         self,
-        temperature: Union[float, "PintFloat"],
-        temperature_unit: Optional[str] = None,
-        unit: Optional[str] = None,
+        temperature: float | PintFloat,
+        temperature_unit: str | None = None,
+        unit: str | None = None,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
+    ) -> tuple[list[Self], PintArray | NDArray]:
         """Calculate the black body transition rates for the Rydberg state.
 
         The black body transitions rates are given by the Einstein B coefficients,
@@ -572,10 +576,10 @@ class RydbergStateSQDT(RydbergStateBase):
     def _get_transition_rates(
         self,
         which_transitions: Literal["spontaneous", "black_body"],
-        temperature_au: Union[float, None] = None,
-        unit: Optional[str] = None,
+        temperature_au: float | None = None,
+        unit: str | None = None,
         method: TransitionRateMethod = "exact",
-    ) -> tuple[list["Self"], Union["PintArray", "NDArray"]]:
+    ) -> tuple[list[Self], PintArray | NDArray]:
         assert which_transitions in ["spontaneous", "black_body"]
 
         is_spontaneous = which_transitions == "spontaneous"
@@ -626,11 +630,11 @@ class RydbergStateSQDT(RydbergStateBase):
     @overload
     def get_lifetime(
         self,
-        temperature: Union[float, "PintFloat", None] = None,
-        temperature_unit: Optional[str] = None,
+        temperature: float | PintFloat | None = None,
+        temperature_unit: str | None = None,
         *,
         method: TransitionRateMethod = "exact",
-    ) -> "PintFloat": ...
+    ) -> PintFloat: ...
 
     @overload
     def get_lifetime(
@@ -643,7 +647,7 @@ class RydbergStateSQDT(RydbergStateBase):
     @overload
     def get_lifetime(
         self,
-        temperature: "PintFloat",
+        temperature: PintFloat,
         *,
         unit: str,
         method: TransitionRateMethod = "exact",
@@ -660,11 +664,11 @@ class RydbergStateSQDT(RydbergStateBase):
 
     def get_lifetime(
         self,
-        temperature: Union[float, "PintFloat", None] = None,
-        temperature_unit: Optional[str] = None,
-        unit: Optional[str] = None,
+        temperature: float | PintFloat | None = None,
+        temperature_unit: str | None = None,
+        unit: str | None = None,
         method: TransitionRateMethod = "exact",
-    ) -> Union["PintFloat", float]:
+    ) -> PintFloat | float:
         r"""Calculate the lifetime of the Rydberg state.
 
         The lifetime is given by the inverse of the sum of the transition rates:
@@ -712,7 +716,7 @@ class RydbergStateSQDT(RydbergStateBase):
 
     def _get_list_of_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
-    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
+    ) -> tuple[list[Self], NDArray, NDArray]:
         if self.m is None:
             raise ValueError("m must be set to get the dipole coupled states.")
 
@@ -747,7 +751,7 @@ class RydbergStateSQDT(RydbergStateBase):
 
     def _get_list_of_radial_dipole_coupled_states(
         self, n_min: int, n_max: int, only_smaller_energy: bool = True
-    ) -> tuple[list["Self"], "NDArray", "NDArray"]:
+    ) -> tuple[list[Self], NDArray, NDArray]:
         relevant_states = []
         energy_differences = []
         radial_matrix_elements = []

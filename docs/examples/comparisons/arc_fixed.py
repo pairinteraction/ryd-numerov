@@ -1,18 +1,20 @@
 # ruff: noqa: INP001
+from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import arc
 import numpy as np
 import scipy.integrate
 
 if TYPE_CHECKING:
+    import arc
+
     from ryd_numerov.units import NDArray
 
 
 def radialWavefunction(  # noqa: N802
     atom: arc.AlkaliAtom, n: int, l: int, j: float, step: float = 1e-2, use_fixed_arc: bool = False
-) -> tuple["NDArray", "NDArray"]:
+) -> tuple[NDArray, NDArray]:
     n, l, j = int(n), int(l), float(j)
     hartree_energy = 27.211 if not use_fixed_arc else 27.211_386_245_988
     energy = atom.getEnergy(int(n), int(l), float(j)) / hartree_energy

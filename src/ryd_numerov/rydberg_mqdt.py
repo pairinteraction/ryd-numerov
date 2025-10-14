@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from functools import cached_property
-from typing import TYPE_CHECKING, Literal, Optional, Union, overload
+from typing import TYPE_CHECKING, Literal, overload
 
 import numpy as np
 
@@ -21,10 +23,10 @@ class RydbergStateMQDT(RydbergStateBase):
         self,
         species: str,
         *,
-        nu: Optional[float] = None,
-        n: Optional[int] = None,
-        l: Optional[int] = None,
-        energy_au: Optional[float] = None,
+        nu: float | None = None,
+        n: int | None = None,
+        l: int | None = None,
+        energy_au: float | None = None,
     ) -> None:
         r"""Initialize the Rydberg state.
 
@@ -63,7 +65,7 @@ class RydbergStateMQDT(RydbergStateBase):
     def __str__(self) -> str:
         return self.get_label("ket")
 
-    def copy(self) -> "Self":
+    def copy(self) -> Self:
         """Create a copy of the Rydberg state."""
         return self.__class__(self.species, nu=self.nu, n=self.n, l=self.l)
 
@@ -125,12 +127,12 @@ class RydbergStateMQDT(RydbergStateBase):
             raise ValueError(f"Invalid Rydberg state {self!r}")
 
     @overload
-    def get_energy(self, unit: None = None) -> "PintFloat": ...
+    def get_energy(self, unit: None = None) -> PintFloat: ...
 
     @overload
     def get_energy(self, unit: str) -> float: ...
 
-    def get_energy(self, unit: Optional[str] = None) -> Union["PintFloat", float]:
+    def get_energy(self, unit: str | None = None) -> PintFloat | float:
         if unit == "a.u.":
             return self._energy_au
         energy: PintFloat = self._energy_au * BaseQuantities["ENERGY"]
