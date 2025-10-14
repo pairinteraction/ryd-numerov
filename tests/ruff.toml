@@ -1,0 +1,4 @@
+extend = "../pyproject.toml"
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "parents"  # allow sibling imports inside tests
