@@ -24,6 +24,7 @@ class HydrogenTextBook(BaseElement):
     """Hydrogen from QM textbook with infinite nucleus mass and no spin orbit coupling."""
 
     species = "H_textbook"
+    Z = 1
     number_valence_electrons = 1
     ground_state_shell = (1, 0)
 

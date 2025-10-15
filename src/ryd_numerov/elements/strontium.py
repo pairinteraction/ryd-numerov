@@ -37,6 +37,7 @@ class _StrontiumAbstract(BaseElement):
 
 class Strontium88(_StrontiumAbstract):
     species = "Sr88"
+    i_c = 0
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/strontiumtable1.htm
     _isotope_mass = 87.905619  # u
@@ -73,6 +74,7 @@ class Strontium88(_StrontiumAbstract):
 
 class Strontium87(_StrontiumAbstract):
     species = "Sr87"
+    i_c = 9 / 2
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/strontiumtable1.htm
     _isotope_mass_u = 86.908884  # u

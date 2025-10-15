@@ -25,6 +25,7 @@ class _YtterbiumAbstract(BaseElement):
 
 class Ytterbium171(_YtterbiumAbstract):
     species = "Yb171"
+    i_c = 1 / 2
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
     _isotope_mass = 170.936323  # u
@@ -37,6 +38,7 @@ class Ytterbium171(_YtterbiumAbstract):
 
 class Ytterbium173(_YtterbiumAbstract):
     species = "Yb173"
+    i_c = 5 / 2
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
     _isotope_mass = 172.938208  # u
@@ -49,6 +51,7 @@ class Ytterbium173(_YtterbiumAbstract):
 
 class Ytterbium174(_YtterbiumAbstract):
     species = "Yb174"
+    i_c = 0
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
     _isotope_mass = 173.938859  # u

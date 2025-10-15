@@ -33,6 +33,8 @@ class BaseElement(ABC):
     """Atomic species."""
     Z: ClassVar[int]
     """Atomic number of the element."""
+    i_c: ClassVar[float] = 0
+    """Nuclear spin, (default 0 to ignore hyperfine structure)."""
     number_valence_electrons: ClassVar[int]
     """Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms)."""
     ground_state_shell: ClassVar[tuple[int, int]]
