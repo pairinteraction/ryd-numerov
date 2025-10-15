@@ -11,8 +11,7 @@ from scipy.special import gamma
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
-    from ryd_numerov.model import Model
-    from ryd_numerov.radial.grid import Grid
+    from ryd_numerov.radial import Grid, Model
     from ryd_numerov.rydberg import RydbergStateBase
     from ryd_numerov.units import NDArray
 

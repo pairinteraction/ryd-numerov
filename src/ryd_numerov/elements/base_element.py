@@ -15,7 +15,7 @@ from ryd_numerov.units import rydberg_constant, ureg
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from ryd_numerov.model.model import PotentialType
+    from ryd_numerov.radial.model import PotentialType
     from ryd_numerov.units import PintFloat
 
 logger = logging.getLogger(__name__)
