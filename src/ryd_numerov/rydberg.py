@@ -150,7 +150,7 @@ class RydbergStateBase(ABC):
 
 
 class RydbergStateAlkali(RydbergStateBase):
-    """Create a Alkali Rydberg state, including the radial and angular states."""
+    """Create an Alkali Rydberg state, including the radial and angular states."""
 
     def __init__(
         self,
@@ -199,4 +199,60 @@ class RydbergStateAlkali(RydbergStateBase):
 
     def get_nu(self) -> float:
         energy_au = self.element.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
+        return self.element.calc_nu_from_energy(energy_au)
+
+
+class RydbergStateAlkalineLS(RydbergStateBase):
+    """Create an Alkaline Rydberg state, including the radial and angular states."""
+
+    def __init__(
+        self,
+        species: str,
+        n: int,
+        l: int,
+        s_tot: float,
+        j_tot: float | None = None,
+        m: float | None = None,
+    ) -> None:
+        r"""Initialize the Rydberg state.
+
+        Args:
+            species: Atomic species.
+            n: Principal quantum number of the rydberg electron.
+            l: Orbital angular momentum quantum number of the rydberg electron.
+            s_tot: Total spin quantum number of all electrons.
+            j_tot: Total angular momentum quantum number of all electrons.
+            m: Total magnetic quantum number.
+              Optional, only needed for concrete angular matrix elements.
+
+        """
+        self.species = species
+        self.n = n
+        self.l = l
+        self.s_tot = s_tot
+        self.j_tot = _try_trivial_spin_addition(l, s_tot, j_tot, "j_tot")
+        self.m = m
+
+        element = BaseElement.from_species(species)
+        if element.number_valence_electrons != 2:
+            raise ValueError(f"The element {species} is not an alkaline atom.")
+        if not element.is_allowed_shell(n, l, s_tot=s_tot):
+            raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
+
+    @cached_property
+    def spin_state(self) -> SpinStateLS:
+        """The spin state of the Rydberg electron."""
+        return SpinStateLS(l_r=self.l, s_tot=self.s_tot, j_tot=self.j_tot, m=self.m, species=self.species)
+
+    @cached_property
+    def radial_state(self) -> RadialState:
+        """The radial state of the Rydberg electron."""
+        return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
+
+    def __repr__(self) -> str:
+        species, n, l, s_tot, j_tot, m = self.species, self.n, self.l, self.s_tot, self.j_tot, self.m
+        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {s_tot=}, {j_tot=}, {m=})"
+
+    def get_nu(self) -> float:
+        energy_au = self.element.calc_energy(self.n, self.l, self.j_tot, s_tot=self.s_tot, unit="a.u.")
         return self.element.calc_nu_from_energy(energy_au)
