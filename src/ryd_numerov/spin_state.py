@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+import numpy as np
 
 from ryd_numerov.angular import calc_angular_matrix_element, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements.base_element import BaseElement
@@ -94,7 +96,11 @@ class SpinStateBase(ABC):
         if any(isinstance(s, SpinStateFJ) for s in states) and any(isinstance(s, SpinStateLS) for s in states):
             fj = next(s for s in states if isinstance(s, SpinStateFJ))
             ls = next(s for s in states if isinstance(s, SpinStateLS))
-            # TODO
+            fj_as_jj = fj.to_jj()
+            ov = 0.0
+            for coeff, jj in zip(fj_as_jj.coefficients, fj_as_jj.states):
+                ov += coeff * ls.calc_reduced_overlap(jj)
+            return ov
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
@@ -130,12 +136,11 @@ class SpinStateLS(SpinStateBase):
 
     def __init__(
         self,
-        *,
         i_c: float | None = None,
         s_c: float | None = None,
         l_c: int = 0,
         s_r: float = 0.5,
-        l_r: int,
+        l_r: int | None = None,
         s_tot: float | None = None,
         l_tot: int | None = None,
         j_tot: float | None = None,
@@ -161,6 +166,8 @@ class SpinStateLS(SpinStateBase):
 
         self.l_c = l_c
         self.s_r = s_r
+        if l_r is None:
+            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
         self.l_r = l_r
 
         self.s_tot = _try_trivial_spin_addition(self.s_c, self.s_r, s_tot, "s_tot")
@@ -211,12 +218,11 @@ class SpinStateJJ(SpinStateBase):
 
     def __init__(
         self,
-        *,
         i_c: float | None = None,
         s_c: float | None = None,
         l_c: int = 0,
         s_r: float = 0.5,
-        l_r: int,
+        l_r: int | None = None,
         j_c: float | None = None,
         j_r: float | None = None,
         j_tot: float | None = None,
@@ -242,6 +248,8 @@ class SpinStateJJ(SpinStateBase):
 
         self.l_c = l_c
         self.s_r = s_r
+        if l_r is None:
+            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
         self.l_r = l_r
 
         self.j_c = _try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
@@ -292,12 +300,11 @@ class SpinStateFJ(SpinStateBase):
 
     def __init__(
         self,
-        *,
         i_c: float | None = None,
         s_c: float | None = None,
         l_c: int = 0,
         s_r: float = 0.5,
-        l_r: int,
+        l_r: int | None = None,
         j_c: float | None = None,
         j_r: float | None = None,
         f_c: float | None = None,
@@ -323,6 +330,8 @@ class SpinStateFJ(SpinStateBase):
 
         self.l_c = l_c
         self.s_r = s_r
+        if l_r is None:
+            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
         self.l_r = l_r
 
         self.j_c = _try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
@@ -367,6 +376,25 @@ class SpinStateFJ(SpinStateBase):
 
         super().sanity_check(msgs)
 
+    def to_jj(self) -> SuperpositionState[SpinStateJJ]:
+        """Convert to JJ coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        states: list[SpinStateJJ] = []
+        coefficients: list[float] = []
+
+        for j_tot in np.arange(abs(self.f_tot - self.i_c), self.f_tot + self.i_c + 1):
+            jj_state = SpinStateJJ(
+                self.i_c, self.s_c, self.l_c, self.s_r, self.l_r, self.j_c, self.j_r, float(j_tot), self.f_tot, self.m
+            )
+            coeff = self.calc_reduced_overlap(jj_state)
+            if coeff != 0:
+                states.append(jj_state)
+                coefficients.append(coeff)
+
+        return SuperpositionState(coefficients, states)
+
 
 def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
     """Try to determine s_tot from s_1 and s_2 if it is not given.
@@ -390,3 +418,17 @@ def _check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
     - s_1 + s_2 + s_tot is an integer
     """
     return abs(s_1 - s_2) <= s_tot <= s_1 + s_2 and (s_1 + s_2 + s_tot) % 1 == 0
+
+
+SpinState = TypeVar("SpinState", bound=SpinStateBase)
+
+
+class SuperpositionState(Generic[SpinState]):
+    def __init__(self, coefficients: list[float], states: list[SpinState]) -> None:
+        if len(coefficients) != len(states):
+            raise ValueError("Length of coefficients and states must be the same.")
+        if abs(np.linalg.norm(coefficients) - 1) > 1e-6:
+            raise ValueError("Coefficients must be normalized.")
+
+        self.coefficients = coefficients
+        self.states = states
