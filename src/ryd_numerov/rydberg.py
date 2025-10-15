@@ -41,11 +41,11 @@ class RydbergStateBase(ABC):
 
     @property
     @abstractmethod
-    def radial_state(self) -> RadialState: ...
+    def radial(self) -> RadialState: ...
 
     @property
     @abstractmethod
-    def spin_state(self) -> SpinStateBase: ...
+    def angular(self) -> SpinStateBase: ...
 
     @abstractmethod
     def get_nu(self) -> float:
@@ -118,8 +118,8 @@ class RydbergStateBase(ABC):
         assert operator in get_args(OperatorType), (
             f"Operator {operator} not supported, must be one of {get_args(OperatorType)}"
         )
-        radial_matrix_element_au = self.radial_state.calc_matrix_element(other.radial_state, k_radial, unit="a.u.")
-        angular_matrix_element_au = self.spin_state.calc_matrix_element(other.spin_state, operator, k_angular, q)
+        radial_matrix_element_au = self.radial.calc_matrix_element(other.radial, k_radial, unit="a.u.")
+        angular_matrix_element_au = self.angular.calc_matrix_element(other.angular, operator, k_angular, q)
         matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
 
         if operator == "MAGNETIC":
@@ -180,12 +180,12 @@ class RydbergStateAlkali(RydbergStateBase):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
-    def spin_state(self) -> SpinStateLS:
-        """The spin state of the Rydberg electron."""
+    def angular(self) -> SpinStateLS:
+        """The angular/spin state of the Rydberg electron."""
         return SpinStateLS(l_r=self.l, j_tot=self.j, m=self.m, species=self.species)
 
     @cached_property
-    def radial_state(self) -> RadialState:
+    def radial(self) -> RadialState:
         """The radial state of the Rydberg electron."""
         return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
 
@@ -236,12 +236,12 @@ class RydbergStateAlkalineLS(RydbergStateBase):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
-    def spin_state(self) -> SpinStateLS:
-        """The spin state of the Rydberg electron."""
+    def angular(self) -> SpinStateLS:
+        """The angular/spin state of the Rydberg electron."""
         return SpinStateLS(l_r=self.l, s_tot=self.s_tot, j_tot=self.j_tot, m=self.m, species=self.species)
 
     @cached_property
-    def radial_state(self) -> RadialState:
+    def radial(self) -> RadialState:
         """The radial state of the Rydberg electron."""
         return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
 

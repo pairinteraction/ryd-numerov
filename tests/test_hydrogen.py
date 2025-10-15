@@ -29,19 +29,18 @@ def test_hydrogen_wavefunctions(species: str, n: int, l: int, run_backward: bool
     """Test that numerov integration matches sympy's analytical hydrogen wavefunctions."""
     # Setup atom
     state = RydbergStateAlkali(species, n=n, l=l, j=l + 0.5)
-    radial_state = state.radial_state
 
     # Run the numerov integration
-    radial_state.create_wavefunction("numerov", run_backward=run_backward, sign_convention="n_l_1")
+    state.radial.create_wavefunction("numerov", run_backward=run_backward, sign_convention="n_l_1")
 
     # Get analytical solution from sympy
     if n <= 35:
         r_nl_lambda = lambdify(sympy_r, sympy_hydrogen.R_nl(n, l, sympy_r, Z=1))
-        r_nl = r_nl_lambda(radial_state.grid.x_list)
+        r_nl = r_nl_lambda(state.radial.grid.x_list)
     else:  # some weird sympy bug if trying to use lambdify R_nl for n > 35
-        r_nl = np.zeros_like(radial_state.grid.x_list)
-        for i, x in enumerate(radial_state.grid.x_list):
+        r_nl = np.zeros_like(state.radial.grid.x_list)
+        for i, x in enumerate(state.radial.grid.x_list):
             r_nl[i] = sympy_hydrogen.R_nl(n, l, x, Z=1)
 
     # Compare numerical and analytical solutions
-    np.testing.assert_allclose(radial_state.wavefunction.r_list, r_nl, rtol=1e-2, atol=1e-2)
+    np.testing.assert_allclose(state.radial.wavefunction.r_list, r_nl, rtol=1e-2, atol=1e-2)
