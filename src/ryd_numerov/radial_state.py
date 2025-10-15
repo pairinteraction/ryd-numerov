@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC
 from typing import TYPE_CHECKING, Literal, overload
 
 import numpy as np
 
-from ryd_numerov.elements import BaseElement
+from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.radial import (
     Grid,
     Model,
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class RadialState(ABC):
+class RadialState:
     species: str
     n: int | None
     l_r: int
@@ -56,6 +55,8 @@ class RadialState(ABC):
         self.species = species
 
         self.n = n
+        if n is not None and nu > n and abs(nu - n) < 1e-10:
+            nu = n  # avoid numerical issues
         self.nu = nu
         self.l_r = l_r
 
@@ -77,19 +78,6 @@ class RadialState(ABC):
         return self.__repr__()
 
     @property
-    def element(self) -> BaseElement:
-        """The element of the Rydberg state."""
-        if not hasattr(self, "_element"):
-            self.create_element()
-        return self._element
-
-    def create_element(self, *, use_nist_data: bool = True) -> None:
-        """Create the element for the Rydberg state."""
-        if hasattr(self, "_element"):
-            raise RuntimeError("The element was already created, you should not create it again.")
-        self._element = BaseElement.from_species(self.species, use_nist_data=use_nist_data)
-
-    @property
     def model(self) -> Model:
         if not hasattr(self, "_model"):
             self.create_model()
@@ -105,7 +93,7 @@ class RadialState(ABC):
         if hasattr(self, "_model"):
             raise RuntimeError("The model was already created, you should not create it again.")
 
-        self._model = Model(self.element, self.l_r, potential_type)
+        self._model = Model(self.species, self.l_r, potential_type)
 
     @property
     def grid(self) -> Grid:
@@ -140,7 +128,9 @@ class RadialState(ABC):
             if self.l_r <= 10:
                 z_min = 0.0
             else:
-                z_min = self.model.calc_turning_point_z(self.get_energy("a.u."))
+                element = BaseElement.from_species(self.species)
+                energy_au = -0.5 * element.reduced_mass_factor / self.nu**2
+                z_min = self.model.calc_turning_point_z(energy_au)
                 z_min = np.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
             z_min = np.sqrt(x_min)
@@ -164,13 +154,15 @@ class RadialState(ABC):
         return self._wavefunction
 
     @overload
-    def create_wavefunction(self, *, sign_convention: WavefunctionSignConvention = None) -> None: ...
+    def create_wavefunction(
+        self, *, sign_convention: WavefunctionSignConvention = "positive_at_outer_bound"
+    ) -> None: ...
 
     @overload
     def create_wavefunction(
         self,
         method: Literal["numerov"],
-        sign_convention: WavefunctionSignConvention = None,
+        sign_convention: WavefunctionSignConvention = "positive_at_outer_bound",
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -179,13 +171,13 @@ class RadialState(ABC):
 
     @overload
     def create_wavefunction(
-        self, method: Literal["whittaker"], sign_convention: WavefunctionSignConvention = None
+        self, method: Literal["whittaker"], sign_convention: WavefunctionSignConvention = "positive_at_outer_bound"
     ) -> None: ...
 
     def create_wavefunction(
         self,
         method: Literal["numerov", "whittaker"] = "numerov",
-        sign_convention: WavefunctionSignConvention = None,
+        sign_convention: WavefunctionSignConvention = "positive_at_outer_bound",
         *,
         run_backward: bool = True,
         w0: float = 1e-10,
@@ -201,26 +193,8 @@ class RadialState(ABC):
             self._wavefunction = WavefunctionWhittaker(self, self.grid)
             self._wavefunction.integrate()
 
-        if sign_convention is None:
-            sign_convention = "n_l_1" if self.element.number_valence_electrons == 1 else "positive_at_outer_bound"
-
         self._wavefunction.apply_sign_convention(sign_convention)
         self._grid = self._wavefunction.grid
-
-    @overload
-    def get_energy(self, unit: None = None) -> PintFloat: ...
-
-    @overload
-    def get_energy(self, unit: str) -> float: ...
-
-    def get_energy(self, unit: str | None = None) -> PintFloat | float:
-        energy_au = -0.5 * self.element.reduced_mass_factor / self.nu**2
-        if unit == "a.u.":
-            return energy_au
-        energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
-        if unit is None:
-            return energy
-        return energy.to(unit, "spectroscopy").magnitude
 
     @overload
     def calc_radial_matrix_element(self, other: RadialState, k_radial: int) -> PintFloat: ...

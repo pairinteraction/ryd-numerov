@@ -8,6 +8,7 @@ import numpy as np
 from mpmath import whitw
 from scipy.special import gamma
 
+from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
 
 if TYPE_CHECKING:
@@ -25,17 +26,17 @@ class Wavefunction(ABC):
 
     def __init__(
         self,
-        state: RadialState,
+        radial_state: RadialState,
         grid: Grid,
     ) -> None:
         """Create a Wavefunction object.
 
         Args:
-            state: The RydbergState object.
+            radial_state: The RadialState object.
             grid: The grid object.
 
         """
-        self.state = state
+        self.radial_state = radial_state
         self.grid = grid
 
         self._w_list: NDArray | None = None
@@ -90,8 +91,8 @@ class Wavefunction(ABC):
                 break
 
         if sign_convention == "n_l_1":
-            assert self.state.n is not None, "n must be given to apply the n_l_1 sign convention."
-            if current_outer_sign != (-1) ** (self.state.n - self.state.l_r - 1):
+            assert self.radial_state.n is not None, "n must be given to apply the n_l_1 sign convention."
+            if current_outer_sign != (-1) ** (self.radial_state.n - self.radial_state.l_r - 1):
                 self._w_list = -self._w_list
         elif sign_convention == "positive_at_outer_bound":
             if current_outer_sign != 1:
@@ -113,19 +114,19 @@ class WavefunctionNumerov(Wavefunction):
 
     def __init__(
         self,
-        state: RadialState,
+        radial_state: RadialState,
         grid: Grid,
         model: Model,
     ) -> None:
         """Create a Wavefunction object.
 
         Args:
-            state: The RydbergState object.
+            radial_state: The RadialState object.
             grid: The grid object.
             model: The model object.
 
         """
-        super().__init__(state, grid)
+        super().__init__(radial_state, grid)
         self.model = model
 
     def integrate(self, run_backward: bool = True, w0: float = 1e-10, *, _use_njit: bool = True) -> None:
@@ -170,13 +171,10 @@ class WavefunctionNumerov(Wavefunction):
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
-        glist = (
-            8
-            * self.state.element.reduced_mass_factor
-            * grid.z_list
-            * grid.z_list
-            * (self.state.get_energy(unit="a.u.") - self.model.calc_total_effective_potential(grid.x_list))
-        )
+        element = BaseElement.from_species(self.radial_state.species)
+        energy_au = -0.5 * element.reduced_mass_factor / self.radial_state.nu**2
+        v_eff = self.model.calc_total_effective_potential(grid.x_list)
+        glist = 8 * element.reduced_mass_factor * grid.z_list * grid.z_list * (energy_au - v_eff)
 
         if run_backward:
             # During the Numerov integration we define the wavefunction such that it should always stop
@@ -196,13 +194,13 @@ class WavefunctionNumerov(Wavefunction):
             # If we further assume, that the wavefunction converges to zero at the inner boundary,
             # we know that after the inner classical turning point
             # the wavefunction should never increase the distance from the x-axis again.
-            x_min = self.model.calc_turning_point_z(self.state.get_energy("a.u."))
+            x_min = self.model.calc_turning_point_z(energy_au)
 
         else:  # forward
             y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
-            n = self.state.n if self.state.n is not None else self.state.nu
+            n = self.radial_state.n if self.radial_state.n is not None else self.radial_state.nu
             x_min = np.sqrt(n * (n + 15))
 
         if _use_njit:
@@ -239,7 +237,7 @@ class WavefunctionNumerov(Wavefunction):
         warning_msgs: list[str] = []
 
         grid = self.grid
-        state = self.state
+        state = self.radial_state
 
         # Check and Correct if divergence of the wavefunction
         w_list_abs = np.abs(self.w_list)
@@ -333,8 +331,8 @@ class WavefunctionNumerov(Wavefunction):
 class WavefunctionWhittaker(Wavefunction):
     def integrate(self) -> None:
         logger.warning("Using Whittaker to get the wavefunction is not recommended! Use this only for comparison.")
-        l = self.state.l_r
-        nu = self.state.nu
+        l = self.radial_state.l_r
+        nu = self.radial_state.nu
 
         whitw_vectorized = np.vectorize(whitw, otypes=[float])
         whitw_list = whitw_vectorized(nu, l + 0.5, 2 * self.grid.x_list / nu)

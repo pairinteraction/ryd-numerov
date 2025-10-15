@@ -5,8 +5,9 @@ from typing import TYPE_CHECKING, Literal, TypeVar, get_args
 
 import numpy as np
 
+from ryd_numerov.elements import BaseElement
+
 if TYPE_CHECKING:
-    from ryd_numerov.elements import BaseElement
     from ryd_numerov.units import NDArray
 
 
@@ -22,19 +23,19 @@ class Model:
 
     def __init__(
         self,
-        element: BaseElement,
+        species: str,
         l: int,
         potential_type: PotentialType | None = None,
     ) -> None:
         r"""Initialize the model.
 
         Args:
-            element: BaseElement object representing the atomic species.
+            species: The atomic species.
             l: Orbital angular momentum quantum number
             potential_type: Which potential to use for the model.
 
         """
-        self.element = element
+        self.element = BaseElement.from_species(species)
         self.l = l
 
         if potential_type is None:
