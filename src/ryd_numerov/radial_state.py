@@ -11,8 +11,8 @@ from ryd_numerov.radial import (
     Model,
     WavefunctionNumerov,
     WavefunctionWhittaker,
-    calc_radial_matrix_element,
 )
+from ryd_numerov.radial.radial_matrix_element import calc_radial_matrix_element_from_w_z
 from ryd_numerov.units import BaseQuantities
 
 if TYPE_CHECKING:
@@ -20,9 +20,9 @@ if TYPE_CHECKING:
         Wavefunction,
     )
     from ryd_numerov.radial.model import PotentialType
+    from ryd_numerov.radial.radial_matrix_element import INTEGRATION_METHODS
     from ryd_numerov.radial.wavefunction import WavefunctionSignConvention
     from ryd_numerov.units import PintFloat
-
 
 logger = logging.getLogger(__name__)
 
@@ -197,15 +197,48 @@ class RadialState:
         self._grid = self._wavefunction.grid
 
     @overload
-    def calc_radial_matrix_element(self, other: RadialState, k_radial: int) -> PintFloat: ...
+    def calc_matrix_element(self, other: RadialState, k_radial: int) -> PintFloat: ...
 
     @overload
-    def calc_radial_matrix_element(self, other: RadialState, k_radial: int, unit: str) -> float: ...
+    def calc_matrix_element(self, other: RadialState, k_radial: int, unit: str) -> float: ...
 
-    def calc_radial_matrix_element(
-        self, other: RadialState, k_radial: int, unit: str | None = None
+    def calc_matrix_element(
+        self,
+        other: RadialState,
+        k_radial: int,
+        unit: str | None = None,
+        *,
+        integration_method: INTEGRATION_METHODS = "sum",
     ) -> PintFloat | float:
-        radial_matrix_element_au = calc_radial_matrix_element(self, other, k_radial)
+        r"""Calculate the radial matrix element between two Rydberg states.
+
+        Computes the integral
+
+        .. math::
+            \int_{0}^{\infty} dr r^2 r^\kappa R_1(r) R_2(r)
+            = a_0^\kappa \int_{0}^{\infty} dx x^\kappa \tilde{u}_1(x) \tilde{u}_2(x)
+            = a_0^\kappa \int_{0}^{\infty} dz 2 z^{2 + 2\kappa} w_1(z) w_2(z)
+
+        where R_1 and R_2 are the radial wavefunctions of self and other,
+        and w(z) = z^{-1/2} \tilde{u}(z^2) = (r/_a_0)^{1/4} \sqrt{a_0} r R(r).
+
+        Args:
+            other: Other radial state
+            k_radial: Power of r in the matrix element
+                (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
+            unit: Unit of the returned matrix element, default None returns a Pint quantity.
+            integration_method: Integration method to use
+
+        Returns:
+            The radial matrix element in the desired unit.
+
+        """
+        # Ensure wavefunctions are integrated before accessing the grid
+        wf1, wf2 = self.wavefunction, other.wavefunction
+        radial_matrix_element_au = calc_radial_matrix_element_from_w_z(
+            wf1.grid.z_list, wf1.w_list, wf2.grid.z_list, wf2.w_list, k_radial, integration_method
+        )
+
         if unit == "a.u.":
             return radial_matrix_element_au
         radial_matrix_element: PintFloat = radial_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]

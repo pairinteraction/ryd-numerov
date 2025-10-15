@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from ryd_numerov.elements.base_element import BaseElement
-from ryd_numerov.radial import calc_radial_matrix_element
 from ryd_numerov.radial_state import RadialState
 from ryd_numerov.rydberg import RydbergStateAlkali
 
@@ -31,7 +30,7 @@ def test_circular_matrix_element(species: str, n: int, dn: int, dl: int) -> None
     for _species in [species, "H_textbook"]:
         state_i = RydbergStateAlkali(_species, n=n, l=l1, j=l1 + 0.5)
         state_f = RydbergStateAlkali(_species, n=n + dn, l=l2, j=l2 + 0.5)
-        matrix_element[_species] = calc_radial_matrix_element(state_i.radial_state, state_f.radial_state, 1)
+        matrix_element[_species] = state_i.radial_state.calc_matrix_element(state_f.radial_state, 1, unit="bohr")
 
     assert np.isclose(matrix_element[species], matrix_element["H_textbook"], rtol=1e-4)
 
@@ -66,7 +65,7 @@ def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) 
     state = RadialState(species, n=n, nu=nu, l_r=l)
     state.create_wavefunction()
 
-    exp_value_numerov = {i: calc_radial_matrix_element(state, state, i) for i in range(3)}
+    exp_value_numerov = {i: state.calc_matrix_element(state, i, unit="bohr") for i in range(3)}
     exp_value_analytic = {
         0: 1,
         1: 0.5 * (3 * n**2 - l * (l + 1)),

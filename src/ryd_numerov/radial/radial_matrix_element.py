@@ -7,7 +7,6 @@ import numpy as np
 import scipy.integrate
 
 if TYPE_CHECKING:
-    from ryd_numerov.radial_state import RadialState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
@@ -15,45 +14,7 @@ logger = logging.getLogger(__name__)
 INTEGRATION_METHODS = Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
 
 
-def calc_radial_matrix_element(
-    state1: RadialState,
-    state2: RadialState,
-    k_radial: int = 0,
-    integration_method: INTEGRATION_METHODS = "sum",
-) -> float:
-    r"""Calculate the radial matrix element between two Rydberg states.
-
-    Computes the integral
-
-    .. math::
-        \int_{0}^{\infty} dr r^2 r^\kappa R_1(r) R_2(r)
-        = a_0^\kappa \int_{0}^{\infty} dx x^\kappa \tilde{u}_1(x) \tilde{u}_2(x)
-        = a_0^\kappa \int_{0}^{\infty} dz 2 z^{2 + 2\kappa} w_1(z) w_2(z)
-
-    where R_1 and R_2 are the radial wavefunctions of the two states
-    and w(z) = z^{-1/2} \tilde{u}(z^2) = (r/_a_0)^{1/4} \sqrt{a_0} r R(r).
-
-    Args:
-        state1: First Rydberg state
-        state2: Second Rydberg state
-        k_radial: Power of r in the matrix element
-            (default=0, this corresponds to the overlap integral \int dr r^2 R_1(r) R_2(r))
-        integration_method: Integration method to use, one of ["sum", "trapezoid", "scipy_simpson", "scipy_trapezoid"]
-            (default="sum")
-
-    Returns:
-        float: The radial matrix element in atomic units.
-
-    """
-    # Ensure wavefunctions are integrated before accessing the grid
-    wf1 = state1.wavefunction
-    wf2 = state2.wavefunction
-    return _calc_radial_matrix_element_from_w_z(
-        wf1.grid.z_list, wf1.w_list, wf2.grid.z_list, wf2.w_list, k_radial, integration_method
-    )
-
-
-def _calc_radial_matrix_element_from_w_z(
+def calc_radial_matrix_element_from_w_z(
     z1: NDArray,
     w1: NDArray,
     z2: NDArray,
