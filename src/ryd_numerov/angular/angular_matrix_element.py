@@ -7,61 +7,6 @@ from ryd_numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, check_tria
 from ryd_numerov.units import OperatorType
 
 
-def calc_angular_matrix_element(
-    s1: float,
-    l1: int,
-    j1: float,
-    m1: float,
-    s2: float,
-    l2: int,
-    j2: float,
-    m2: float,
-    operator: OperatorType,
-    kappa: int,
-    q: int,
-) -> float:
-    r"""Calculate the angular matrix element $\bra{state_2} \hat{O}_{kq} \ket{state_1}$.
-
-    For the states $\bra{state_2} = \bra{s2,l2,j2,m2}$ and $\ket{state_1} = \ket{s1,l1,j1,m1}$,
-    the angular matrix elements of the operator :math:`\hat{O}_{kq}` is given by
-
-    .. math::
-        \bra{state_2} \hat{O}_{kq} \ket{state_1}
-        = \bra{s2,l2,j2,m2} \hat{O}_{kq} \ket{s1,l1,j1,m1}
-        = \langle j1, m1, k, q | j2, m2 \rangle \langle j2 || \hat{O}_{k0} || j1 \rangle / \sqrt{2 * j2 + 1}
-        = (-1)^{j1 - \kappa + m2} wigner_3j(j1, kappa, j2, m1, q, -m2)
-        \langle j2 || \hat{O}_{k0} || j1 \rangle
-
-    where we first used the Wigner-Eckhart theorem
-    and then the Wigner 3-j symbol to express the Clebsch-Gordan coefficient.
-
-    Note we changed the formulas to match the pairinteraction paper convention:
-    https://doi.org/10.1088/1361-6455/aa743a
-
-    Args:
-        s1: The spin quantum number of the initial state.
-        l1: The orbital quantum number of the initial state.
-        j1: The total angular momentum quantum number of the initial state.
-        m1: The magnetic quantum number of the initial state.
-        s2: The spin quantum number of the final state.
-        l2: The orbital quantum number of the final state.
-        j2: The total angular momentum quantum number of the final state.
-        m2: The magnetic quantum number of the final state.
-        operator: The operator type :math:`\hat{O}_{kq}` for which to calculate the matrix element.
-            Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
-        kappa: The quantum number $\kappa$ of the angular momentum operator.
-        q: The quantum number $q$ of the angular momentum operator.
-
-    Returns:
-        The angular matrix element $\bra{state_2} \hat{O}_{kq} \ket{state_1}$.
-
-    """
-    prefactor = minus_one_pow(j2 - m2)
-    reduced_matrix_element = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, operator, kappa)
-    wigner_3j = calc_wigner_3j(j2, kappa, j1, -m2, q, m1)
-    return prefactor * reduced_matrix_element * wigner_3j
-
-
 @lru_cache(maxsize=10_000)
 def calc_reduced_angular_matrix_element(
     s1: float,

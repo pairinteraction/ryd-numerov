@@ -6,10 +6,13 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 
-from ryd_numerov.angular import calc_angular_matrix_element, clebsch_gordan_6j, clebsch_gordan_9j
+from ryd_numerov.angular import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
+from ryd_numerov.angular.angular_matrix_element import calc_reduced_angular_matrix_element
 from ryd_numerov.elements.base_element import BaseElement
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from ryd_numerov.units import OperatorType
 
 logger = logging.getLogger(__name__)
@@ -56,6 +59,20 @@ class SpinStateBase(ABC):
     def __str__(self) -> str:
         return self.__repr__()
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SpinStateBase):
+            raise NotImplementedError(f"Cannot compare {self!r} with {other!r}.")
+        if type(self) is not type(other):
+            return False
+        if self.m != other.m:
+            return False
+        if self.species != other.species:
+            return False
+        return all(
+            self.spin_quantum_numbers_dict[k] == other.spin_quantum_numbers_dict[k]
+            for k in self.spin_quantum_numbers_dict
+        )
+
     def sanity_check(self, msgs: list[str] | None = None) -> None:
         """Check that the quantum numbers are valid."""
         msgs = msgs if msgs is not None else []
@@ -72,6 +89,9 @@ class SpinStateBase(ABC):
             logger.error(msg)
         if msgs:
             raise ValueError(f"Invalid quantum numbers for {self!r}")
+
+    @abstractmethod
+    def to_ls(self) -> SuperpositionState[SpinStateLS]: ...
 
     def calc_reduced_overlap(self, other: SpinStateBase) -> float:
         """Calculate the reduced (ignore any m) overlap <self||other>."""
@@ -96,39 +116,67 @@ class SpinStateBase(ABC):
         if any(isinstance(s, SpinStateFJ) for s in states) and any(isinstance(s, SpinStateLS) for s in states):
             fj = next(s for s in states if isinstance(s, SpinStateFJ))
             ls = next(s for s in states if isinstance(s, SpinStateLS))
-            fj_as_jj = fj.to_jj()
             ov = 0.0
-            for coeff, jj in zip(fj_as_jj.coefficients, fj_as_jj.states):
-                ov += coeff * ls.calc_reduced_overlap(jj)
+            for coeff, jj_state in fj.to_jj():
+                ov += coeff * ls.calc_reduced_overlap(jj_state)
             return ov
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
-    def calc_reduced_angular_matrix_element(
-        self, other: SpinStateBase, operator: OperatorType, k_angular: int
-    ) -> float:
-        """Calculate the dimensionless angular matrix element.
+    def calc_reduced_matrix_element(self, other: SpinStateBase, operator: OperatorType, kappa: int) -> float:
+        r"""Calculate the reduced angular matrix element.
 
         This means, calculate the following matrix element:
-        <self| T^(k_angular)_q |other>
+        <self| \hat{O}^(\kappa)_q |other>
         """
-        raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
+        self_ls_states = self.to_ls()
+        other_ls_states = other.to_ls()
+        value = 0.0
+        for coeff1, state1 in self_ls_states:
+            for coeff2, state2 in other_ls_states:
+                v = calc_reduced_angular_matrix_element(
+                    *(state1.s_tot, state1.l_tot, state1.j_tot),
+                    *(state2.s_tot, state2.l_tot, state2.j_tot),
+                    operator,
+                    kappa,
+                )
+                value += coeff1 * coeff2 * v
+        return value
 
-    def calc_angular_matrix_element(
-        self, other: SpinStateBase, operator: OperatorType, k_angular: int, q: int
-    ) -> float:
-        """Calculate the dimensionless angular matrix element.
+    def calc_matrix_element(self, other: SpinStateBase, operator: OperatorType, kappa: int, q: int) -> float:
+        r"""Calculate the dimensionless angular matrix element.
 
+        Use the Wigner-Eckart theorem to calculate the angular matrix element from the reduced matrix element.
         This means, calculate the following matrix element:
-        <self| T^(k_angular)_q |other>
+
+        .. math::
+            <self| \hat{O}^(\kappa)_q |other>
+            = <\alpha',f_tot',m'| \hat{O}^(\kappa)_q |\alpha,f_tot,m>
+            = ... * <\alpha',f_tot' || \hat{O}^(\kappa) || \alpha,f_tot>
+
+        where alpha denotes all other quantum numbers
+        and <\alpha',f_tot' || \hat{O}^(\kappa) || \alpha,f_tot> is the reduced matrix element
+        (see `calc_reduced_matrix_element`).
+
+        Args:
+            other: The other spin state |other>.
+            operator: The operator type :math:`\hat{O}_{kq}` for which to calculate the matrix element.
+                Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
+            kappa: The quantum number $\kappa$ of the angular momentum operator.
+            q: The quantum number $q$ of the angular momentum operator.
+
+        Returns:
+            The dimensionless angular matrix element.
+
         """
         if self.m is None or other.m is None:
-            raise ValueError("m must be set to calculate the angular matrix element.")
+            raise ValueError("m must be set to calculate the matrix element.")
 
-        raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
-        return calc_angular_matrix_element(
-            self.s_tot, self.l, self.j_tot, self.m, other.s_tot, other.l, other.j_tot, other.m, operator, k_angular, q
-        )
+        reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, kappa)
+        # TODO check prefactor?? also in docstring above
+        prefactor: float = (-1) ** (other.f_tot - other.m)  # type: ignore [assignment]
+        wigner_3j = calc_wigner_3j(other.f_tot, kappa, self.f_tot, -other.m, q, self.m)
+        return prefactor * reduced_matrix_element * wigner_3j
 
 
 class SpinStateLS(SpinStateBase):
@@ -212,6 +260,13 @@ class SpinStateLS(SpinStateBase):
 
         super().sanity_check(msgs)
 
+    def to_ls(self) -> SuperpositionState[SpinStateLS]:
+        """Convert to LS coupling.
+
+        Note that this is already LS coupling, we have this method just for convenience.
+        """
+        return SuperpositionState([1.0], [self])
+
 
 class SpinStateJJ(SpinStateBase):
     """Spin state in JJ coupling."""
@@ -293,6 +348,35 @@ class SpinStateJJ(SpinStateBase):
             msgs.append(f"{self.j_tot=}, {self.i_c=}, {self.f_tot=} don't satisfy spin addition rule.")
 
         super().sanity_check(msgs)
+
+    def to_ls(self) -> SuperpositionState[SpinStateLS]:
+        """Convert to LS coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        states: list[SpinStateLS] = []
+        coefficients: list[float] = []
+
+        for s_tot in np.arange(abs(self.s_c - self.s_r), self.s_c + self.s_r + 1):
+            for l_tot in np.arange(abs(self.l_c - self.l_r), self.l_c + self.l_r + 1):
+                ls_state = SpinStateLS(
+                    self.i_c,
+                    self.s_c,
+                    self.l_c,
+                    self.s_r,
+                    self.l_r,
+                    float(s_tot),
+                    int(l_tot),
+                    self.j_tot,
+                    self.f_tot,
+                    self.m,
+                )
+                coeff = self.calc_reduced_overlap(ls_state)
+                if coeff != 0:
+                    states.append(ls_state)
+                    coefficients.append(coeff)
+
+        return SuperpositionState(coefficients, states)
 
 
 class SpinStateFJ(SpinStateBase):
@@ -395,6 +479,24 @@ class SpinStateFJ(SpinStateBase):
 
         return SuperpositionState(coefficients, states)
 
+    def to_ls(self) -> SuperpositionState[SpinStateLS]:
+        """Convert to LS coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        jj_states = self.to_jj()
+        ls_states: list[SpinStateLS] = []
+        coefficients: list[float] = []
+        for jj_coeff, jj_state in jj_states:
+            for ls_coeff, ls_state in jj_state.to_ls():
+                if ls_state in ls_states:
+                    idx = ls_states.index(ls_state)
+                    coefficients[idx] += jj_coeff * ls_coeff
+                else:
+                    ls_states.append(ls_state)
+                    coefficients.append(jj_coeff * ls_coeff)
+        return SuperpositionState(coefficients, ls_states)
+
 
 def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
     """Try to determine s_tot from s_1 and s_2 if it is not given.
@@ -432,3 +534,6 @@ class SuperpositionState(Generic[SpinState]):
 
         self.coefficients = coefficients
         self.states = states
+
+    def __iter__(self) -> Iterator[tuple[float, SpinState]]:
+        return zip(self.coefficients, self.states).__iter__()
