@@ -133,6 +133,7 @@ extend-ignore = [
   "E741",  # Ambiguous variable name, does not like quantum number 'l'
   "EM10",  # raw-string or f-string in-exception
   "PLR0913",  # Too many arguments in function definition (... > 5)
+  "PLW1641",  # eq-without-hash
 ]
 future-annotations = true
 flake8-tidy-imports.ban-relative-imports = "all"
