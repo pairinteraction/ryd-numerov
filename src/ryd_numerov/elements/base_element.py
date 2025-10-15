@@ -324,13 +324,15 @@ class BaseElement(ABC):
         )
 
     @overload
-    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: None = None) -> PintFloat: ...
+    def calc_energy(
+        self, n: int, l: int, j_tot: float, s_tot: float | None = None, *, unit: None = None
+    ) -> PintFloat: ...
 
     @overload
-    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float, unit: str) -> float: ...
+    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float | None = None, *, unit: str) -> float: ...
 
-    def calc_energy(
-        self, n: int, l: int, j_tot: float, s_tot: float, unit: str | None = "hartree"
+    def calc_energy(  # noqa: C901
+        self, n: int, l: int, j_tot: float, s_tot: float | None = None, *, unit: str | None = "hartree"
     ) -> PintFloat | float:
         r"""Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.
 
@@ -357,6 +359,10 @@ class BaseElement(ABC):
             - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
 
         """
+        if s_tot is None:
+            if self.number_valence_electrons != 1:
+                raise ValueError("s_tot must be specified for elements with more than one valence electron.")
+            s_tot = 0.5
         if (s_tot % 1) != ((self.number_valence_electrons / 2) % 1):
             raise ValueError(f"Invalid spin {s_tot=} for {self.species}.")
         if j_tot % 1 != (l + s_tot) % 1:
