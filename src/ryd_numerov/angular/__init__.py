@@ -7,8 +7,9 @@ from ryd_numerov.angular.angular_matrix_element import (
 from ryd_numerov.angular.utils import (
     calc_wigner_3j,
     calc_wigner_6j,
-    check_triangular,
-    minus_one_pow,
+    calc_wigner_9j,
+    clebsch_gordan_6j,
+    clebsch_gordan_9j,
 )
 
 __all__ = [
@@ -16,8 +17,9 @@ __all__ = [
     "calc_reduced_angular_matrix_element",
     "calc_wigner_3j",
     "calc_wigner_6j",
-    "check_triangular",
-    "minus_one_pow",
+    "calc_wigner_9j",
+    "clebsch_gordan_6j",
+    "clebsch_gordan_9j",
     "spherical_like_matrix_element",
     "spin_like_matrix_element",
 ]
