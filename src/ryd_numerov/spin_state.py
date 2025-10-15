@@ -4,7 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from ryd_numerov.angular import calc_angular_matrix_element
+from ryd_numerov.angular import calc_angular_matrix_element, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements.base_element import BaseElement
 
 if TYPE_CHECKING:
@@ -70,6 +70,33 @@ class SpinStateBase(ABC):
             logger.error(msg)
         if msgs:
             raise ValueError(f"Invalid quantum numbers for {self!r}")
+
+    def calc_reduced_overlap(self, other: SpinStateBase) -> float:
+        """Calculate the reduced (ignore any m) overlap <self||other>."""
+        if type(self) is type(other):
+            for k, qn1 in self.spin_quantum_numbers_dict.items():
+                if qn1 != other.spin_quantum_numbers_dict[k]:
+                    return 0.0
+            return 1.0
+
+        states = [self, other]
+
+        if any(isinstance(s, SpinStateJJ) for s in states) and any(isinstance(s, SpinStateFJ) for s in states):
+            jj = next(s for s in states if isinstance(s, SpinStateJJ))
+            fj = next(s for s in states if isinstance(s, SpinStateFJ))
+            return clebsch_gordan_6j(fj.i_c, fj.j_c, fj.f_c, fj.j_r, fj.f_tot, jj.j_tot)
+
+        if any(isinstance(s, SpinStateJJ) for s in states) and any(isinstance(s, SpinStateLS) for s in states):
+            jj = next(s for s in states if isinstance(s, SpinStateJJ))
+            ls = next(s for s in states if isinstance(s, SpinStateLS))
+            return clebsch_gordan_9j(ls.s_r, ls.s_c, ls.s_tot, ls.l_r, ls.l_c, ls.l_tot, jj.j_r, jj.j_c, jj.j_tot)
+
+        if any(isinstance(s, SpinStateFJ) for s in states) and any(isinstance(s, SpinStateLS) for s in states):
+            fj = next(s for s in states if isinstance(s, SpinStateFJ))
+            ls = next(s for s in states if isinstance(s, SpinStateLS))
+            # TODO
+
+        raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
     def calc_reduced_angular_matrix_element(
         self, other: SpinStateBase, operator: OperatorType, k_angular: int
