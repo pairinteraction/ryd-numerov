@@ -1,34 +1,37 @@
 import numpy as np
 import pytest
+from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.radial import calc_radial_matrix_element
-from ryd_numerov.rydberg import RydbergState
+from ryd_numerov.radial_state import RadialState
+from ryd_numerov.rydberg import RydbergStateAlkali
 
 
 @pytest.mark.parametrize(
-    ("species", "n", "dn", "dl", "dj"),
+    ("species", "n", "dn", "dl"),
     [
-        ("Rb", 100, 3, 1, 0),
-        ("Rb", 60, 2, 0, 0),
-        ("Rb", 81, 2, 2, 2),
-        ("Rb", 130, 5, 1, 0),
-        ("Rb", 111, 5, 2, 1),
-        ("Cs", 60, 2, 0, 0),
-        ("K", 81, 2, 2, 2),
+        ("Rb", 100, 3, 1),
+        ("Rb", 60, 2, 0),
+        ("Rb", 81, 2, 2),
+        ("Rb", 130, 5, 1),
+        ("Rb", 111, 5, 2),
+        ("Cs", 60, 2, 0),
+        ("K", 81, 2, 2),
     ],
 )
-def test_circular_matrix_element(species: str, n: int, dn: int, dl: int, dj: int) -> None:
+def test_circular_matrix_element(species: str, n: int, dn: int, dl: int) -> None:
     """Test radial matrix elements of ((almost) circular states, i.e. with large l (l = n-1 for circular states).
 
      Circular matrix elements should be very close to the perfect hydrogen case, so we can check if the matrix elements
     are reasonable by comparing them to the hydrogen case.
     """
-    l, j_tot = n - 1, n - 0.5
+    l1 = n - 1  # circular state
+    l2 = l1 + dl  # almost circular state
 
     matrix_element = {}
     for _species in [species, "H_textbook"]:
-        state_i = RydbergState(_species, n=n, l=l, j_tot=j_tot)  # circular state
-        state_f = RydbergState(_species, n=n + dn, l=l + dl, j_tot=j_tot + dj)  # almost circular state
-        matrix_element[_species] = calc_radial_matrix_element(state_i, state_f, 1)
+        state_i = RydbergStateAlkali(_species, n=n, l=l1, j=l1 + 0.5)
+        state_f = RydbergStateAlkali(_species, n=n + dn, l=l2, j=l2 + 0.5)
+        matrix_element[_species] = calc_radial_matrix_element(state_i.radial_state, state_f.radial_state, 1)
 
     assert np.isclose(matrix_element[species], matrix_element["H_textbook"], rtol=1e-4)
 
@@ -56,7 +59,11 @@ def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) 
         <r>_{nl} = 1/2 (3 n^2 - l(l+1))
         <r^2>_{nl} = n^2/2 (5 n^2 - 3 l(l+1) + 1)
     """
-    state = RydbergState(species, n=n, l=l, j_tot=j_tot)
+    element = BaseElement.from_species(species)
+    energy_au = element.calc_energy(n, l, j_tot, unit="hartree")
+    nu = element.calc_nu_from_energy(energy_au)
+
+    state = RadialState(species, n=n, nu=nu, l_r=l)
     state.create_wavefunction()
 
     exp_value_numerov = {i: calc_radial_matrix_element(state, state, i) for i in range(3)}
