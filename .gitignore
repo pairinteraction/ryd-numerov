@@ -1,6 +1,7 @@
-# Ignore build and cache directories
+# python stuff (Ignore build and cache directories, ...)
 __pycache__/
 .ruff_cache/
+.mypy_cache/
 .venv/
 *.egg-info/
 wheelhouse/
@@ -8,6 +9,7 @@ build/
 dist/
 .pytest_cache/
 .pairinteraction_cache/
+requirements.txt
 
 # Ignore local development files
 playground/
