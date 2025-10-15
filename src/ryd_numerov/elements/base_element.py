@@ -47,7 +47,7 @@ class BaseElement(ABC):
     _ionization_energy: tuple[float, float | None, str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
-    # Parameters for the extended Rydberg Ritz formula, see calc_n_star
+    # Parameters for the extended Rydberg Ritz formula, see calc_energy
     _quantum_defects: ClassVar[dict[tuple[int, float, float], tuple[float, float, float, float, float]] | None] = None
     """Dictionary containing the quantum defects for each (l, j_tot, s_tot) combination, i.e.
     _quantum_defects[(l,j_tot,s_tot)] = (d0, d2, d4, d6, d8)
@@ -233,6 +233,10 @@ class BaseElement(ABC):
             True if the quantum numbers specify a shell equal to or above the ground state shell, False otherwise.
 
         """
+        assert (self.number_valence_electrons == 1 and s_tot == 1 / 2) or (
+            self.number_valence_electrons == 2 and s_tot in (0, 1)
+        ), f"Invalid spin {s_tot=} for {self.species}."
+
         if self.number_valence_electrons == 2 and s_tot == 1 and (n, l) == self.ground_state_shell:
             return False  # For alkaline earth atoms, the triplet state of the ground state shell is not allowed
         if n < 1 or l < 0 or l >= n:
@@ -375,7 +379,7 @@ class BaseElement(ABC):
             d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
             delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
             n_star = n - delta_nlj
-            energy_au = -0.5 * self.reduced_mass_factor / n_star**2
+            energy_au = self.calc_energy_from_nu(n_star)
 
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
@@ -383,6 +387,29 @@ class BaseElement(ABC):
         if unit == "a.u.":
             return energy.magnitude
         return energy.to(unit, "spectroscopy").magnitude
+
+    def calc_nu_from_energy(self, energy_au: float) -> float:
+        r"""Calculate the effective principal quantum number nu from a given energy.
+
+        The effective principal quantum number is given by
+        .. math::
+            \nu = \sqrt{\frac{1}{2} \frac{\mu}{-E}}
+
+        where :math:`\mu` is the reduced mass factor and :math:`E` the energy in atomic units.
+
+        """
+        return np.sqrt(0.5 * self.reduced_mass_factor / -energy_au)  # type: ignore [no-any-return]
+
+    def calc_energy_from_nu(self, nu: float) -> float:
+        r"""Calculate the energy from a given effective principal quantum number nu.
+
+        The energy is given by
+        .. math::
+            E = -\frac{1}{2} \frac{\mu}{\nu^2}
+
+        where :math:`\mu` is the reduced mass factor and :math:`\nu` the effective principal quantum number.
+        """
+        return -0.5 * self.reduced_mass_factor / nu**2
 
 
 def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:
