@@ -7,7 +7,7 @@ import numpy as np
 import scipy.integrate
 
 if TYPE_CHECKING:
-    from ryd_numerov.rydberg import RydbergStateBase
+    from ryd_numerov.radial_state import RadialState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
@@ -16,8 +16,8 @@ INTEGRATION_METHODS = Literal["sum", "trapezoid", "scipy_simpson", "scipy_trapez
 
 
 def calc_radial_matrix_element(
-    state1: RydbergStateBase,
-    state2: RydbergStateBase,
+    state1: RadialState,
+    state2: RadialState,
     k_radial: int = 0,
     integration_method: INTEGRATION_METHODS = "sum",
 ) -> float:

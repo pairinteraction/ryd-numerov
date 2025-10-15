@@ -12,7 +12,7 @@ from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_nume
 
 if TYPE_CHECKING:
     from ryd_numerov.radial import Grid, Model
-    from ryd_numerov.rydberg import RydbergStateBase
+    from ryd_numerov.radial_state import RadialState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class Wavefunction(ABC):
 
     def __init__(
         self,
-        state: RydbergStateBase,
+        state: RadialState,
         grid: Grid,
     ) -> None:
         """Create a Wavefunction object.
@@ -91,7 +91,7 @@ class Wavefunction(ABC):
 
         if sign_convention == "n_l_1":
             assert self.state.n is not None, "n must be given to apply the n_l_1 sign convention."
-            if current_outer_sign != (-1) ** (self.state.n - self.state.l - 1):
+            if current_outer_sign != (-1) ** (self.state.n - self.state.l_r - 1):
                 self._w_list = -self._w_list
         elif sign_convention == "positive_at_outer_bound":
             if current_outer_sign != 1:
@@ -101,9 +101,19 @@ class Wavefunction(ABC):
 
 
 class WavefunctionNumerov(Wavefunction):
+    r"""A wavefunction object for the Numerov method.
+
+    We solve the radial dimensionless Schrödinger equation for the Rydberg state
+
+    .. math::
+        \frac{d^2}{dx^2} u(x) = - \\left[ E - V_{eff}(x) \right] u(x)
+
+    using the Numerov method, see `integration.run_numerov_integration`.
+    """
+
     def __init__(
         self,
-        state: RydbergStateBase,
+        state: RadialState,
         grid: Grid,
         model: Model,
     ) -> None:
@@ -192,7 +202,7 @@ class WavefunctionNumerov(Wavefunction):
             y0, y1 = 0, w0
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
-            n = self.state.n if self.state.n is not None else self.state.get_n_star()
+            n = self.state.n if self.state.n is not None else self.state.nu
             x_min = np.sqrt(n * (n + 15))
 
         if _use_njit:
@@ -268,7 +278,7 @@ class WavefunctionNumerov(Wavefunction):
 
         tol = 1e-4
         # for low n the wavefunction converges not as good and still has more weight at the inner boundary
-        n = state.n if state.n is not None else state.get_n_star() + 5
+        n = state.n if state.n is not None else state.nu + 5
         if n <= 10:
             tol = 8e-3
         elif n <= 16:
@@ -298,16 +308,16 @@ class WavefunctionNumerov(Wavefunction):
 
         # Check the number of nodes
         nodes = self.nodes
-        if state.n is not None and nodes != state.n - state.l - 1:
-            warning_msgs.append(f"The wavefunction has {nodes} nodes, but should have {state.n - state.l - 1} nodes.")
+        if state.n is not None and nodes != state.n - state.l_r - 1:
+            warning_msgs.append(f"The wavefunction has {nodes} nodes, but should have {state.n - state.l_r - 1} nodes.")
 
         # Check that numerov stopped and did not run until x_stop
-        if state.l > 0:
+        if state.l_r > 0:
             if run_backward and z_stop > grid.z_list[0] - grid.dz / 2 and inner_weight_scaled_to_whole_grid > 1e-6:
                 warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[0]}, z_stop={z_stop}")
             if not run_backward and z_stop < grid.z_list[-1] + grid.dz / 2:
                 warning_msgs.append(f"The integration did not stop before z_stop, z={grid.z_list[-1]}")
-        elif state.l == 0 and run_backward:
+        elif state.l_r == 0 and run_backward:
             if grid.z_list[0] > 0.035:  # z_list[0] should run almost to zero for l=0
                 warning_msgs.append(f"The integration for l=0 did stop at {grid.z_list[0]} (should be close to zero).")
 
@@ -323,8 +333,8 @@ class WavefunctionNumerov(Wavefunction):
 class WavefunctionWhittaker(Wavefunction):
     def integrate(self) -> None:
         logger.warning("Using Whittaker to get the wavefunction is not recommended! Use this only for comparison.")
-        l = self.state.l
-        nu = self.state.get_n_star()
+        l = self.state.l_r
+        nu = self.state.nu
 
         whitw_vectorized = np.vectorize(whitw, otypes=[float])
         whitw_list = whitw_vectorized(nu, l + 0.5, 2 * self.grid.x_list / nu)
