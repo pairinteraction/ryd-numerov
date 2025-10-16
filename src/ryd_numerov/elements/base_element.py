@@ -180,7 +180,7 @@ class BaseElement(ABC):
         This approach allows for easy extension of the library with new elements.
         A user can even subclass BaseElement in his code (without modifying the ryd-numerov library),
         e.g. `class CustomRubidium(BaseElement): species = "Custom_Rb" ...`
-        and then use the new element by calling RydbergState("Custom_Rb", ...)
+        and then use the new element by calling RydbergStateAlkali("Custom_Rb", ...)
 
         Args:
             species: The species string (e.g. "Rb").
