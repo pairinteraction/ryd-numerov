@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import numpy as np
 
-from ryd_numerov.angular import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.angular.angular_matrix_element import calc_reduced_angular_matrix_element
-from ryd_numerov.elements.base_element import BaseElement
+from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
+from ryd_numerov.elements import BaseElement
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -522,11 +522,11 @@ def _check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
     return abs(s_1 - s_2) <= s_tot <= s_1 + s_2 and (s_1 + s_2 + s_tot) % 1 == 0
 
 
-AngularState = TypeVar("AngularState", bound=AngularStateBase)
+_AngularState = TypeVar("_AngularState", bound=AngularStateBase)
 
 
-class SuperpositionState(Generic[AngularState]):
-    def __init__(self, coefficients: list[float], states: list[AngularState]) -> None:
+class SuperpositionState(Generic[_AngularState]):
+    def __init__(self, coefficients: list[float], states: list[_AngularState]) -> None:
         if len(coefficients) != len(states):
             raise ValueError("Length of coefficients and states must be the same.")
         if abs(np.linalg.norm(coefficients) - 1) > 1e-6:
@@ -535,5 +535,5 @@ class SuperpositionState(Generic[AngularState]):
         self.coefficients = coefficients
         self.states = states
 
-    def __iter__(self) -> Iterator[tuple[float, AngularState]]:
+    def __iter__(self) -> Iterator[tuple[float, _AngularState]]:
         return zip(self.coefficients, self.states).__iter__()

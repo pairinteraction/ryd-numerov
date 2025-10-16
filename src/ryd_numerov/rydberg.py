@@ -5,15 +5,16 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING, get_args, overload
 
-from ryd_numerov.angular_state import AngularStateLS, _try_trivial_spin_addition
+from ryd_numerov.angular import AngularStateLS
+from ryd_numerov.angular.angular_state import _try_trivial_spin_addition
 from ryd_numerov.elements.base_element import BaseElement
-from ryd_numerov.radial_state import RadialState
+from ryd_numerov.radial import RadialState
 from ryd_numerov.units import BaseQuantities, OperatorType, ureg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ryd_numerov.angular_state import AngularStateBase
+    from ryd_numerov.angular import AngularStateBase
     from ryd_numerov.units import PintFloat
 
 

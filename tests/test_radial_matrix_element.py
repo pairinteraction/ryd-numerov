@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from ryd_numerov.elements.base_element import BaseElement
-from ryd_numerov.radial_state import RadialState
+from ryd_numerov.elements import BaseElement
+from ryd_numerov.radial import RadialState
 from ryd_numerov.rydberg import RydbergStateAlkali
 
 

@@ -5,23 +5,17 @@ from typing import TYPE_CHECKING, Literal, overload
 
 import numpy as np
 
-from ryd_numerov.elements.base_element import BaseElement
-from ryd_numerov.radial import (
-    Grid,
-    Model,
-    WavefunctionNumerov,
-    WavefunctionWhittaker,
-)
+from ryd_numerov.elements import BaseElement
+from ryd_numerov.radial.grid import Grid
+from ryd_numerov.radial.model import Model
 from ryd_numerov.radial.radial_matrix_element import calc_radial_matrix_element_from_w_z
+from ryd_numerov.radial.wavefunction import WavefunctionNumerov, WavefunctionWhittaker
 from ryd_numerov.units import BaseQuantities
 
 if TYPE_CHECKING:
-    from ryd_numerov.radial import (
-        Wavefunction,
-    )
     from ryd_numerov.radial.model import PotentialType
     from ryd_numerov.radial.radial_matrix_element import INTEGRATION_METHODS
-    from ryd_numerov.radial.wavefunction import WavefunctionSignConvention
+    from ryd_numerov.radial.wavefunction import Wavefunction, WavefunctionSignConvention
     from ryd_numerov.units import PintFloat
 
 logger = logging.getLogger(__name__)

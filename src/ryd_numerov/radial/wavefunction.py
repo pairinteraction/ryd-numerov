@@ -13,7 +13,7 @@ from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_nume
 
 if TYPE_CHECKING:
     from ryd_numerov.radial import Grid, Model
-    from ryd_numerov.radial_state import RadialState
+    from ryd_numerov.radial.radial_state import RadialState
     from ryd_numerov.units import NDArray
 
 logger = logging.getLogger(__name__)
