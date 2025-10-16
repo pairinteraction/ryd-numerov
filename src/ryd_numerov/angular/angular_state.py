@@ -18,6 +18,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class InvalidQuantumNumbersError(ValueError):
+    def __init__(self, state: AngularStateBase, msg: str = "") -> None:
+        _msg = f"Invalid quantum numbers for {state!r}"
+        if len(msg) > 0:
+            _msg += f"\n  {msg}"
+        super().__init__(_msg)
+
+
 class AngularStateBase(ABC):
     """Base class for a spin state."""
 
@@ -57,7 +65,7 @@ class AngularStateBase(ABC):
         return f"{self.__class__.__name__}({args})"
 
     def __str__(self) -> str:
-        return self.__repr__()
+        return self.__repr__().replace("AngularState", "")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AngularStateBase):
@@ -85,10 +93,9 @@ class AngularStateBase(ABC):
         if self.m is not None and not -self.f_tot <= self.m <= self.f_tot:
             msgs.append(f"m must be between -f_tot and f_tot, but {self.f_tot=}, {self.m=}")
 
-        for msg in msgs:
-            logger.error(msg)
         if msgs:
-            raise ValueError(f"Invalid quantum numbers for {self!r}")
+            msg = "\n  ".join(msgs)
+            raise InvalidQuantumNumbersError(self, msg)
 
     @abstractmethod
     def to_ls(self) -> SuperpositionState[AngularStateLS]: ...
@@ -106,7 +113,7 @@ class AngularStateBase(ABC):
         if any(isinstance(s, AngularStateJJ) for s in states) and any(isinstance(s, AngularStateFJ) for s in states):
             jj = next(s for s in states if isinstance(s, AngularStateJJ))
             fj = next(s for s in states if isinstance(s, AngularStateFJ))
-            return clebsch_gordan_6j(fj.i_c, fj.j_c, fj.f_c, fj.j_r, fj.f_tot, jj.j_tot)
+            return clebsch_gordan_6j(fj.j_c, fj.j_r, jj.j_tot, fj.i_c, fj.f_c, fj.f_tot)
 
         if any(isinstance(s, AngularStateJJ) for s in states) and any(isinstance(s, AngularStateLS) for s in states):
             jj = next(s for s in states if isinstance(s, AngularStateJJ))
@@ -359,18 +366,22 @@ class AngularStateJJ(AngularStateBase):
 
         for s_tot in np.arange(abs(self.s_c - self.s_r), self.s_c + self.s_r + 1):
             for l_tot in np.arange(abs(self.l_c - self.l_r), self.l_c + self.l_r + 1):
-                ls_state = AngularStateLS(
-                    self.i_c,
-                    self.s_c,
-                    self.l_c,
-                    self.s_r,
-                    self.l_r,
-                    float(s_tot),
-                    int(l_tot),
-                    self.j_tot,
-                    self.f_tot,
-                    self.m,
-                )
+                try:
+                    ls_state = AngularStateLS(
+                        self.i_c,
+                        self.s_c,
+                        self.l_c,
+                        self.s_r,
+                        self.l_r,
+                        float(s_tot),
+                        int(l_tot),
+                        self.j_tot,
+                        self.f_tot,
+                        self.m,
+                        species=self.species,
+                    )
+                except InvalidQuantumNumbersError:
+                    continue
                 coeff = self.calc_reduced_overlap(ls_state)
                 if coeff != 0:
                     states.append(ls_state)
@@ -469,9 +480,22 @@ class AngularStateFJ(AngularStateBase):
         coefficients: list[float] = []
 
         for j_tot in np.arange(abs(self.f_tot - self.i_c), self.f_tot + self.i_c + 1):
-            jj_state = AngularStateJJ(
-                self.i_c, self.s_c, self.l_c, self.s_r, self.l_r, self.j_c, self.j_r, float(j_tot), self.f_tot, self.m
-            )
+            try:
+                jj_state = AngularStateJJ(
+                    self.i_c,
+                    self.s_c,
+                    self.l_c,
+                    self.s_r,
+                    self.l_r,
+                    self.j_c,
+                    self.j_r,
+                    float(j_tot),
+                    self.f_tot,
+                    self.m,
+                    species=self.species,
+                )
+            except InvalidQuantumNumbersError:
+                continue
             coeff = self.calc_reduced_overlap(jj_state)
             if coeff != 0:
                 states.append(jj_state)
@@ -530,10 +554,18 @@ class SuperpositionState(Generic[_AngularState]):
         if len(coefficients) != len(states):
             raise ValueError("Length of coefficients and states must be the same.")
         if abs(np.linalg.norm(coefficients) - 1) > 1e-6:
-            raise ValueError("Coefficients must be normalized.")
+            raise ValueError(f"Coefficients must be normalized, but {coefficients=}, {states=}.")
 
         self.coefficients = coefficients
         self.states = states
 
     def __iter__(self) -> Iterator[tuple[float, _AngularState]]:
         return zip(self.coefficients, self.states).__iter__()
+
+    def __repr__(self) -> str:
+        terms = [f"{coeff}*{state!r}" for coeff, state in self]
+        return f"{self.__class__.__name__}({', '.join(terms)})"
+
+    def __str__(self) -> str:
+        terms = [f"{coeff}*{state!r}" for coeff, state in self]
+        return f"{', '.join(terms)}".replace("AngularState", "")
