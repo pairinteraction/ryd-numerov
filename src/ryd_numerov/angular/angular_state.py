@@ -134,7 +134,10 @@ class AngularStateBase(ABC):
         r"""Calculate the reduced angular matrix element.
 
         This means, calculate the following matrix element:
-        <self| \hat{O}^(\kappa)_q |other>
+
+        .. math::
+            <self| \hat{O}^{(\kappa)}_q |other>
+
         """
         self_ls_states = self.to_ls()
         other_ls_states = other.to_ls()
@@ -157,20 +160,20 @@ class AngularStateBase(ABC):
         This means, calculate the following matrix element:
 
         .. math::
-            <self| \hat{O}^(\kappa)_q |other>
-            = <\alpha',f_tot',m'| \hat{O}^(\kappa)_q |\alpha,f_tot,m>
-            = ... * <\alpha',f_tot' || \hat{O}^(\kappa) || \alpha,f_tot>
+            <self| \hat{O}^{(\kappa)}_q |other>
+            = <\alpha',f_{tot}',m'| \hat{O}^{(\kappa)}_q |\alpha,f_{tot},m>
+            = ... \cdot <\alpha',f_{tot}' || \hat{O}^{(\kappa)} || \alpha,f_{tot}>
 
         where alpha denotes all other quantum numbers
-        and <\alpha',f_tot' || \hat{O}^(\kappa) || \alpha,f_tot> is the reduced matrix element
+        and :math:`<\alpha',f_{tot}' || \hat{O}^{(\kappa)} || \alpha,f_{tot}>` is the reduced matrix element
         (see `calc_reduced_matrix_element`).
 
         Args:
-            other: The other spin state |other>.
+            other: The other spin state :math:`|other>`.
             operator: The operator type :math:`\hat{O}_{kq}` for which to calculate the matrix element.
                 Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
-            kappa: The quantum number $\kappa$ of the angular momentum operator.
-            q: The quantum number $q$ of the angular momentum operator.
+            kappa: The quantum number :math:`\kappa` of the angular momentum operator.
+            q: The quantum number :math:`q` of the angular momentum operator.
 
         Returns:
             The dimensionless angular matrix element.

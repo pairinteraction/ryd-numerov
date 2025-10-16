@@ -398,6 +398,7 @@ class BaseElement(ABC):
         r"""Calculate the effective principal quantum number nu from a given energy.
 
         The effective principal quantum number is given by
+
         .. math::
             \nu = \sqrt{\frac{1}{2} \frac{\mu}{-E}}
 
@@ -410,6 +411,7 @@ class BaseElement(ABC):
         r"""Calculate the energy from a given effective principal quantum number nu.
 
         The energy is given by
+
         .. math::
             E = -\frac{1}{2} \frac{\mu}{\nu^2}
 
