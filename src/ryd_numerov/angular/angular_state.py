@@ -100,6 +100,12 @@ class AngularStateBase(ABC):
     @abstractmethod
     def to_ls(self) -> SuperpositionState[AngularStateLS]: ...
 
+    @abstractmethod
+    def to_jj(self) -> SuperpositionState[AngularStateJJ]: ...
+
+    @abstractmethod
+    def to_fj(self) -> SuperpositionState[AngularStateFJ]: ...
+
     def calc_reduced_overlap(self, other: AngularStateBase) -> float:
         """Calculate the reduced (ignore any m) overlap <self||other>."""
         if type(self) is type(other):
@@ -277,6 +283,57 @@ class AngularStateLS(AngularStateBase):
         """
         return SuperpositionState([1.0], [self])
 
+    def to_jj(self) -> SuperpositionState[AngularStateJJ]:
+        """Convert to JJ coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        states: list[AngularStateJJ] = []
+        coefficients: list[float] = []
+
+        for j_c in np.arange(abs(self.s_c - self.l_c), self.s_c + self.l_c + 1):
+            for j_r in np.arange(abs(self.s_r - self.l_r), self.s_r + self.l_r + 1):
+                try:
+                    jj_state = AngularStateJJ(
+                        self.i_c,
+                        self.s_c,
+                        self.l_c,
+                        self.s_r,
+                        self.l_r,
+                        float(j_c),
+                        float(j_r),
+                        self.j_tot,
+                        self.f_tot,
+                        self.m,
+                        species=self.species,
+                    )
+                except InvalidQuantumNumbersError:
+                    continue
+                coeff = self.calc_reduced_overlap(jj_state)
+                if coeff != 0:
+                    states.append(jj_state)
+                    coefficients.append(coeff)
+
+        return SuperpositionState(coefficients, states)
+
+    def to_fj(self) -> SuperpositionState[AngularStateFJ]:
+        """Convert to FJ coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        jj_states = self.to_jj()
+        fj_states: list[AngularStateFJ] = []
+        coefficients: list[float] = []
+        for jj_coeff, jj_state in jj_states:
+            for fj_coeff, fj_state in jj_state.to_fj():
+                if fj_state in fj_states:
+                    idx = fj_states.index(fj_state)
+                    coefficients[idx] += jj_coeff * fj_coeff
+                else:
+                    fj_states.append(fj_state)
+                    coefficients.append(jj_coeff * fj_coeff)
+        return SuperpositionState(coefficients, fj_states)
+
 
 class AngularStateJJ(AngularStateBase):
     """Spin state in JJ coupling."""
@@ -392,9 +449,48 @@ class AngularStateJJ(AngularStateBase):
 
         return SuperpositionState(coefficients, states)
 
+    def to_jj(self) -> SuperpositionState[AngularStateJJ]:
+        """Convert to JJ coupling.
+
+        Note that this is already JJ coupling, we have this method just for convenience.
+        """
+        return SuperpositionState([1.0], [self])
+
+    def to_fj(self) -> SuperpositionState[AngularStateFJ]:
+        """Convert to FJ coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        states: list[AngularStateFJ] = []
+        coefficients: list[float] = []
+
+        for f_c in np.arange(abs(self.j_c - self.i_c), self.j_c + self.i_c + 1):
+            try:
+                fj_state = AngularStateFJ(
+                    self.i_c,
+                    self.s_c,
+                    self.l_c,
+                    self.s_r,
+                    self.l_r,
+                    self.j_c,
+                    self.j_r,
+                    float(f_c),
+                    self.f_tot,
+                    self.m,
+                    species=self.species,
+                )
+            except InvalidQuantumNumbersError:
+                continue
+            coeff = self.calc_reduced_overlap(fj_state)
+            if coeff != 0:
+                states.append(fj_state)
+                coefficients.append(coeff)
+
+        return SuperpositionState(coefficients, states)
+
 
 class AngularStateFJ(AngularStateBase):
-    """Spin state in JJ coupling."""
+    """Spin state in FJ coupling."""
 
     def __init__(
         self,
@@ -474,6 +570,24 @@ class AngularStateFJ(AngularStateBase):
 
         super().sanity_check(msgs)
 
+    def to_ls(self) -> SuperpositionState[AngularStateLS]:
+        """Convert to LS coupling.
+
+        Note that in general this is a superposition of states.
+        """
+        jj_states = self.to_jj()
+        ls_states: list[AngularStateLS] = []
+        coefficients: list[float] = []
+        for jj_coeff, jj_state in jj_states:
+            for ls_coeff, ls_state in jj_state.to_ls():
+                if ls_state in ls_states:
+                    idx = ls_states.index(ls_state)
+                    coefficients[idx] += jj_coeff * ls_coeff
+                else:
+                    ls_states.append(ls_state)
+                    coefficients.append(jj_coeff * ls_coeff)
+        return SuperpositionState(coefficients, ls_states)
+
     def to_jj(self) -> SuperpositionState[AngularStateJJ]:
         """Convert to JJ coupling.
 
@@ -482,7 +596,7 @@ class AngularStateFJ(AngularStateBase):
         states: list[AngularStateJJ] = []
         coefficients: list[float] = []
 
-        for j_tot in np.arange(abs(self.f_tot - self.i_c), self.f_tot + self.i_c + 1):
+        for j_tot in np.arange(abs(self.j_c - self.j_r), self.j_c + self.j_r + 1):
             try:
                 jj_state = AngularStateJJ(
                     self.i_c,
@@ -506,23 +620,12 @@ class AngularStateFJ(AngularStateBase):
 
         return SuperpositionState(coefficients, states)
 
-    def to_ls(self) -> SuperpositionState[AngularStateLS]:
-        """Convert to LS coupling.
+    def to_fj(self) -> SuperpositionState[AngularStateFJ]:
+        """Convert to FJ coupling.
 
-        Note that in general this is a superposition of states.
+        Note that this is already FJ coupling, we have this method just for convenience.
         """
-        jj_states = self.to_jj()
-        ls_states: list[AngularStateLS] = []
-        coefficients: list[float] = []
-        for jj_coeff, jj_state in jj_states:
-            for ls_coeff, ls_state in jj_state.to_ls():
-                if ls_state in ls_states:
-                    idx = ls_states.index(ls_state)
-                    coefficients[idx] += jj_coeff * ls_coeff
-                else:
-                    ls_states.append(ls_state)
-                    coefficients.append(jj_coeff * ls_coeff)
-        return SuperpositionState(coefficients, ls_states)
+        return SuperpositionState([1.0], [self])
 
 
 def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
