@@ -1,4 +1,7 @@
-from functools import lru_cache
+from __future__ import annotations
+
+from functools import lru_cache, wraps
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 import numpy as np
 from sympy import Integer
@@ -8,17 +11,30 @@ from sympy.physics.wigner import (
     wigner_9j as sympy_wigner_9j,
 )
 
+if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
 
-def _check_quantum_numbers(qns: list[float]) -> list[float]:
-    """Check that quantum numbers are valid and convert to int or half-integer."""
-    for i, qn in enumerate(qns):
-        if qn % 1 == 0:
-            qns[i] = int(qn)
-        elif qn % 0.5 == 0:
-            qns[i] = Integer(2 * qn) / Integer(2)
-        else:
-            raise ValueError(f"Invalid input {qn}.")
-    return qns
+    P = ParamSpec("P")
+    R = TypeVar("R")
+
+
+def sympify_args(func: Callable[P, R]) -> Callable[P, R]:
+    """Check that quantum numbers are valid and convert to sympy.Integer (and half-integer)."""
+
+    def check_arg(arg: float) -> Integer:
+        if arg.is_integer():
+            return Integer(int(arg))
+        if (arg * 2).is_integer():
+            return Integer(int(arg * 2)) / Integer(2)
+        raise ValueError(f"Invalid input to {func.__name__}: {arg}.")
+
+    @wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        _args = [check_arg(arg) for arg in args]  # type: ignore[arg-type]
+        _kwargs = {key: check_arg(value) for key, value in kwargs.items()}  # type: ignore[arg-type]
+        return func(*_args, **_kwargs)
+
+    return wrapper
 
 
 def calc_wigner_3j(j1: float, j2: float, j3: float, m1: float, m2: float, m3: float) -> float:
@@ -37,23 +53,23 @@ def calc_wigner_3j(j1: float, j2: float, j3: float, m1: float, m2: float, m3: fl
 
 
 @lru_cache(maxsize=10_000)
+@sympify_args
 def _calc_wigner_3j(j1: float, j2: float, j3: float, m1: float, m2: float, m3: float) -> float:
-    qns = _check_quantum_numbers([j1, j2, j3, m1, m2, m3])
-    return float(sympy_wigner_3j(*qns).evalf())
+    return float(sympy_wigner_3j(j1, j2, j3, m1, m2, m3).evalf())
 
 
 @lru_cache(maxsize=10_000)
+@sympify_args
 def calc_wigner_6j(j1: float, j2: float, j3: float, j4: float, j5: float, j6: float) -> float:
-    qns = _check_quantum_numbers([j1, j2, j3, j4, j5, j6])
-    return float(sympy_wigner_6j(*qns).evalf())
+    return float(sympy_wigner_6j(j1, j2, j3, j4, j5, j6).evalf())
 
 
 @lru_cache(maxsize=10_000)
+@sympify_args
 def calc_wigner_9j(
     j1: float, j2: float, j3: float, j4: float, j5: float, j6: float, j7: float, j8: float, j9: float
 ) -> float:
-    qns = _check_quantum_numbers([j1, j2, j3, j4, j5, j6, j7, j8, j9])
-    return float(sympy_wigner_9j(*qns).evalf())
+    return float(sympy_wigner_9j(j1, j2, j3, j4, j5, j6, j7, j8, j9).evalf())
 
 
 def clebsch_gordan_6j(s1: float, s2: float, s_tot: float, l1: float, j1: float, j_tot: float) -> float:
@@ -75,7 +91,8 @@ def clebsch_gordan_6j(s1: float, s2: float, s_tot: float, l1: float, j1: float, 
         The Clebsch-Gordan coefficient <((s1,s2)s_tot,l1)j_tot|((s1,l1)j1,s2)j_tot>.
 
     """
-    racah_w = minus_one_pow(j_tot + l1 + s1 + s2) * calc_wigner_6j(j_tot, l1, s_tot, s1, s2, j1)
+    racah_w = minus_one_pow(j_tot + l1 + s1 + s2) * calc_wigner_6j(s1, s2, s_tot, l1, j_tot, j1)
+    # same as calc_wigner_6j(j_tot, l1, s_tot, s1, s2, j1)
     prefactor: float = np.sqrt((2 * s_tot + 1) * (2 * j1 + 1))
     return prefactor * racah_w
 
