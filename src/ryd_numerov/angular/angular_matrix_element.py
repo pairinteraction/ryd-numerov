@@ -1,185 +1,68 @@
-from functools import lru_cache
-from typing import get_args
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 
-from ryd_numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, check_triangular, minus_one_pow
-from ryd_numerov.units import OperatorType
+from ryd_numerov.angular.utils import calc_wigner_3j, calc_wigner_6j, minus_one_pow
+
+if TYPE_CHECKING:
+    from typing_extensions import ParamSpec
+
+    P = ParamSpec("P")
+    R = TypeVar("R")
 
 
-@lru_cache(maxsize=10_000)
-def calc_reduced_angular_matrix_element(
-    s1: float,
-    l1: int,
-    j1: float,
-    s2: float,
-    l2: int,
-    j2: float,
-    operator: OperatorType,
-    kappa: int,
-    _lazy_evaluation: bool = True,
-) -> float:
-    r"""Calculate the reduced matrix element :math:`\langle j2 || \hat{O}_{k0} || j1 \rangle`.
-
-    The reduced matrix elements :math:`\langle j2 || \hat{O}_{k0} || j1 \rangle` for
-    :math:`\bra{j2} = \bra{\gamma_2, s2, l2, j2}` and :math:`\ket{j1} = \ket{\gamma_1, s1, l1, j1}`
-    simplify for the special cases :math:`s2 = s1` or :math:`l2 = l1` to the following expressions:
-    (see https://www.phys.ksu.edu/reu2015/danielkeylon/Wigner.pdf, and Edmonds: "Angular Momentum in Quantum Mechanics")
-
-    For :math:`s2 = s1` (i.e. when :math:`\hat{O}_{k0}` only acts on :math:`l`), the reduced matrix element is given by
-
-    .. math::
-        \langle \gamma_{2}, s2, l2, j2 || \hat{O}_{k0} || \gamma_{1}, s2, l1, j1 \rangle
-        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2j1 + 1} \mathrm{Wigner6j}(l2, j2, s2, j1, l1, \kappa)
-        \langle \gamma_{2}, l2 || \hat{O}_{k0} || \gamma_{1}, l1 \rangle
-
-    And for :math:`l2 = l1` (i.e. when :math:`\hat{O}_{k0}` only acts on :math:`s`),
-    the reduced matrix element is given by
-
-    .. math::
-        \langle \gamma_{2}, s2, l2, j2 || \hat{O}_{k0} || \gamma_{1}, s1, l2, j1 \rangle
-        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2 * j1 + 1} \mathrm{Wigner6j}(s2, j2, l2, j1, s1, \kappa)
-        \langle \gamma_{2}, s2 || \hat{O}_{k0} || \gamma_{1}, s1 \rangle
-
-    Note we changed the formulas to match the pairinteraction paper convention:
-    https://doi.org/10.1088/1361-6455/aa743a
-
-    Args:
-        s1: The spin quantum number of the initial state.
-        l1: The orbital quantum number of the initial state.
-        j1: The total angular momentum quantum number of the initial state.
-        s2: The spin quantum number of the final state.
-        l2: The orbital quantum number of the final state.
-        j2: The total angular momentum quantum number of the final state.
-        operator: The operator type :math:`\hat{O}_{kq}` for which to calculate the matrix element.
-            Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
-        kappa: The quantum number :math:`\kappa` of the angular momentum operator.
-
-    Returns:
-        The reduced matrix element :math:`\langle j2 || \hat{O}_{k0} || j1 \rangle`.
-
-    """
-    assert operator in get_args(OperatorType), (
-        f"Operator {operator} not supported, must be one of {get_args(OperatorType)}"
-    )
-
-    should_be_zero = check_reduced_angular_matrix_element_should_be_zero(s1, l1, j1, s2, l2, j2, operator, kappa)
-    if _lazy_evaluation and should_be_zero:
-        return 0
-
-    if operator == "MAGNETIC":
-        g_s = 2.0023192
-        value_s = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "MAGNETIC_S", kappa)
-        g_l = 1
-        value_l = calc_reduced_angular_matrix_element(s1, l1, j1, s2, l2, j2, "MAGNETIC_L", kappa)
-        return g_s * value_s + g_l * value_l
-
-    prefactor: float = np.sqrt(2 * j1 + 1) * np.sqrt(2 * j2 + 1)
-
-    reduced_matrix_element: float
-    if operator == "MAGNETIC_S":
-        prefactor *= minus_one_pow(l2 + s1 + j2 + kappa)
-        reduced_matrix_element = spin_like_matrix_element(s1, s2, kappa)
-        wigner_6j = calc_wigner_6j(s2, j2, l2, j1, s1, kappa)
-    else:
-        prefactor *= minus_one_pow(l2 + s2 + j1 + kappa)
-        if operator == "MAGNETIC_L":
-            reduced_matrix_element = spin_like_matrix_element(l1, l2, kappa)
-        else:
-            reduced_matrix_element = spherical_like_matrix_element(l1, l2, operator, kappa)
-        wigner_6j = calc_wigner_6j(l2, j2, s2, j1, l1, kappa)
-
-    value = prefactor * reduced_matrix_element * wigner_6j
-
-    # Check that we catched all cases where the reduced matrix element is zero before
-    if should_be_zero and value != 0:
-        raise ValueError(
-            f"The reduced angular matrix element for {(s1, l1, j1)}, {(s2, l2, j2)}, {operator}, {kappa} "
-            "is not zero (but should be zero)."
-        )
-    if value == 0 and not should_be_zero:
-        raise ValueError(
-            f"The reduced angular matrix element for {(s1, l1, j1)}, {(s2, l2, j2)}, {operator}, {kappa} "
-            "is zero (but should not be zero)."
-        )
-
-    return value
-
-
-def check_reduced_angular_matrix_element_should_be_zero(  # noqa: PLR0911
-    s1: float, l1: int, j1: float, s2: float, l2: int, j2: float, operator: OperatorType, kappa: int
-) -> bool:
-    if not check_triangular(j2, j1, kappa):
-        return True
-    if operator in ["SPHERICAL", "ELECTRIC", "MAGNETIC_L"] and not check_triangular(l2, l1, kappa):
-        return True
-    if operator in ["SPHERICAL", "ELECTRIC"] and (l2 + l1 + kappa) % 2 != 0:
-        return True
-    if operator in ["MAGNETIC_L", "MAGNETIC_S", "MAGNETIC"] and l2 != l1:
-        return True
-    if (operator == "MAGNETIC_S" and s2 == 0) or (operator == "MAGNETIC_L" and l2 == 0):
-        return True
-    if s2 != s1:  # noqa: SIM103
-        return True
-    return False
-
-
-def spin_like_matrix_element(x1: float, x2: float, kappa: int) -> float:
-    r"""Calculate the reduced spin-like matrix element $(x2||\hat{x}_{10}||x1)$ for a spin-like operator.
-
-    The matrix elements of the spin-like operators $x \in \{l, s\}$ are given by
-
-    .. math::
-        (x2||\hat{x}_{10}||x1) = \delta_{x2, x1} \sqrt{x1 (x1 + 1) (2 * x1 + 1)}
-
-    Args:
-        x1: The spin-like quantum number of the initial state.
-        x2: The spin-like quantum number of the final state.
-        kappa: The quantum number $\kappa$ of the spin-like operator.
-
-    Returns:
-        The reduced matrix element $(x2||\hat{x}_{10}||x1)$.
-
-    """
-    if kappa != 1:
-        raise NotImplementedError("Currently only kappa=1 is supported.")
-
-    if x1 != x2 or x1 == 0:
-        return 0
-    value: float = np.sqrt(x1 * (x1 + 1) * (2 * x1 + 1))
-    return value
-
-
-@lru_cache(maxsize=1_000)
-def spherical_like_matrix_element(l1: int, l2: int, operator: OperatorType, kappa: int) -> float:
-    r"""Calculate the reduced spherical-like matrix element $(l2||\hat{Y}_{k0}||l1)$.
+def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kappa: int) -> float:
+    r"""Calculate the reduced spherical matrix element $(l_r_final || \hat{Y}_{k} || l_r_initial)$.
 
     The matrix elements of the spherical operators are given by (see also: Gaunt coefficient)
 
     .. math::
-        (l2||\hat{Y}_{k0}||l1) = (-1)^l2 \sqrt{(2 * l2 + 1)(2 * l1 + 1)} * \sqrt{\frac{2 * \kappa + 1}{4 \pi}}
-                                    \begin{pmatrix} l2 & k & l1 \\ 0 & 0 & 0 \end{pmatrix}
-
-    If the operator is the electric multipole operator, the prefactor $\sqrt{(2 * \kappa + 1) / (4 \pi)}$ is dropped.
+        (l_r_final || \hat{Y}_{k} || l_r_initial)
+            = (-1)^{l_r_final} \sqrt{(2 * l_r_final + 1)(2 * l_r_initial + 1)} * \sqrt{\frac{2 * \kappa + 1}{4 \pi}}
+                                    \mathrm{Wigner3j}(l_r_final, k, l_r_initial; 0, 0, 0)
 
     Args:
-        l1: The orbital momentum quantum number of the initial state.
-        l2: The orbital momentum quantum number of the final state.
-        operator: The multipole operator, either "SPHERICAL" or "ELECTRIC".
-        kappa: The quantum number $\kappa$ of the angular momentum operator.
+        l_r_final: The orbital momentum quantum number of the final state.
+        l_r_initial: The orbital momentum quantum number of the initial state.
+        kappa: The quantum number :math:`\kappa` of the angular momentum operator.
 
     Returns:
-        The reduced matrix element $(l2||\hat{Y}_{k0}||l1)$.
+        The reduced matrix element :math:`(l2 || \hat{Y}_{k} || l1)`.
 
     """
-    assert operator in ["SPHERICAL", "ELECTRIC"]
+    prefactor = (
+        minus_one_pow(l_r_final)
+        * np.sqrt((2 * l_r_final + 1) * (2 * l_r_initial + 1))
+        * np.sqrt((2 * kappa + 1) / (4 * np.pi))
+    )
+    wigner_3j = calc_wigner_3j(l_r_final, kappa, l_r_initial, 0, 0, 0)
+    return prefactor * wigner_3j  # type: ignore [no-any-return]
 
-    prefactor: float = minus_one_pow(l2)
-    prefactor *= np.sqrt((2 * l1 + 1) * (2 * l2 + 1))
-    if operator == "SPHERICAL":
-        prefactor *= np.sqrt((2 * kappa + 1) / (4 * np.pi))
-    wigner_3j = calc_wigner_3j(l2, kappa, l1, 0, 0, 0)
-    return prefactor * wigner_3j
+
+def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
+    r"""Calculate the reduced spin matrix element $(s_final || \hat{s} || s_initial)$.
+
+    The spin operator \hat{s} must be the operator corresponding to the quantum number s_final and s_initial.
+
+    The matrix elements of the spin operators are given by:
+
+    .. math::
+        (s_final || \hat{s} || s_initial)
+            = \sqrt{(2 * s_final + 1) * (s_final + 1) * s_final} * \delta_{s_final, s_initial}
+
+    Args:
+        s_final: The spin quantum number of the final state.
+        s_initial: The spin quantum number of the initial state.
+
+    Returns:
+        The reduced matrix element :math:`(s_final || \hat{s} || s_initial)`.
+
+    """
+    if s_final != s_initial:
+        return 0
+    return np.sqrt((2 * s_final + 1) * (s_final + 1) * s_final)  # type: ignore [no-any-return]
 
 
 def calc_prefactor_of_operator_in_coupled_scheme(

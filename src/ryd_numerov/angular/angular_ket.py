@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Self, TypeVar
 
 import numpy as np
 
+from ryd_numerov.angular.angular_matrix_element import (
+    calc_prefactor_of_operator_in_coupled_scheme,
+    calc_reduced_spherical_matrix_element,
+    calc_reduced_spin_matrix_element,
+)
 from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements import BaseElement
 
@@ -32,6 +38,9 @@ class AngularKetBase(ABC):
 
     _spin_quantum_number_names: ClassVar[list[str]]
     """Names of all well defined spin quantum numbers (without the magnetic quantum number m) in this class."""
+
+    _coupled_quantum_numbers: ClassVar[dict[str, tuple[str, str]]]
+    """Mapping of coupled quantum numbers to their constituent quantum numbers."""
 
     i_c: float
     """Nuclear spin quantum number."""
@@ -136,10 +145,7 @@ class AngularKetBase(ABC):
             return False
         if self.m != other.m:
             return False
-        return all(
-            self.spin_quantum_numbers_dict[k] == other.spin_quantum_numbers_dict[k]
-            for k in self.spin_quantum_numbers_dict
-        )
+        return all(self.get_qn(k) == other.get_qn(k) for k in self.spin_quantum_numbers_dict)
 
     def __hash__(self) -> int:
         return hash(
@@ -149,10 +155,16 @@ class AngularKetBase(ABC):
             )
         )
 
-    @property
+    @cached_property
     def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
         """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
         return {k: getattr(self, k) for k in self._spin_quantum_number_names}
+
+    def get_qn(self, qn: str) -> float:
+        """Get the value of a quantum number by name."""
+        if qn not in self._spin_quantum_number_names:
+            raise ValueError(f"Quantum number {qn} not found in {self!r}.")
+        return self.spin_quantum_numbers_dict[qn]
 
     @abstractmethod
     def to_ls(self) -> AngularState[AngularKetLS]: ...
@@ -177,7 +189,7 @@ class AngularKetBase(ABC):
         """
         if type(self) is type(other):
             for k, qn1 in self.spin_quantum_numbers_dict.items():
-                if qn1 != other.spin_quantum_numbers_dict[k]:
+                if qn1 != other.get_qn(k):
                     return 0.0
             return 1.0
 
@@ -218,6 +230,18 @@ class AngularKetBase(ABC):
         if type(self) is not type(other):
             return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
 
+        if operator == "SPHERICAL":
+            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, "l_r", kappa)
+            complete_reduced_matrix_element = calc_reduced_spherical_matrix_element(self.l_r, other.l_r, kappa)
+            return prefactor * complete_reduced_matrix_element
+
+        if operator in self._spin_quantum_number_names:
+            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
+            complete_reduced_matrix_element = calc_reduced_spin_matrix_element(
+                self.get_qn(operator), other.get_qn(operator)
+            )
+            return prefactor * complete_reduced_matrix_element
+
         raise NotImplementedError("calc_reduced_matrix_element is not implemented yet")
 
     def calc_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int, q: int) -> float:
@@ -254,12 +278,44 @@ class AngularKetBase(ABC):
         wigner_3j = calc_wigner_3j(other.f_tot, kappa, self.f_tot, -other.m, q, self.m)
         return prefactor * reduced_matrix_element * wigner_3j
 
+    def _calc_prefactor_of_operator_in_coupled_scheme(self, other: AngularKetBase, q: str, kappa: int) -> float:
+        """Calculate the prefactor for the complete reduced matrix element.
+
+        This approach is only valid if the operator acts only on one of the well defined quantum numbers.
+        """
+        if type(self) is not type(other):
+            raise ValueError(
+                "Both kets must be of the same type to calculate the prefactor of the operator in the coupled scheme."
+            )
+
+        if q == "f_tot":
+            return 1
+
+        for key, qs in self._coupled_quantum_numbers.items():
+            if q in qs:
+                q_combined = key
+                q2 = qs[1] if qs[0] == q else qs[0]
+                break
+        else:  # no break
+            raise ValueError(f"Quantum number {q} not found in _coupled_quantum_numbers.")
+
+        f1, f2, f_tot = (self.get_qn(q), self.get_qn(q2), self.get_qn(q_combined))
+        i1, i2, i_tot = (other.get_qn(q), other.get_qn(q2), other.get_qn(q_combined))
+        prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa)
+        return prefactor * self._calc_prefactor_of_operator_in_coupled_scheme(other, q_combined, kappa)
+
 
 class AngularKetLS(AngularKetBase):
     """Spin ket in LS coupling."""
 
     __slots__ = ("s_tot", "l_tot", "j_tot")
     _spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_tot", "f_tot"]
+    _coupled_quantum_numbers: ClassVar = {
+        "s_tot": ("s_c", "s_r"),
+        "l_tot": ("l_c", "l_r"),
+        "j_tot": ("s_tot", "l_tot"),
+        "f_tot": ("j_tot", "i_c"),
+    }
 
     s_tot: float
     """Total electron spin quantum number (s_c + s_r)."""
@@ -375,6 +431,12 @@ class AngularKetJJ(AngularKetBase):
 
     __slots__ = ("j_c", "j_r", "j_tot")
     _spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "j_r", "j_tot", "f_tot"]
+    _coupled_quantum_numbers: ClassVar = {
+        "j_c": ("s_c", "l_c"),
+        "j_r": ("s_r", "l_r"),
+        "j_tot": ("j_c", "j_r"),
+        "f_tot": ("j_tot", "i_c"),
+    }
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
@@ -502,6 +564,12 @@ class AngularKetFJ(AngularKetBase):
 
     __slots__ = ("j_c", "f_c", "j_r")
     _spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "f_c", "j_r", "f_tot"]
+    _coupled_quantum_numbers: ClassVar = {
+        "j_c": ("s_c", "l_c"),
+        "f_c": ("j_c", "i_c"),
+        "j_r": ("s_r", "l_r"),
+        "f_tot": ("f_c", "j_r"),
+    }
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
