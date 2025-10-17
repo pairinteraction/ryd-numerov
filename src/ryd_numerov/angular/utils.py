@@ -93,8 +93,7 @@ def clebsch_gordan_6j(s1: float, s2: float, s_tot: float, l1: float, j1: float, 
         The Clebsch-Gordan coefficient <((s1,s2)s_tot,l1)j_tot|((s1,l1)j1,s2)j_tot>.
 
     """
-    racah_w = minus_one_pow(j_tot + l1 + s1 + s2) * calc_wigner_6j(s1, s2, s_tot, l1, j_tot, j1)
-    # same as calc_wigner_6j(j_tot, l1, s_tot, s1, s2, j1)
+    racah_w = minus_one_pow(j_tot + l1 + s1 + s2) * calc_wigner_6j(j_tot, l1, s_tot, s1, s2, j1)
     prefactor: float = np.sqrt((2 * s_tot + 1) * (2 * j1 + 1))
     return prefactor * racah_w
 
