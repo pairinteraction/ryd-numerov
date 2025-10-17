@@ -93,7 +93,7 @@ class AngularState(Generic[_AngularKet]):
         if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
-                    return self._to_coupling_scheme(ket_class._coupling_scheme).calc_exp_qn(q)  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class.coupling_scheme).calc_exp_qn(q)
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
@@ -111,7 +111,7 @@ class AngularState(Generic[_AngularKet]):
         if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
-                    return self._to_coupling_scheme(ket_class._coupling_scheme).calc_std_qn(q)  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class.coupling_scheme).calc_std_qn(q)
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
