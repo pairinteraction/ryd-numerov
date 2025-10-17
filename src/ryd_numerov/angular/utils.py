@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     R = TypeVar("R")
 
+    def lru_cache(maxsize: int) -> Callable[[Callable[P, R]], Callable[P, R]]: ...  # type: ignore [no-redef]
+
 
 def sympify_args(func: Callable[P, R]) -> Callable[P, R]:
     """Check that quantum numbers are valid and convert to sympy.Integer (and half-integer)."""
