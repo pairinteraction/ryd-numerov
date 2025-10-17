@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, ClassVar, Self, TypeVar
 
 import numpy as np
 
-from ryd_numerov.angular.angular_matrix_element import calc_reduced_angular_matrix_element
 from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements import BaseElement
 
@@ -207,7 +206,7 @@ class AngularKetBase(ABC):
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
-    def calc_reduced_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:
+    def calc_reduced_matrix_element(self: Self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:
         r"""Calculate the reduced angular matrix element.
 
         This means, calculate the following matrix element:
@@ -216,21 +215,10 @@ class AngularKetBase(ABC):
             <self || \hat{O}^{(\kappa)} || other>
 
         """
-        self_ls_state = self.to_ls()
-        other_ls_state = other.to_ls()
-        value = 0.0
-        for coeff1, ket1 in self_ls_state:
-            for coeff2, ket2 in other_ls_state:
-                # TODO should this be l_tot or l_ryd? (also s_tot or s_ryd? and j_tot or j_ryd?)
-                v = calc_reduced_angular_matrix_element(
-                    *(ket1.s_tot, ket1.l_tot, ket1.j_tot),
-                    *(ket2.s_tot, ket2.l_tot, ket2.j_tot),
-                    operator,
-                    kappa,
-                )
-                value += coeff1 * coeff2 * v
-                # TODO add nuclear spin and nuclear magnetic moment for b field?
-        return value
+        if type(self) is not type(other):
+            return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
+
+        raise NotImplementedError("calc_reduced_matrix_element is not implemented yet")
 
     def calc_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int, q: int) -> float:
         r"""Calculate the dimensionless angular matrix element.
@@ -262,7 +250,6 @@ class AngularKetBase(ABC):
             raise ValueError("m must be set to calculate the matrix element.")
 
         reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, kappa)
-        # TODO check prefactor?? also in docstring above
         prefactor: float = (-1) ** (other.f_tot - other.m)  # type: ignore [assignment]
         wigner_3j = calc_wigner_3j(other.f_tot, kappa, self.f_tot, -other.m, q, self.m)
         return prefactor * reduced_matrix_element * wigner_3j

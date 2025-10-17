@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
 import numpy as np
 
@@ -9,6 +9,8 @@ from ryd_numerov.angular.angular_ket import AngularKetBase
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from ryd_numerov.units import OperatorType
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +28,7 @@ class AngularState(Generic[_AngularKet]):
             raise ValueError("Length of coefficients and kets must be the same.")
         if not all(type(ket) is type(kets[0]) for ket in kets):
             raise ValueError("All kets must be of the same type.")
-        if any(s1 == s2 for i, s1 in enumerate(kets) for s2 in kets[i + 1 :]):
+        if len(set(kets)) != len(kets):
             raise ValueError("AngularState initialized with duplicate kets.")
         if abs(self.norm - 1) > 1e-10:
             raise ValueError(f"Coefficients must be normalized, but {coefficients=}, {kets=}.")
@@ -86,3 +88,26 @@ class AngularState(Generic[_AngularKet]):
         if abs(exp_q2 - exp_q**2) < 1e-10:
             return 0.0
         return np.sqrt(exp_q2 - exp_q**2)  # type: ignore [no-any-return]
+
+    def calc_reduced_overlap(self, other: AngularState[AngularKetBase] | AngularKetBase) -> float:
+        """Calculate the reduced (ignore any m) overlap <self||other>."""
+        if isinstance(other, AngularKetBase):
+            other = other.to_state()
+
+        raise NotImplementedError("calc_reduced_overlap is not implemented yet")
+
+    def calc_reduced_matrix_element(
+        self: Self, other: AngularState[AngularKetBase] | AngularKetBase, operator: OperatorType, kappa: int
+    ) -> float:
+        r"""Calculate the reduced angular matrix element.
+
+        This means, calculate the following matrix element:
+
+        .. math::
+            <self || \hat{O}^{(\kappa)} || other>
+
+        """
+        if isinstance(other, AngularKetBase):
+            other = other.to_state()
+
+        raise NotImplementedError("calc_reduced_matrix_element is not implemented yet")
