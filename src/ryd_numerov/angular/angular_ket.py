@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 import numpy as np
 
@@ -28,7 +28,11 @@ class InvalidQuantumNumbersError(ValueError):
 class AngularKetBase(ABC):
     """Base class for a angular ket (i.e. a simple canonical spin ketstate)."""
 
-    __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "species")
+    # We use __slots__ to prevent dynamic attributes and make the objects immutable after initialization
+    __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "species", "_initialized")
+
+    _spin_quantum_number_names: ClassVar[list[str]]
+    """Names of all well defined spin quantum numbers (without the magnetic quantum number m) in this class."""
 
     i_c: float
     """Nuclear spin quantum number."""
@@ -52,10 +56,53 @@ class AngularKetBase(ABC):
     """Atomic species, e.g. 'Rb87'.
     Not used for calculations, only for convenience to infer th core electron spin and nuclear spin quantum numbers."""
 
-    @property
-    @abstractmethod
-    def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
-        """Return all angular momentum quantum numbers (apart from the magnetic quantum number m) as dictionary."""
+    def __init__(
+        self,
+        i_c: float | None = None,
+        s_c: float | None = None,
+        l_c: int = 0,
+        s_r: float = 0.5,
+        l_r: int | None = None,
+        f_tot: float | None = None,  # noqa: ARG002
+        m: float | None = None,
+        species: str | None = None,
+    ) -> None:
+        self.species = species
+        if species is not None:
+            element = BaseElement.from_species(species)
+            if i_c is not None and i_c != element.i_c:
+                raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
+            i_c = element.i_c
+            s_c = 0.5 * (element.number_valence_electrons - 1)
+        if i_c is None:
+            raise ValueError("Nuclear spin i_c must be set or a species must be given.")
+        self.i_c = i_c
+
+        if s_c is None:
+            raise ValueError("Core spin s_c must be set or a species must be given.")
+        self.s_c = s_c
+
+        self.l_c = l_c
+        self.s_r = s_r
+        if l_r is None:
+            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
+        self.l_r = l_r
+
+        # f_tot will be set in the subclasses
+        self.m = m
+
+    def _post_init(self) -> None:
+        self._initialized = True
+
+        self.sanity_check()
+
+    def __setattr__(self, key: str, value: object) -> None:
+        # We use this custom __setattr__ to make the objects immutable after initialization
+        if getattr(self, "_initialized", False):
+            raise AttributeError(
+                f"Cannot modify attributes of immutable {self.__class__.__name__} objects after initialization."
+            )
+        super().__setattr__(key, value)
 
     def __repr__(self) -> str:
         args = ", ".join(f"{k}={v}" for k, v in self.spin_quantum_numbers_dict.items())
@@ -97,6 +144,11 @@ class AngularKetBase(ABC):
         if msgs:
             msg = "\n  ".join(msgs)
             raise InvalidQuantumNumbersError(self, msg)
+
+    @property
+    def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
+        """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
+        return {k: getattr(self, k) for k in self._spin_quantum_number_names}
 
     @abstractmethod
     def to_ls(self) -> AngularState[AngularKetLS]: ...
@@ -208,6 +260,7 @@ class AngularKetLS(AngularKetBase):
     """Spin ket in LS coupling."""
 
     __slots__ = ("s_tot", "l_tot", "j_tot")
+    _spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_tot", "f_tot"]
 
     s_tot: float
     """Total electron spin quantum number (s_c + s_r)."""
@@ -231,50 +284,14 @@ class AngularKetLS(AngularKetBase):
         species: str | None = None,
     ) -> None:
         """Initialize the Spin ket."""
-        self.species = species
-        if species is not None:
-            element = BaseElement.from_species(species)
-            if i_c is not None and i_c != element.i_c:
-                raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
-            i_c = element.i_c
-            s_c = 0.5 * (element.number_valence_electrons - 1)
-        if i_c is None:
-            raise ValueError("Nuclear spin i_c must be set or a species must be given.")
-        self.i_c = i_c
-
-        if s_c is None:
-            raise ValueError("Core spin s_c must be set or a species must be given.")
-        self.s_c = s_c
-
-        self.l_c = l_c
-        self.s_r = s_r
-        if l_r is None:
-            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
-        self.l_r = l_r
+        super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
 
         self.s_tot = _try_trivial_spin_addition(self.s_c, self.s_r, s_tot, "s_tot")
         self.l_tot = int(_try_trivial_spin_addition(self.l_c, self.l_r, l_tot, "l_tot"))
         self.j_tot = _try_trivial_spin_addition(self.l_tot, self.s_tot, j_tot, "j_tot")
         self.f_tot = _try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
 
-        self.m = m
-
-        self.sanity_check()
-
-    @property
-    def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
-        """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
-        return {
-            "i_c": self.i_c,
-            "s_c": self.s_c,
-            "l_c": self.l_c,
-            "s_r": self.s_r,
-            "l_r": self.l_r,
-            "s_tot": self.s_tot,
-            "l_tot": self.l_tot,
-            "j_tot": self.j_tot,
-            "f_tot": self.f_tot,
-        }
+        super()._post_init()
 
     def sanity_check(self, msgs: list[str] | None = None) -> None:
         """Check that the quantum numbers are valid."""
@@ -359,6 +376,7 @@ class AngularKetJJ(AngularKetBase):
     """Spin ket in JJ coupling."""
 
     __slots__ = ("j_c", "j_r", "j_tot")
+    _spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "j_r", "j_tot", "f_tot"]
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
@@ -382,50 +400,14 @@ class AngularKetJJ(AngularKetBase):
         species: str | None = None,
     ) -> None:
         """Initialize the Spin ket."""
-        self.species = species
-        if species is not None:
-            element = BaseElement.from_species(species)
-            if i_c is not None and i_c != element.i_c:
-                raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
-            i_c = element.i_c
-            s_c = 0.5 * (element.number_valence_electrons - 1)
-        if i_c is None:
-            raise ValueError("Nuclear spin i_c must be set or a species must be given.")
-        self.i_c = i_c
-
-        if s_c is None:
-            raise ValueError("Core spin s_c must be set or a species must be given.")
-        self.s_c = s_c
-
-        self.l_c = l_c
-        self.s_r = s_r
-        if l_r is None:
-            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
-        self.l_r = l_r
+        super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
 
         self.j_c = _try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
         self.j_r = _try_trivial_spin_addition(self.l_r, self.s_r, j_r, "j_r")
         self.j_tot = _try_trivial_spin_addition(self.j_c, self.j_r, j_tot, "j_tot")
         self.f_tot = _try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
 
-        self.m = m
-
-        self.sanity_check()
-
-    @property
-    def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
-        """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
-        return {
-            "i_c": self.i_c,
-            "s_c": self.s_c,
-            "l_c": self.l_c,
-            "s_r": self.s_r,
-            "l_r": self.l_r,
-            "j_c": self.j_c,
-            "j_r": self.j_r,
-            "j_tot": self.j_tot,
-            "f_tot": self.f_tot,
-        }
+        super()._post_init()
 
     def sanity_check(self, msgs: list[str] | None = None) -> None:
         """Check that the quantum numbers are valid."""
@@ -523,6 +505,7 @@ class AngularKetFJ(AngularKetBase):
     """Spin ket in FJ coupling."""
 
     __slots__ = ("j_c", "f_c", "j_r")
+    _spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "f_c", "j_r", "f_tot"]
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
@@ -546,50 +529,14 @@ class AngularKetFJ(AngularKetBase):
         species: str | None = None,
     ) -> None:
         """Initialize the Spin ket."""
-        self.species = species
-        if species is not None:
-            element = BaseElement.from_species(species)
-            if i_c is not None and i_c != element.i_c:
-                raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
-            i_c = element.i_c
-            s_c = 0.5 * (element.number_valence_electrons - 1)
-        if i_c is None:
-            raise ValueError("Nuclear spin i_c must be set or a species must be given.")
-        self.i_c = i_c
-
-        if s_c is None:
-            raise ValueError("Core spin s_c must be set or a species must be given.")
-        self.s_c = s_c
-
-        self.l_c = l_c
-        self.s_r = s_r
-        if l_r is None:
-            raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
-        self.l_r = l_r
+        super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
 
         self.j_c = _try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
         self.j_r = _try_trivial_spin_addition(self.l_r, self.s_r, j_r, "j_r")
         self.f_c = _try_trivial_spin_addition(self.j_c, self.i_c, f_c, "f_c")
         self.f_tot = _try_trivial_spin_addition(self.f_c, self.j_r, f_tot, "f_tot")
 
-        self.m = m
-
-        self.sanity_check()
-
-    @property
-    def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
-        """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
-        return {
-            "i_c": self.i_c,
-            "s_c": self.s_c,
-            "l_c": self.l_c,
-            "s_r": self.s_r,
-            "l_r": self.l_r,
-            "j_c": self.j_c,
-            "f_c": self.f_c,
-            "j_r": self.j_r,
-            "f_tot": self.f_tot,
-        }
+        super()._post_init()
 
     def sanity_check(self, msgs: list[str] | None = None) -> None:
         """Check that the quantum numbers are valid."""
