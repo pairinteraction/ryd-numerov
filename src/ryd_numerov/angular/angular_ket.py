@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Self, TypeVar
 
 import numpy as np
 
@@ -164,6 +164,10 @@ class AngularKetBase(ABC):
     @abstractmethod
     def to_fj(self) -> AngularState[AngularKetFJ]: ...
 
+    def to_state(self: Self) -> AngularState[Self]:
+        """Convert the ket to a trivial AngularState with one component."""
+        return create_angular_state([1.0], [self])
+
     def calc_reduced_overlap(self, other: AngularKetBase) -> float:
         """Calculate the reduced (ignore any m) overlap <self||other>.
 
@@ -180,16 +184,19 @@ class AngularKetBase(ABC):
 
         kets = [self, other]
 
+        # JJ - FJ overlaps
         if any(isinstance(s, AngularKetJJ) for s in kets) and any(isinstance(s, AngularKetFJ) for s in kets):
             jj = next(s for s in kets if isinstance(s, AngularKetJJ))
             fj = next(s for s in kets if isinstance(s, AngularKetFJ))
             return clebsch_gordan_6j(fj.j_c, fj.j_r, jj.j_tot, fj.i_c, fj.f_c, fj.f_tot)
 
+        # JJ - LS overlaps
         if any(isinstance(s, AngularKetJJ) for s in kets) and any(isinstance(s, AngularKetLS) for s in kets):
             jj = next(s for s in kets if isinstance(s, AngularKetJJ))
             ls = next(s for s in kets if isinstance(s, AngularKetLS))
             return clebsch_gordan_9j(ls.s_r, ls.s_c, ls.s_tot, ls.l_r, ls.l_c, ls.l_tot, jj.j_r, jj.j_c, jj.j_tot)
 
+        # FJ - LS overlaps
         if any(isinstance(s, AngularKetFJ) for s in kets) and any(isinstance(s, AngularKetLS) for s in kets):
             fj = next(s for s in kets if isinstance(s, AngularKetFJ))
             ls = next(s for s in kets if isinstance(s, AngularKetLS))
@@ -322,7 +329,7 @@ class AngularKetLS(AngularKetBase):
         Note, this object is already in LS coupling,
         so this method transforms the ket to a trivial state with one component.
         """
-        return create_angular_state([1.0], [self])
+        return self.to_state()
 
     def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to state in JJ coupling.
@@ -469,7 +476,7 @@ class AngularKetJJ(AngularKetBase):
         Note, this object is already in JJ coupling,
         so this method transforms the ket to a trivial state with one component.
         """
-        return create_angular_state([1.0], [self])
+        return self.to_state()
 
     def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to state in FJ coupling.
@@ -613,7 +620,7 @@ class AngularKetFJ(AngularKetBase):
         Note, this object is already in FJ coupling,
         so this method transforms the ket to a trivial state with one component.
         """
-        return create_angular_state([1.0], [self])
+        return self.to_state()
 
 
 def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
