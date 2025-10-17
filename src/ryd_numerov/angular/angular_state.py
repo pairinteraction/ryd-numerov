@@ -85,14 +85,16 @@ class AngularState(Generic[_AngularKet]):
             q: The quantum number to calculate the expectation value for.
 
         """
-        if q not in self.kets[0].spin_quantum_numbers_dict:
-            raise ValueError(f"Quantum number {q} not found in kets.")
+        if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+            for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
+                if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class._coupling_scheme).exp_q(q)  # noqa: SLF001
 
-        qs = np.array([ket.spin_quantum_numbers_dict[q] for ket in self.kets])
+        qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
             return qs[0]  # type: ignore [no-any-return]
 
-        return np.sum(self.coefficients * self.coefficients * qs)  # type: ignore [no-any-return]
+        return np.sum(np.conjugate(self.coefficients) * self.coefficients * qs)  # type: ignore [no-any-return]
 
     def std_q(self, q: str) -> float:
         """Calculate the standard deviation of a quantum number q.
@@ -101,19 +103,21 @@ class AngularState(Generic[_AngularKet]):
             q: The quantum number to calculate the standard deviation for.
 
         """
-        if q not in self.kets[0].spin_quantum_numbers_dict:
-            raise ValueError(f"Quantum number {q} not found in kets.")
+        if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+            for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
+                if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class._coupling_scheme).std_q(q)  # noqa: SLF001
 
-        qs = np.array([ket.spin_quantum_numbers_dict[q] for ket in self.kets])
+        qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
             return 0
 
-        coefficients2 = self.coefficients * self.coefficients
+        coefficients2 = np.conjugate(self.coefficients) * self.coefficients
         exp_q = np.sum(coefficients2 * qs)
         exp_q2 = np.sum(coefficients2 * qs * qs)
 
         if abs(exp_q2 - exp_q**2) < 1e-10:
-            return 0.0
+            return 0
         return np.sqrt(exp_q2 - exp_q**2)  # type: ignore [no-any-return]
 
     def calc_reduced_overlap(self, other: AngularState[AngularKetBase] | AngularKetBase) -> float:
@@ -121,7 +125,12 @@ class AngularState(Generic[_AngularKet]):
         if isinstance(other, AngularKetBase):
             other = other.to_state()
 
-        raise NotImplementedError("calc_reduced_overlap is not implemented yet")
+        ov = 0
+        for coeff1, ket1 in self:
+            for coeff2, ket2 in other:
+                if ket1 == ket2:
+                    ov += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_overlap(ket2)
+        return ov
 
     def calc_reduced_matrix_element(
         self: Self, other: AngularState[AngularKetBase] | AngularKetBase, operator: OperatorType, kappa: int
@@ -137,4 +146,9 @@ class AngularState(Generic[_AngularKet]):
         if isinstance(other, AngularKetBase):
             other = other.to_state()
 
-        raise NotImplementedError("calc_reduced_matrix_element is not implemented yet")
+        value = 0
+        for coeff1, ket1 in self:
+            for coeff2, ket2 in other:
+                if ket1 == ket2:
+                    value += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_matrix_element(ket2, operator, kappa)
+        return value
