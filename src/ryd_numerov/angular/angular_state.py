@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 class InvalidQuantumNumbersError(ValueError):
-    def __init__(self, state: AngularStateBase, msg: str = "") -> None:
+    def __init__(self, state: AngularKetBase, msg: str = "") -> None:
         _msg = f"Invalid quantum numbers for {state!r}"
         if len(msg) > 0:
             _msg += f"\n  {msg}"
         super().__init__(_msg)
 
 
-class AngularStateBase(ABC):
-    """Base class for a spin state."""
+class AngularKetBase(ABC):
+    """Base class for a angular ket (i.e. a simple canonical spin ketstate)."""
 
     i_c: float
     """Nuclear spin."""
@@ -68,7 +68,7 @@ class AngularStateBase(ABC):
         return self.__repr__().replace("AngularState", "")
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, AngularStateBase):
+        if not isinstance(other, AngularKetBase):
             raise NotImplementedError(f"Cannot compare {self!r} with {other!r}.")
         if type(self) is not type(other):
             return False
@@ -98,15 +98,15 @@ class AngularStateBase(ABC):
             raise InvalidQuantumNumbersError(self, msg)
 
     @abstractmethod
-    def to_ls(self) -> SuperpositionState[AngularStateLS]: ...
+    def to_ls(self) -> AngularState[AngularKetLS]: ...
 
     @abstractmethod
-    def to_jj(self) -> SuperpositionState[AngularStateJJ]: ...
+    def to_jj(self) -> AngularState[AngularKetJJ]: ...
 
     @abstractmethod
-    def to_fj(self) -> SuperpositionState[AngularStateFJ]: ...
+    def to_fj(self) -> AngularState[AngularKetFJ]: ...
 
-    def calc_reduced_overlap(self, other: AngularStateBase) -> float:
+    def calc_reduced_overlap(self, other: AngularKetBase) -> float:
         """Calculate the reduced (ignore any m) overlap <self||other>."""
         if type(self) is type(other):
             for k, qn1 in self.spin_quantum_numbers_dict.items():
@@ -116,19 +116,19 @@ class AngularStateBase(ABC):
 
         states = [self, other]
 
-        if any(isinstance(s, AngularStateJJ) for s in states) and any(isinstance(s, AngularStateFJ) for s in states):
-            jj = next(s for s in states if isinstance(s, AngularStateJJ))
-            fj = next(s for s in states if isinstance(s, AngularStateFJ))
+        if any(isinstance(s, AngularKetJJ) for s in states) and any(isinstance(s, AngularKetFJ) for s in states):
+            jj = next(s for s in states if isinstance(s, AngularKetJJ))
+            fj = next(s for s in states if isinstance(s, AngularKetFJ))
             return clebsch_gordan_6j(fj.j_c, fj.j_r, jj.j_tot, fj.i_c, fj.f_c, fj.f_tot)
 
-        if any(isinstance(s, AngularStateJJ) for s in states) and any(isinstance(s, AngularStateLS) for s in states):
-            jj = next(s for s in states if isinstance(s, AngularStateJJ))
-            ls = next(s for s in states if isinstance(s, AngularStateLS))
+        if any(isinstance(s, AngularKetJJ) for s in states) and any(isinstance(s, AngularKetLS) for s in states):
+            jj = next(s for s in states if isinstance(s, AngularKetJJ))
+            ls = next(s for s in states if isinstance(s, AngularKetLS))
             return clebsch_gordan_9j(ls.s_r, ls.s_c, ls.s_tot, ls.l_r, ls.l_c, ls.l_tot, jj.j_r, jj.j_c, jj.j_tot)
 
-        if any(isinstance(s, AngularStateFJ) for s in states) and any(isinstance(s, AngularStateLS) for s in states):
-            fj = next(s for s in states if isinstance(s, AngularStateFJ))
-            ls = next(s for s in states if isinstance(s, AngularStateLS))
+        if any(isinstance(s, AngularKetFJ) for s in states) and any(isinstance(s, AngularKetLS) for s in states):
+            fj = next(s for s in states if isinstance(s, AngularKetFJ))
+            ls = next(s for s in states if isinstance(s, AngularKetLS))
             ov = 0.0
             for coeff, jj_state in fj.to_jj():
                 ov += coeff * ls.calc_reduced_overlap(jj_state)
@@ -136,7 +136,7 @@ class AngularStateBase(ABC):
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
-    def calc_reduced_matrix_element(self, other: AngularStateBase, operator: OperatorType, kappa: int) -> float:
+    def calc_reduced_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:
         r"""Calculate the reduced angular matrix element.
 
         This means, calculate the following matrix element:
@@ -161,7 +161,7 @@ class AngularStateBase(ABC):
                 # TODO add nuclear spin and nuclear magnetic moment for b field?
         return value
 
-    def calc_matrix_element(self, other: AngularStateBase, operator: OperatorType, kappa: int, q: int) -> float:
+    def calc_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int, q: int) -> float:
         r"""Calculate the dimensionless angular matrix element.
 
         Use the Wigner-Eckart theorem to calculate the angular matrix element from the reduced matrix element.
@@ -197,7 +197,7 @@ class AngularStateBase(ABC):
         return prefactor * reduced_matrix_element * wigner_3j
 
 
-class AngularStateLS(AngularStateBase):
+class AngularKetLS(AngularKetBase):
     """Spin state in LS coupling."""
 
     def __init__(
@@ -278,25 +278,25 @@ class AngularStateLS(AngularStateBase):
 
         super().sanity_check(msgs)
 
-    def to_ls(self) -> SuperpositionState[AngularStateLS]:
+    def to_ls(self) -> AngularState[AngularKetLS]:
         """Convert to LS coupling.
 
         Note that this is already LS coupling, we have this method just for convenience.
         """
-        return SuperpositionState([1.0], [self])
+        return AngularState([1.0], [self])
 
-    def to_jj(self) -> SuperpositionState[AngularStateJJ]:
+    def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to JJ coupling.
 
         Note that in general this is a superposition of states.
         """
-        states: list[AngularStateJJ] = []
+        states: list[AngularKetJJ] = []
         coefficients: list[float] = []
 
         for j_c in np.arange(abs(self.s_c - self.l_c), self.s_c + self.l_c + 1):
             for j_r in np.arange(abs(self.s_r - self.l_r), self.s_r + self.l_r + 1):
                 try:
-                    jj_state = AngularStateJJ(
+                    jj_state = AngularKetJJ(
                         self.i_c,
                         self.s_c,
                         self.l_c,
@@ -316,15 +316,15 @@ class AngularStateLS(AngularStateBase):
                     states.append(jj_state)
                     coefficients.append(coeff)
 
-        return SuperpositionState(coefficients, states)
+        return AngularState(coefficients, states)
 
-    def to_fj(self) -> SuperpositionState[AngularStateFJ]:
+    def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to FJ coupling.
 
         Note that in general this is a superposition of states.
         """
         jj_states = self.to_jj()
-        fj_states: list[AngularStateFJ] = []
+        fj_states: list[AngularKetFJ] = []
         coefficients: list[float] = []
         for jj_coeff, jj_state in jj_states:
             for fj_coeff, fj_state in jj_state.to_fj():
@@ -334,10 +334,10 @@ class AngularStateLS(AngularStateBase):
                 else:
                     fj_states.append(fj_state)
                     coefficients.append(jj_coeff * fj_coeff)
-        return SuperpositionState(coefficients, fj_states)
+        return AngularState(coefficients, fj_states)
 
 
-class AngularStateJJ(AngularStateBase):
+class AngularKetJJ(AngularKetBase):
     """Spin state in JJ coupling."""
 
     def __init__(
@@ -418,18 +418,18 @@ class AngularStateJJ(AngularStateBase):
 
         super().sanity_check(msgs)
 
-    def to_ls(self) -> SuperpositionState[AngularStateLS]:
+    def to_ls(self) -> AngularState[AngularKetLS]:
         """Convert to LS coupling.
 
         Note that in general this is a superposition of states.
         """
-        states: list[AngularStateLS] = []
+        states: list[AngularKetLS] = []
         coefficients: list[float] = []
 
         for s_tot in np.arange(abs(self.s_c - self.s_r), self.s_c + self.s_r + 1):
             for l_tot in np.arange(abs(self.l_c - self.l_r), self.l_c + self.l_r + 1):
                 try:
-                    ls_state = AngularStateLS(
+                    ls_state = AngularKetLS(
                         self.i_c,
                         self.s_c,
                         self.l_c,
@@ -449,26 +449,26 @@ class AngularStateJJ(AngularStateBase):
                     states.append(ls_state)
                     coefficients.append(coeff)
 
-        return SuperpositionState(coefficients, states)
+        return AngularState(coefficients, states)
 
-    def to_jj(self) -> SuperpositionState[AngularStateJJ]:
+    def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to JJ coupling.
 
         Note that this is already JJ coupling, we have this method just for convenience.
         """
-        return SuperpositionState([1.0], [self])
+        return AngularState([1.0], [self])
 
-    def to_fj(self) -> SuperpositionState[AngularStateFJ]:
+    def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to FJ coupling.
 
         Note that in general this is a superposition of states.
         """
-        states: list[AngularStateFJ] = []
+        states: list[AngularKetFJ] = []
         coefficients: list[float] = []
 
         for f_c in np.arange(abs(self.j_c - self.i_c), self.j_c + self.i_c + 1):
             try:
-                fj_state = AngularStateFJ(
+                fj_state = AngularKetFJ(
                     self.i_c,
                     self.s_c,
                     self.l_c,
@@ -488,10 +488,10 @@ class AngularStateJJ(AngularStateBase):
                 states.append(fj_state)
                 coefficients.append(coeff)
 
-        return SuperpositionState(coefficients, states)
+        return AngularState(coefficients, states)
 
 
-class AngularStateFJ(AngularStateBase):
+class AngularKetFJ(AngularKetBase):
     """Spin state in FJ coupling."""
 
     def __init__(
@@ -572,13 +572,13 @@ class AngularStateFJ(AngularStateBase):
 
         super().sanity_check(msgs)
 
-    def to_ls(self) -> SuperpositionState[AngularStateLS]:
+    def to_ls(self) -> AngularState[AngularKetLS]:
         """Convert to LS coupling.
 
         Note that in general this is a superposition of states.
         """
         jj_states = self.to_jj()
-        ls_states: list[AngularStateLS] = []
+        ls_states: list[AngularKetLS] = []
         coefficients: list[float] = []
         for jj_coeff, jj_state in jj_states:
             for ls_coeff, ls_state in jj_state.to_ls():
@@ -588,19 +588,19 @@ class AngularStateFJ(AngularStateBase):
                 else:
                     ls_states.append(ls_state)
                     coefficients.append(jj_coeff * ls_coeff)
-        return SuperpositionState(coefficients, ls_states)
+        return AngularState(coefficients, ls_states)
 
-    def to_jj(self) -> SuperpositionState[AngularStateJJ]:
+    def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to JJ coupling.
 
         Note that in general this is a superposition of states.
         """
-        states: list[AngularStateJJ] = []
+        states: list[AngularKetJJ] = []
         coefficients: list[float] = []
 
         for j_tot in np.arange(abs(self.j_c - self.j_r), self.j_c + self.j_r + 1):
             try:
-                jj_state = AngularStateJJ(
+                jj_state = AngularKetJJ(
                     self.i_c,
                     self.s_c,
                     self.l_c,
@@ -620,14 +620,14 @@ class AngularStateFJ(AngularStateBase):
                 states.append(jj_state)
                 coefficients.append(coeff)
 
-        return SuperpositionState(coefficients, states)
+        return AngularState(coefficients, states)
 
-    def to_fj(self) -> SuperpositionState[AngularStateFJ]:
+    def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to FJ coupling.
 
         Note that this is already FJ coupling, we have this method just for convenience.
         """
-        return SuperpositionState([1.0], [self])
+        return AngularState([1.0], [self])
 
 
 def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
@@ -654,10 +654,10 @@ def _check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
     return abs(s_1 - s_2) <= s_tot <= s_1 + s_2 and (s_1 + s_2 + s_tot) % 1 == 0
 
 
-_AngularState = TypeVar("_AngularState", bound=AngularStateBase)
+_AngularState = TypeVar("_AngularState", bound=AngularKetBase)
 
 
-class SuperpositionState(Generic[_AngularState]):
+class AngularState(Generic[_AngularState]):
     def __init__(self, coefficients: list[float], states: list[_AngularState]) -> None:
         self.coefficients = np.array(coefficients)
         self.states = states

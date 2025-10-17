@@ -3,7 +3,7 @@ from ryd_numerov.angular.angular_matrix_element import (
     spherical_like_matrix_element,
     spin_like_matrix_element,
 )
-from ryd_numerov.angular.angular_state import AngularStateBase, AngularStateFJ, AngularStateJJ, AngularStateLS
+from ryd_numerov.angular.angular_state import AngularKetBase, AngularKetFJ, AngularKetJJ, AngularKetLS
 from ryd_numerov.angular.utils import (
     calc_wigner_3j,
     calc_wigner_6j,
@@ -13,10 +13,10 @@ from ryd_numerov.angular.utils import (
 )
 
 __all__ = [
-    "AngularStateBase",
-    "AngularStateFJ",
-    "AngularStateJJ",
-    "AngularStateLS",
+    "AngularKetBase",
+    "AngularKetFJ",
+    "AngularKetJJ",
+    "AngularKetLS",
     "calc_reduced_angular_matrix_element",
     "calc_wigner_3j",
     "calc_wigner_6j",

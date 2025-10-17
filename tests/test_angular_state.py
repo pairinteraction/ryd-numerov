@@ -1,11 +1,11 @@
 import numpy as np
-from ryd_numerov.angular import AngularStateFJ, AngularStateJJ, AngularStateLS
+from ryd_numerov.angular import AngularKetFJ, AngularKetJJ, AngularKetLS
 
 
 def test_fj_to_ls() -> None:
-    fj = AngularStateFJ(f_c=2, l_r=0, f_tot=2.5, species="Yb173")
-    ls_1 = AngularStateLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
-    ls_2 = AngularStateLS(s_tot=1.0, l_r=0, j_tot=1.0, f_tot=2.5, species="Yb173")
+    fj = AngularKetFJ(f_c=2, l_r=0, f_tot=2.5, species="Yb173")
+    ls_1 = AngularKetLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
+    ls_2 = AngularKetLS(s_tot=1.0, l_r=0, j_tot=1.0, f_tot=2.5, species="Yb173")
     assert np.isclose(fj.calc_reduced_overlap(ls_1), -np.sqrt(5) / 2 / np.sqrt(3))
     assert np.isclose(fj.calc_reduced_overlap(ls_2), np.sqrt(7) / 2 / np.sqrt(3))
 
@@ -18,8 +18,8 @@ def test_fj_to_ls() -> None:
 
 
 def test_jj_to_ls() -> None:
-    jj = AngularStateJJ(j_tot=0, l_r=0, f_tot=2.5, species="Yb173")
-    ls = AngularStateLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
+    jj = AngularKetJJ(j_tot=0, l_r=0, f_tot=2.5, species="Yb173")
+    ls = AngularKetLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
     assert np.isclose(jj.calc_reduced_overlap(ls), 1.0)
 
     jj_as_ls = jj.to_ls()
@@ -29,8 +29,8 @@ def test_jj_to_ls() -> None:
 
 
 def test_ls_to_jj() -> None:
-    ls = AngularStateLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
-    jj = AngularStateJJ(j_tot=0, l_r=0, f_tot=2.5, species="Yb173")
+    ls = AngularKetLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
+    jj = AngularKetJJ(j_tot=0, l_r=0, f_tot=2.5, species="Yb173")
     assert np.isclose(ls.calc_reduced_overlap(jj), 1.0)
 
     ls_as_jj = ls.to_jj()
@@ -40,9 +40,9 @@ def test_ls_to_jj() -> None:
 
 
 def test_ls_to_fj() -> None:
-    ls = AngularStateLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
-    fj_1 = AngularStateFJ(f_c=2, l_r=0, f_tot=2.5, species="Yb173")
-    fj_2 = AngularStateFJ(f_c=3, l_r=0, f_tot=2.5, species="Yb173")
+    ls = AngularKetLS(s_tot=0, l_r=0, j_tot=0, species="Yb173")
+    fj_1 = AngularKetFJ(f_c=2, l_r=0, f_tot=2.5, species="Yb173")
+    fj_2 = AngularKetFJ(f_c=3, l_r=0, f_tot=2.5, species="Yb173")
     assert np.isclose(ls.calc_reduced_overlap(fj_1), -np.sqrt(5) / 2 / np.sqrt(3))
     assert np.isclose(ls.calc_reduced_overlap(fj_2), np.sqrt(7) / 2 / np.sqrt(3))
 
