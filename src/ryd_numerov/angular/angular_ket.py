@@ -96,6 +96,22 @@ class AngularKetBase(ABC):
 
         self.sanity_check()
 
+    def sanity_check(self, msgs: list[str] | None = None) -> None:
+        """Check that the quantum numbers are valid."""
+        msgs = msgs if msgs is not None else []
+
+        if self.s_c not in [0, 0.5]:
+            msgs.append(f"Core spin s_c must be 0 or 1/2, but {self.s_c=}")
+        if self.s_r != 0.5:
+            msgs.append(f"Rydberg electron spin s_r must be 1/2, but {self.s_r=}")
+
+        if self.m is not None and not -self.f_tot <= self.m <= self.f_tot:
+            msgs.append(f"m must be between -f_tot and f_tot, but {self.f_tot=}, {self.m=}")
+
+        if msgs:
+            msg = "\n  ".join(msgs)
+            raise InvalidQuantumNumbersError(self, msg)
+
     def __setattr__(self, key: str, value: object) -> None:
         # We use this custom __setattr__ to make the objects immutable after initialization
         if getattr(self, "_initialized", False):
@@ -129,21 +145,14 @@ class AngularKetBase(ABC):
             for k in self.spin_quantum_numbers_dict
         )
 
-    def sanity_check(self, msgs: list[str] | None = None) -> None:
-        """Check that the quantum numbers are valid."""
-        msgs = msgs if msgs is not None else []
-
-        if self.s_c not in [0, 0.5]:
-            msgs.append(f"Core spin s_c must be 0 or 1/2, but {self.s_c=}")
-        if self.s_r != 0.5:
-            msgs.append(f"Rydberg electron spin s_r must be 1/2, but {self.s_r=}")
-
-        if self.m is not None and not -self.f_tot <= self.m <= self.f_tot:
-            msgs.append(f"m must be between -f_tot and f_tot, but {self.f_tot=}, {self.m=}")
-
-        if msgs:
-            msg = "\n  ".join(msgs)
-            raise InvalidQuantumNumbersError(self, msg)
+    def __hash__(self) -> int:
+        return hash(
+            (
+                tuple((k, v) for k, v in self.spin_quantum_numbers_dict.items()),
+                self.m,
+                self.species,
+            )
+        )
 
     @property
     def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
