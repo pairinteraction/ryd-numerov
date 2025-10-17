@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 
@@ -11,8 +11,7 @@ from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch
 from ryd_numerov.elements import BaseElement
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
+    from ryd_numerov.angular.angular_state import AngularState
     from ryd_numerov.units import OperatorType
 
 logger = logging.getLogger(__name__)
@@ -65,7 +64,7 @@ class AngularKetBase(ABC):
         return f"{self.__class__.__name__}({args})"
 
     def __str__(self) -> str:
-        return self.__repr__().replace("AngularState", "")
+        return self.__repr__().replace("AngularKet", "")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AngularKetBase):
@@ -283,7 +282,7 @@ class AngularKetLS(AngularKetBase):
 
         Note that this is already LS coupling, we have this method just for convenience.
         """
-        return AngularState([1.0], [self])
+        return create_angular_state([1.0], [self])
 
     def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to JJ coupling.
@@ -316,7 +315,7 @@ class AngularKetLS(AngularKetBase):
                     states.append(jj_state)
                     coefficients.append(coeff)
 
-        return AngularState(coefficients, states)
+        return create_angular_state(coefficients, states)
 
     def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to FJ coupling.
@@ -334,7 +333,8 @@ class AngularKetLS(AngularKetBase):
                 else:
                     fj_states.append(fj_state)
                     coefficients.append(jj_coeff * fj_coeff)
-        return AngularState(coefficients, fj_states)
+
+        return create_angular_state(coefficients, fj_states)
 
 
 class AngularKetJJ(AngularKetBase):
@@ -449,14 +449,14 @@ class AngularKetJJ(AngularKetBase):
                     states.append(ls_state)
                     coefficients.append(coeff)
 
-        return AngularState(coefficients, states)
+        return create_angular_state(coefficients, states)
 
     def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to JJ coupling.
 
         Note that this is already JJ coupling, we have this method just for convenience.
         """
-        return AngularState([1.0], [self])
+        return create_angular_state([1.0], [self])
 
     def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to FJ coupling.
@@ -488,7 +488,7 @@ class AngularKetJJ(AngularKetBase):
                 states.append(fj_state)
                 coefficients.append(coeff)
 
-        return AngularState(coefficients, states)
+        return create_angular_state(coefficients, states)
 
 
 class AngularKetFJ(AngularKetBase):
@@ -588,7 +588,7 @@ class AngularKetFJ(AngularKetBase):
                 else:
                     ls_states.append(ls_state)
                     coefficients.append(jj_coeff * ls_coeff)
-        return AngularState(coefficients, ls_states)
+        return create_angular_state(coefficients, ls_states)
 
     def to_jj(self) -> AngularState[AngularKetJJ]:
         """Convert to JJ coupling.
@@ -620,14 +620,14 @@ class AngularKetFJ(AngularKetBase):
                 states.append(jj_state)
                 coefficients.append(coeff)
 
-        return AngularState(coefficients, states)
+        return create_angular_state(coefficients, states)
 
     def to_fj(self) -> AngularState[AngularKetFJ]:
         """Convert to FJ coupling.
 
         Note that this is already FJ coupling, we have this method just for convenience.
         """
-        return AngularState([1.0], [self])
+        return create_angular_state([1.0], [self])
 
 
 def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
@@ -654,71 +654,17 @@ def _check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
     return abs(s_1 - s_2) <= s_tot <= s_1 + s_2 and (s_1 + s_2 + s_tot) % 1 == 0
 
 
-_AngularState = TypeVar("_AngularState", bound=AngularKetBase)
+_AngularKet = TypeVar("_AngularKet", bound=AngularKetBase)
 
 
-class AngularState(Generic[_AngularState]):
-    def __init__(self, coefficients: list[float], states: list[_AngularState]) -> None:
-        self.coefficients = np.array(coefficients)
-        self.states = states
+def create_angular_state(
+    coefficients: list[float],
+    states: list[_AngularKet],
+) -> AngularState[_AngularKet]:
+    """Create an AngularState from the given coefficients and states.
 
-        if len(coefficients) != len(states):
-            raise ValueError("Length of coefficients and states must be the same.")
-        if abs(self.norm - 1) > 1e-10:
-            raise ValueError(f"Coefficients must be normalized, but {coefficients=}, {states=}.")
-        if self.norm > 1:
-            self.coefficients /= self.norm
+    This is just a convenience function to avoid importing AngularState directly.
+    """
+    from ryd_numerov.angular.angular_state import AngularState  # noqa: PLC0415
 
-    def __iter__(self) -> Iterator[tuple[float, _AngularState]]:
-        return zip(self.coefficients, self.states).__iter__()
-
-    def __repr__(self) -> str:
-        terms = [f"{coeff}*{state!r}" for coeff, state in self]
-        return f"{self.__class__.__name__}({', '.join(terms)})"
-
-    def __str__(self) -> str:
-        terms = [f"{coeff}*{state!s}" for coeff, state in self]
-        return f"{', '.join(terms)}".replace("AngularState", "")
-
-    @property
-    def norm(self) -> float:
-        """Return the norm of the superposition state (should be 1)."""
-        return np.linalg.norm(self.coefficients)  # type: ignore [return-value]
-
-    def exp_q(self, q: str) -> float:
-        """Calculate the expectation value of a quantum number q.
-
-        Args:
-            q: The quantum number to calculate the expectation value for.
-
-        """
-        if not all(q in state.spin_quantum_numbers_dict for state in self.states):
-            raise ValueError(f"Quantum number {q} not found in all states.")
-
-        qs = np.array([state.spin_quantum_numbers_dict[q] for state in self.states])
-        if all(q_val == qs[0] for q_val in qs):
-            return qs[0]  # type: ignore [no-any-return]
-
-        return np.sum(self.coefficients * self.coefficients * qs)  # type: ignore [no-any-return]
-
-    def std_q(self, q: str) -> float:
-        """Calculate the standard deviation of a quantum number q.
-
-        Args:
-            q: The quantum number to calculate the standard deviation for.
-
-        """
-        if not all(q in state.spin_quantum_numbers_dict for state in self.states):
-            raise ValueError(f"Quantum number {q} not found in all states.")
-
-        qs = np.array([state.spin_quantum_numbers_dict[q] for state in self.states])
-        if all(q_val == qs[0] for q_val in qs):
-            return 0
-
-        coefficients2 = self.coefficients * self.coefficients
-        exp_q = np.sum(coefficients2 * qs)
-        exp_q2 = np.sum(coefficients2 * qs * qs)
-
-        if abs(exp_q2 - exp_q**2) < 1e-10:
-            return 0.0
-        return np.sqrt(exp_q2 - exp_q**2)  # type: ignore [no-any-return]
+    return AngularState(coefficients, states)
