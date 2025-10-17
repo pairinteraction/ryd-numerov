@@ -18,31 +18,35 @@ _AngularKet = TypeVar("_AngularKet", bound=AngularKetBase)
 
 
 class AngularState(Generic[_AngularKet]):
-    def __init__(self, coefficients: list[float], states: list[_AngularKet]) -> None:
+    def __init__(self, coefficients: list[float], kets: list[_AngularKet]) -> None:
         self.coefficients = np.array(coefficients)
-        self.states = states
+        self.kets = kets
 
-        if len(coefficients) != len(states):
-            raise ValueError("Length of coefficients and states must be the same.")
+        if len(coefficients) != len(kets):
+            raise ValueError("Length of coefficients and kets must be the same.")
+        if not all(type(ket) is type(kets[0]) for ket in kets):
+            raise ValueError("All kets must be of the same type.")
+        if any(s1 == s2 for i, s1 in enumerate(kets) for s2 in kets[i + 1 :]):
+            raise ValueError("AngularState initialized with duplicate kets.")
         if abs(self.norm - 1) > 1e-10:
-            raise ValueError(f"Coefficients must be normalized, but {coefficients=}, {states=}.")
+            raise ValueError(f"Coefficients must be normalized, but {coefficients=}, {kets=}.")
         if self.norm > 1:
             self.coefficients /= self.norm
 
     def __iter__(self) -> Iterator[tuple[float, _AngularKet]]:
-        return zip(self.coefficients, self.states).__iter__()
+        return zip(self.coefficients, self.kets).__iter__()
 
     def __repr__(self) -> str:
-        terms = [f"{coeff}*{state!r}" for coeff, state in self]
+        terms = [f"{coeff}*{ket!r}" for coeff, ket in self]
         return f"{self.__class__.__name__}({', '.join(terms)})"
 
     def __str__(self) -> str:
-        terms = [f"{coeff}*{state!s}" for coeff, state in self]
+        terms = [f"{coeff}*{ket!s}" for coeff, ket in self]
         return f"{', '.join(terms)}"
 
     @property
     def norm(self) -> float:
-        """Return the norm of the superposition state (should be 1)."""
+        """Return the norm of the state (should be 1)."""
         return np.linalg.norm(self.coefficients)  # type: ignore [return-value]
 
     def exp_q(self, q: str) -> float:
@@ -52,10 +56,10 @@ class AngularState(Generic[_AngularKet]):
             q: The quantum number to calculate the expectation value for.
 
         """
-        if not all(q in state.spin_quantum_numbers_dict for state in self.states):
-            raise ValueError(f"Quantum number {q} not found in all states.")
+        if q not in self.kets[0].spin_quantum_numbers_dict:
+            raise ValueError(f"Quantum number {q} not found in kets.")
 
-        qs = np.array([state.spin_quantum_numbers_dict[q] for state in self.states])
+        qs = np.array([ket.spin_quantum_numbers_dict[q] for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
             return qs[0]  # type: ignore [no-any-return]
 
@@ -68,10 +72,10 @@ class AngularState(Generic[_AngularKet]):
             q: The quantum number to calculate the standard deviation for.
 
         """
-        if not all(q in state.spin_quantum_numbers_dict for state in self.states):
-            raise ValueError(f"Quantum number {q} not found in all states.")
+        if q not in self.kets[0].spin_quantum_numbers_dict:
+            raise ValueError(f"Quantum number {q} not found in kets.")
 
-        qs = np.array([state.spin_quantum_numbers_dict[q] for state in self.states])
+        qs = np.array([ket.spin_quantum_numbers_dict[q] for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
             return 0
 
