@@ -142,7 +142,7 @@ class AngularStateBase(ABC):
         This means, calculate the following matrix element:
 
         .. math::
-            <self| \hat{O}^{(\kappa)}_q |other>
+            <self || \hat{O}^{(\kappa)} || other>
 
         """
         self_ls_states = self.to_ls()
@@ -150,6 +150,7 @@ class AngularStateBase(ABC):
         value = 0.0
         for coeff1, state1 in self_ls_states:
             for coeff2, state2 in other_ls_states:
+                # TODO should this be l_tot or l_ryd? (also s_tot or s_ryd? and j_tot or j_ryd?)
                 v = calc_reduced_angular_matrix_element(
                     *(state1.s_tot, state1.l_tot, state1.j_tot),
                     *(state2.s_tot, state2.l_tot, state2.j_tot),
@@ -157,6 +158,7 @@ class AngularStateBase(ABC):
                     kappa,
                 )
                 value += coeff1 * coeff2 * v
+                # TODO add nuclear spin and nuclear magnetic moment for b field?
         return value
 
     def calc_matrix_element(self, other: AngularStateBase, operator: OperatorType, kappa: int, q: int) -> float:
