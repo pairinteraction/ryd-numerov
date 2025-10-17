@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING, Generic, Self, TypeVar
 
 import numpy as np
 
-from ryd_numerov.angular.angular_ket import AngularKetBase
+from ryd_numerov.angular.angular_ket import AngularKetBase, AngularKetFJ, AngularKetJJ, AngularKetLS
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from ryd_numerov.angular.angular_ket import CouplingScheme
     from ryd_numerov.units import OperatorType
 
 
@@ -50,6 +51,32 @@ class AngularState(Generic[_AngularKet]):
     def norm(self) -> float:
         """Return the norm of the state (should be 1)."""
         return np.linalg.norm(self.coefficients)  # type: ignore [return-value]
+
+    def _to_coupling_scheme(self, coupling_scheme: CouplingScheme) -> AngularState[AngularKetBase]:
+        """Convert to specified coupling scheme."""
+        kets: list[AngularKetBase] = []
+        coefficients: list[float] = []
+        for coeff, ket in self:
+            for scheme_coeff, scheme_ket in ket._to_coupling_scheme(coupling_scheme):  # noqa: SLF001
+                if scheme_ket in kets:
+                    index = kets.index(scheme_ket)
+                    coefficients[index] += coeff * scheme_coeff
+                else:
+                    kets.append(scheme_ket)
+                    coefficients.append(coeff * scheme_coeff)
+        return AngularState(coefficients, kets)
+
+    def to_ls(self) -> AngularState[AngularKetLS]:
+        """Convert to state in LS coupling."""
+        return self._to_coupling_scheme("LS")  # type: ignore [return-value]
+
+    def to_jj(self) -> AngularState[AngularKetJJ]:
+        """Convert to state in JJ coupling."""
+        return self._to_coupling_scheme("JJ")  # type: ignore [return-value]
+
+    def to_fj(self) -> AngularState[AngularKetFJ]:
+        """Convert to state in FJ coupling."""
+        return self._to_coupling_scheme("FJ")  # type: ignore [return-value]
 
     def exp_q(self, q: str) -> float:
         """Calculate the expectation value of a quantum number q.

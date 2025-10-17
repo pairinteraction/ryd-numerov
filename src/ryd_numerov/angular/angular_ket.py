@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Self, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Literal, Self, TypeVar
 
 import numpy as np
 
@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from ryd_numerov.units import OperatorType
 
 logger = logging.getLogger(__name__)
+
+CouplingScheme = Literal["LS", "JJ", "FJ"]
 
 
 class InvalidQuantumNumbersError(ValueError):
@@ -41,6 +43,9 @@ class AngularKetBase(ABC):
 
     _coupled_quantum_numbers: ClassVar[dict[str, tuple[str, str]]]
     """Mapping of coupled quantum numbers to their constituent quantum numbers."""
+
+    _coupling_scheme: CouplingScheme
+    """Name of the coupling scheme, e.g. 'LS', 'JJ', or 'FJ'."""
 
     i_c: float
     """Nuclear spin quantum number."""
@@ -166,6 +171,16 @@ class AngularKetBase(ABC):
             raise ValueError(f"Quantum number {qn} not found in {self!r}.")
         return self.spin_quantum_numbers_dict[qn]
 
+    def _to_coupling_scheme(self, coupling_scheme: CouplingScheme) -> AngularState[AngularKetBase]:
+        """Convert to specified coupling scheme."""
+        if coupling_scheme == "LS":
+            return self.to_ls()  # type: ignore [return-value]
+        if coupling_scheme == "JJ":
+            return self.to_jj()  # type: ignore [return-value]
+        if coupling_scheme == "FJ":
+            return self.to_fj()  # type: ignore [return-value]
+        raise NotImplementedError(f"Coupling scheme {coupling_scheme} is not implemented.")
+
     @abstractmethod
     def to_ls(self) -> AngularState[AngularKetLS]: ...
 
@@ -177,7 +192,7 @@ class AngularKetBase(ABC):
 
     def to_state(self: Self) -> AngularState[Self]:
         """Convert the ket to a trivial AngularState with one component."""
-        return create_angular_state([1.0], [self])
+        return create_angular_state([1], [self])
 
     def calc_reduced_overlap(self, other: AngularKetBase) -> float:
         """Calculate the reduced (ignore any m) overlap <self||other>.
@@ -190,8 +205,8 @@ class AngularKetBase(ABC):
         if type(self) is type(other):
             for k, qn1 in self.spin_quantum_numbers_dict.items():
                 if qn1 != other.get_qn(k):
-                    return 0.0
-            return 1.0
+                    return 0
+            return 1
 
         kets = [self, other]
 
@@ -211,7 +226,7 @@ class AngularKetBase(ABC):
         if any(isinstance(s, AngularKetFJ) for s in kets) and any(isinstance(s, AngularKetLS) for s in kets):
             fj = next(s for s in kets if isinstance(s, AngularKetFJ))
             ls = next(s for s in kets if isinstance(s, AngularKetLS))
-            ov = 0.0
+            ov: float = 0
             for coeff, jj_ket in fj.to_jj():
                 ov += coeff * ls.calc_reduced_overlap(jj_ket)
             return ov
@@ -316,6 +331,7 @@ class AngularKetLS(AngularKetBase):
         "j_tot": ("s_tot", "l_tot"),
         "f_tot": ("j_tot", "i_c"),
     }
+    _coupling_scheme = "LS"
 
     s_tot: float
     """Total electron spin quantum number (s_c + s_r)."""
@@ -437,6 +453,7 @@ class AngularKetJJ(AngularKetBase):
         "j_tot": ("j_c", "j_r"),
         "f_tot": ("j_tot", "i_c"),
     }
+    _coupling_scheme = "JJ"
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
@@ -570,6 +587,7 @@ class AngularKetFJ(AngularKetBase):
         "j_r": ("s_r", "l_r"),
         "f_tot": ("f_c", "j_r"),
     }
+    _coupling_scheme = "FJ"
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
