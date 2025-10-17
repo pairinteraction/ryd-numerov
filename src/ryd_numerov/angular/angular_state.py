@@ -78,7 +78,7 @@ class AngularState(Generic[_AngularKet]):
         """Convert to state in FJ coupling."""
         return self._to_coupling_scheme("FJ")  # type: ignore [return-value]
 
-    def exp_q(self, q: str) -> float:
+    def calc_exp_qn(self, q: str) -> float:
         """Calculate the expectation value of a quantum number q.
 
         Args:
@@ -88,7 +88,7 @@ class AngularState(Generic[_AngularKet]):
         if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
-                    return self._to_coupling_scheme(ket_class._coupling_scheme).exp_q(q)  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class._coupling_scheme).calc_exp_qn(q)  # noqa: SLF001
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
@@ -96,7 +96,7 @@ class AngularState(Generic[_AngularKet]):
 
         return np.sum(np.conjugate(self.coefficients) * self.coefficients * qs)  # type: ignore [no-any-return]
 
-    def std_q(self, q: str) -> float:
+    def calc_std_qn(self, q: str) -> float:
         """Calculate the standard deviation of a quantum number q.
 
         Args:
@@ -106,7 +106,7 @@ class AngularState(Generic[_AngularKet]):
         if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
-                    return self._to_coupling_scheme(ket_class._coupling_scheme).std_q(q)  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class._coupling_scheme).calc_std_qn(q)  # noqa: SLF001
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
