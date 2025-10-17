@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Literal, Self, TypeVar
 
 import numpy as np
@@ -160,16 +159,16 @@ class AngularKetBase(ABC):
             )
         )
 
-    @cached_property
+    @property
     def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
         """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
-        return {k: getattr(self, k) for k in self._spin_quantum_number_names}
+        return {q: getattr(self, q) for q in self._spin_quantum_number_names}
 
     def get_qn(self, qn: str) -> float:
         """Get the value of a quantum number by name."""
         if qn not in self._spin_quantum_number_names:
             raise ValueError(f"Quantum number {qn} not found in {self!r}.")
-        return self.spin_quantum_numbers_dict[qn]
+        return getattr(self, qn)  # type: ignore [no-any-return]
 
     def _to_coupling_scheme(self, coupling_scheme: CouplingScheme) -> AngularState[AngularKetBase]:
         """Convert to specified coupling scheme."""
@@ -257,7 +256,7 @@ class AngularKetBase(ABC):
             )
             return prefactor * complete_reduced_matrix_element
 
-        raise NotImplementedError("calc_reduced_matrix_element is not implemented yet")
+        raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
 
     def calc_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int, q: int) -> float:
         r"""Calculate the dimensionless angular matrix element.
@@ -317,6 +316,8 @@ class AngularKetBase(ABC):
         f1, f2, f_tot = (self.get_qn(q), self.get_qn(q2), self.get_qn(q_combined))
         i1, i2, i_tot = (other.get_qn(q), other.get_qn(q2), other.get_qn(q_combined))
         prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa)
+        if prefactor == 0:
+            return 0
         return prefactor * self._calc_prefactor_of_operator_in_coupled_scheme(other, q_combined, kappa)
 
 
