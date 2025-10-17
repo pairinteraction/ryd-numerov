@@ -43,7 +43,7 @@ class AngularKetBase(ABC):
     _coupled_quantum_numbers: ClassVar[dict[str, tuple[str, str]]]
     """Mapping of coupled quantum numbers to their constituent quantum numbers."""
 
-    _coupling_scheme: CouplingScheme
+    coupling_scheme: CouplingScheme
     """Name of the coupling scheme, e.g. 'LS', 'JJ', or 'FJ'."""
 
     i_c: float
@@ -251,6 +251,8 @@ class AngularKetBase(ABC):
             return prefactor * complete_reduced_matrix_element
 
         if operator in self._spin_quantum_number_names:
+            if not kappa == 1:
+                raise ValueError("Only kappa=1 is supported for spin operators.")
             prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
             complete_reduced_matrix_element = calc_reduced_spin_matrix_element(
                 self.get_qn(operator), other.get_qn(operator)
@@ -316,9 +318,10 @@ class AngularKetBase(ABC):
 
         f1, f2, f_tot = (self.get_qn(q), self.get_qn(q2), self.get_qn(q_combined))
         i1, i2, i_tot = (other.get_qn(q), other.get_qn(q2), other.get_qn(q_combined))
-        prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa)
-        if prefactor == 0:
+
+        if f2 != i2:
             return 0
+        prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa)
         return prefactor * self._calc_prefactor_of_operator_in_coupled_scheme(other, q_combined, kappa)
 
 
@@ -333,7 +336,7 @@ class AngularKetLS(AngularKetBase):
         "j_tot": ("s_tot", "l_tot"),
         "f_tot": ("j_tot", "i_c"),
     }
-    _coupling_scheme = "LS"
+    coupling_scheme = "LS"
 
     s_tot: float
     """Total electron spin quantum number (s_c + s_r)."""
@@ -455,7 +458,7 @@ class AngularKetJJ(AngularKetBase):
         "j_tot": ("j_c", "j_r"),
         "f_tot": ("j_tot", "i_c"),
     }
-    _coupling_scheme = "JJ"
+    coupling_scheme = "JJ"
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""
@@ -589,7 +592,7 @@ class AngularKetFJ(AngularKetBase):
         "j_r": ("s_r", "l_r"),
         "f_tot": ("f_c", "j_r"),
     }
-    _coupling_scheme = "FJ"
+    coupling_scheme = "FJ"
 
     j_c: float
     """Total core electron angular quantum number (s_c + l_c)."""

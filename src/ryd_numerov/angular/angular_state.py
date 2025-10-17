@@ -48,6 +48,11 @@ class AngularState(Generic[_AngularKet]):
         return f"{', '.join(terms)}"
 
     @property
+    def coupling_scheme(self) -> CouplingScheme:
+        """Return the coupling scheme of the state."""
+        return self.kets[0].coupling_scheme
+
+    @property
     def norm(self) -> float:
         """Return the norm of the state (should be 1)."""
         return np.linalg.norm(self.coefficients)  # type: ignore [return-value]
@@ -144,6 +149,9 @@ class AngularState(Generic[_AngularKet]):
         """
         if isinstance(other, AngularKetBase):
             other = other.to_state()
+
+        if self.coupling_scheme != other.coupling_scheme:
+            other = other._to_coupling_scheme(self.coupling_scheme)  # noqa: SLF001
 
         value = 0
         for coeff1, ket1 in self:
