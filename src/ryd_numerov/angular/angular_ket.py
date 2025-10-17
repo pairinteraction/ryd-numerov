@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, Literal, Self, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Literal, Self, TypeVar, get_args
 
 import numpy as np
 
@@ -13,14 +13,17 @@ from ryd_numerov.angular.angular_matrix_element import (
 )
 from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements import BaseElement
+from ryd_numerov.units import OperatorType
 
 if TYPE_CHECKING:
     from ryd_numerov.angular.angular_state import AngularState
-    from ryd_numerov.units import OperatorType
 
 logger = logging.getLogger(__name__)
 
 CouplingScheme = Literal["LS", "JJ", "FJ"]
+AngularMomentumQuantumNumbers = Literal[
+    "i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_c", "j_r", "j_tot", "f_c", "f_tot"
+]
 
 
 class InvalidQuantumNumbersError(ValueError):
@@ -37,10 +40,10 @@ class AngularKetBase(ABC):
     # We use __slots__ to prevent dynamic attributes and make the objects immutable after initialization
     __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "_initialized")
 
-    _spin_quantum_number_names: ClassVar[list[str]]
+    _spin_quantum_number_names: ClassVar[list[AngularMomentumQuantumNumbers]]
     """Names of all well defined spin quantum numbers (without the magnetic quantum number m) in this class."""
 
-    _coupled_quantum_numbers: ClassVar[dict[str, tuple[str, str]]]
+    _coupled_quantum_numbers: ClassVar[dict[AngularMomentumQuantumNumbers, tuple[str, str]]]
     """Mapping of coupled quantum numbers to their constituent quantum numbers."""
 
     coupling_scheme: CouplingScheme
@@ -164,7 +167,7 @@ class AngularKetBase(ABC):
         """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
         return {q: getattr(self, q) for q in self._spin_quantum_number_names}
 
-    def get_qn(self, qn: str) -> float:
+    def get_qn(self, qn: AngularMomentumQuantumNumbers) -> float:
         """Get the value of a quantum number by name."""
         if qn not in self._spin_quantum_number_names:
             raise ValueError(f"Quantum number {qn} not found in {self!r}.")
@@ -242,21 +245,27 @@ class AngularKetBase(ABC):
             <self || \hat{O}^{(\kappa)} || other>
 
         """
+        if operator not in get_args(OperatorType):
+            raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
         if type(self) is not type(other):
             return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
 
         if operator == "SPHERICAL":
-            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, "l_r", kappa)
+            if self._kronecker_delta_non_involved_spins(other, "l_r") == 0:
+                return 0
             complete_reduced_matrix_element = calc_reduced_spherical_matrix_element(self.l_r, other.l_r, kappa)
+            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, "l_r", kappa)
             return prefactor * complete_reduced_matrix_element
 
         if operator in self._spin_quantum_number_names:
             if not kappa == 1:
                 raise ValueError("Only kappa=1 is supported for spin operators.")
-            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
+            if self._kronecker_delta_non_involved_spins(other, operator) == 0:
+                return 0
             complete_reduced_matrix_element = calc_reduced_spin_matrix_element(
                 self.get_qn(operator), other.get_qn(operator)
             )
+            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
             return prefactor * complete_reduced_matrix_element
 
         raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
@@ -295,7 +304,30 @@ class AngularKetBase(ABC):
         wigner_3j = calc_wigner_3j(other.f_tot, kappa, self.f_tot, -other.m, q, self.m)
         return prefactor * reduced_matrix_element * wigner_3j
 
-    def _calc_prefactor_of_operator_in_coupled_scheme(self, other: AngularKetBase, q: str, kappa: int) -> float:
+    def _kronecker_delta_non_involved_spins(self, other: AngularKetBase, qn: AngularMomentumQuantumNumbers) -> int:
+        """Calculate the Kronecker delta for non involed angular momentum quantum numbers.
+
+        This means return 0 if any of the quantum numbers,
+        that are not qn or a coupled quantum number resulting from qn differ between self and other.
+        """
+        if qn not in get_args(AngularMomentumQuantumNumbers):
+            raise ValueError(f"Quantum number {qn} is not a valid angular momentum quantum number.")
+
+        resulting_qns = [qn]
+        while "f_tot" not in resulting_qns:
+            for key, qs in self._coupled_quantum_numbers.items():
+                if resulting_qns[-1] in qs:
+                    resulting_qns.append(key)
+                    break
+
+        for _qn in set(self._spin_quantum_number_names) - set(resulting_qns):
+            if self.get_qn(_qn) != other.get_qn(_qn):
+                return 0
+        return 1
+
+    def _calc_prefactor_of_operator_in_coupled_scheme(
+        self, other: AngularKetBase, qn: AngularMomentumQuantumNumbers, kappa: int
+    ) -> float:
         """Calculate the prefactor for the complete reduced matrix element.
 
         This approach is only valid if the operator acts only on one of the well defined quantum numbers.
@@ -305,24 +337,24 @@ class AngularKetBase(ABC):
                 "Both kets must be of the same type to calculate the prefactor of the operator in the coupled scheme."
             )
 
-        if q == "f_tot":
+        if qn == "f_tot":
             return 1
 
         for key, qs in self._coupled_quantum_numbers.items():
-            if q in qs:
-                q_combined = key
-                q2 = qs[1] if qs[0] == q else qs[0]
+            if qn in qs:
+                qn_combined = key
+                qn2 = qs[1] if qs[0] == qn else qs[0]
                 break
         else:  # no break
-            raise ValueError(f"Quantum number {q} not found in _coupled_quantum_numbers.")
+            raise ValueError(f"Quantum number {qn} not found in _coupled_quantum_numbers.")
 
-        f1, f2, f_tot = (self.get_qn(q), self.get_qn(q2), self.get_qn(q_combined))
-        i1, i2, i_tot = (other.get_qn(q), other.get_qn(q2), other.get_qn(q_combined))
+        f1, f2, f_tot = (self.get_qn(qn), self.get_qn(qn2), self.get_qn(qn_combined))
+        i1, i2, i_tot = (other.get_qn(qn), other.get_qn(qn2), other.get_qn(qn_combined))
 
         if f2 != i2:
             return 0
         prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa)
-        return prefactor * self._calc_prefactor_of_operator_in_coupled_scheme(other, q_combined, kappa)
+        return prefactor * self._calc_prefactor_of_operator_in_coupled_scheme(other, qn_combined, kappa)
 
 
 class AngularKetLS(AngularKetBase):
