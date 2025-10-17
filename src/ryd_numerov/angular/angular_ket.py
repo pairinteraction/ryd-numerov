@@ -29,7 +29,7 @@ class AngularKetBase(ABC):
     """Base class for a angular ket (i.e. a simple canonical spin ketstate)."""
 
     # We use __slots__ to prevent dynamic attributes and make the objects immutable after initialization
-    __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "species", "_initialized")
+    __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "_initialized")
 
     _spin_quantum_number_names: ClassVar[list[str]]
     """Names of all well defined spin quantum numbers (without the magnetic quantum number m) in this class."""
@@ -52,10 +52,6 @@ class AngularKetBase(ABC):
     If None, only reduced matrix elements can be calculated
     """
 
-    species: str | None
-    """Atomic species, e.g. 'Rb87'.
-    Not used for calculations, only for convenience to infer th core electron spin and nuclear spin quantum numbers."""
-
     def __init__(
         self,
         i_c: float | None = None,
@@ -67,7 +63,12 @@ class AngularKetBase(ABC):
         m: float | None = None,
         species: str | None = None,
     ) -> None:
-        self.species = species
+        """Initialize the Spin ket.
+
+        species:
+        Atomic species, e.g. 'Rb87'.
+        Not used for calculation, only for convenience to infer the core electron spin and nuclear spin quantum numbers.
+        """
         if species is not None:
             element = BaseElement.from_species(species)
             if i_c is not None and i_c != element.i_c:
@@ -124,8 +125,6 @@ class AngularKetBase(ABC):
         args = ", ".join(f"{k}={v}" for k, v in self.spin_quantum_numbers_dict.items())
         if self.m is not None:
             args += f", m={self.m}"
-        if self.species is not None:
-            args += f", species='{self.species}'"
         return f"{self.__class__.__name__}({args})"
 
     def __str__(self) -> str:
@@ -138,8 +137,6 @@ class AngularKetBase(ABC):
             return False
         if self.m != other.m:
             return False
-        if self.species != other.species:
-            return False
         return all(
             self.spin_quantum_numbers_dict[k] == other.spin_quantum_numbers_dict[k]
             for k in self.spin_quantum_numbers_dict
@@ -150,7 +147,6 @@ class AngularKetBase(ABC):
             (
                 tuple((k, v) for k, v in self.spin_quantum_numbers_dict.items()),
                 self.m,
-                self.species,
             )
         )
 
@@ -350,7 +346,6 @@ class AngularKetLS(AngularKetBase):
                         j_tot=self.j_tot,
                         f_tot=self.f_tot,
                         m=self.m,
-                        species=self.species,
                     )
                 except InvalidQuantumNumbersError:
                     continue
@@ -458,7 +453,6 @@ class AngularKetJJ(AngularKetBase):
                         j_tot=self.j_tot,
                         f_tot=self.f_tot,
                         m=self.m,
-                        species=self.species,
                     )
                 except InvalidQuantumNumbersError:
                     continue
@@ -498,7 +492,6 @@ class AngularKetJJ(AngularKetBase):
                     j_r=self.j_r,
                     f_tot=self.f_tot,
                     m=self.m,
-                    species=self.species,
                 )
             except InvalidQuantumNumbersError:
                 continue
@@ -604,7 +597,6 @@ class AngularKetFJ(AngularKetBase):
                     j_tot=float(j_tot),
                     f_tot=self.f_tot,
                     m=self.m,
-                    species=self.species,
                 )
             except InvalidQuantumNumbersError:
                 continue
