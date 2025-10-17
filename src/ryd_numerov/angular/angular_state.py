@@ -128,8 +128,7 @@ class AngularState(Generic[_AngularKet]):
         ov = 0
         for coeff1, ket1 in self:
             for coeff2, ket2 in other:
-                if ket1 == ket2:
-                    ov += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_overlap(ket2)
+                ov += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_overlap(ket2)
         return ov
 
     def calc_reduced_matrix_element(
@@ -149,6 +148,5 @@ class AngularState(Generic[_AngularKet]):
         value = 0
         for coeff1, ket1 in self:
             for coeff2, ket2 in other:
-                if ket1 == ket2:
-                    value += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_matrix_element(ket2, operator, kappa)
+                value += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_matrix_element(ket2, operator, kappa)
         return value

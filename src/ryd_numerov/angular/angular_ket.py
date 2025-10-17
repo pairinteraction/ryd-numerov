@@ -89,20 +89,20 @@ class AngularKetBase(ABC):
             s_c = 0.5 * (element.number_valence_electrons - 1)
         if i_c is None:
             raise ValueError("Nuclear spin i_c must be set or a species must be given.")
-        self.i_c = i_c
+        self.i_c = float(i_c)
 
         if s_c is None:
             raise ValueError("Core spin s_c must be set or a species must be given.")
-        self.s_c = s_c
+        self.s_c = float(s_c)
 
-        self.l_c = l_c
-        self.s_r = s_r
+        self.l_c = int(l_c)
+        self.s_r = float(s_r)
         if l_r is None:
             raise ValueError("Rydberg electron orbital angular momentum l_r must be set.")
-        self.l_r = l_r
+        self.l_r = int(l_r)
 
         # f_tot will be set in the subclasses
-        self.m = m
+        self.m = None if m is None else float(m)
 
     def _post_init(self) -> None:
         self._initialized = True
@@ -201,10 +201,11 @@ class AngularKetBase(ABC):
         If the kets are of different types, the overlap is calculated using the corresponding
         Clebsch-Gordan coefficients (/ Wigner-j symbols).
         """
+        for q in set(self._spin_quantum_number_names) & set(other._spin_quantum_number_names):
+            if self.get_qn(q) != other.get_qn(q):
+                return 0
+
         if type(self) is type(other):
-            for k, qn1 in self.spin_quantum_numbers_dict.items():
-                if qn1 != other.get_qn(k):
-                    return 0
             return 1
 
         kets = [self, other]
@@ -708,7 +709,7 @@ def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name
             msg = f"{name} must be set if both parts ({s_1=} and {s_2=}) are non-zero."
             raise ValueError(msg)
         s_tot = s_1 + s_2
-    return s_tot
+    return float(s_tot)
 
 
 def _check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
