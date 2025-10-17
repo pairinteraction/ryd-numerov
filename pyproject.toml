@@ -134,6 +134,7 @@ extend-ignore = [
   "EM10",  # raw-string or f-string in-exception
   "PLR0913",  # Too many arguments in function definition (... > 5)
   "PLW1641",  # eq-without-hash
+  "RUF023",  # unsorted-dunder-slots
 ]
 future-annotations = true
 flake8-tidy-imports.ban-relative-imports = "all"

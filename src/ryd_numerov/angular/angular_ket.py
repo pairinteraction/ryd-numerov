@@ -28,32 +28,34 @@ class InvalidQuantumNumbersError(ValueError):
 class AngularKetBase(ABC):
     """Base class for a angular ket (i.e. a simple canonical spin ketstate)."""
 
+    __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "species")
+
     i_c: float
-    """Nuclear spin."""
+    """Nuclear spin quantum number."""
     s_c: float
-    """Core electron spin (0 for alkali metals, 0.5 for alkaline earth metals)."""
-    s_r: float
-    """Rydberg electron spin (always 0.5)."""
+    """Core electron spin quantum number (0 for alkali atoms, 0.5 for alkaline earth atoms)."""
     l_c: int
-    """Core electron orbital angular momentum"""
+    """Core electron orbital quantum number (usually 0)."""
+    s_r: float
+    """Rydberg electron spin quantum number (always 0.5)."""
     l_r: int
-    """Rydberg electron orbital angular momentum"""
+    """Rydberg electron orbital quantum number."""
 
     f_tot: float
-    """Total spin (including nuclear, core electron and rydberg electron contributions)."""
+    """Total atom angular quantum number (including nuclear, core electron and rydberg electron contributions)."""
+    m: float | None
+    """Magnetic quantum number, which is the projection of `f_tot` onto the quantization axis.
+    If None, only reduced matrix elements can be calculated
+    """
 
     species: str | None
     """Atomic species, e.g. 'Rb87'.
-    Not used for calculations, only for convenience to infert core electron+ spin and nuclear spin."""
-    m: float | None
-    """Magnetic quantum number.
-    If None, only reduced matrix elements can be calculated
-    """
+    Not used for calculations, only for convenience to infer th core electron spin and nuclear spin quantum numbers."""
 
     @property
     @abstractmethod
     def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
-        """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
+        """Return all angular momentum quantum numbers (apart from the magnetic quantum number m) as dictionary."""
 
     def __repr__(self) -> str:
         args = ", ".join(f"{k}={v}" for k, v in self.spin_quantum_numbers_dict.items())
@@ -205,6 +207,15 @@ class AngularKetBase(ABC):
 class AngularKetLS(AngularKetBase):
     """Spin ket in LS coupling."""
 
+    __slots__ = ("s_tot", "l_tot", "j_tot")
+
+    s_tot: float
+    """Total electron spin quantum number (s_c + s_r)."""
+    l_tot: int
+    """Total electron orbital quantum number (l_c + l_r)."""
+    j_tot: float
+    """Total electron angular momentum quantum number (s_tot + l_tot)."""
+
     def __init__(
         self,
         i_c: float | None = None,
@@ -242,7 +253,7 @@ class AngularKetLS(AngularKetBase):
         self.l_r = l_r
 
         self.s_tot = _try_trivial_spin_addition(self.s_c, self.s_r, s_tot, "s_tot")
-        self.l_tot = _try_trivial_spin_addition(self.l_c, self.l_r, l_tot, "l_tot")
+        self.l_tot = int(_try_trivial_spin_addition(self.l_c, self.l_r, l_tot, "l_tot"))
         self.j_tot = _try_trivial_spin_addition(self.l_tot, self.s_tot, j_tot, "j_tot")
         self.f_tot = _try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
 
@@ -303,16 +314,16 @@ class AngularKetLS(AngularKetBase):
             for j_r in np.arange(abs(self.s_r - self.l_r), self.s_r + self.l_r + 1):
                 try:
                     jj_ket = AngularKetJJ(
-                        self.i_c,
-                        self.s_c,
-                        self.l_c,
-                        self.s_r,
-                        self.l_r,
-                        float(j_c),
-                        float(j_r),
-                        self.j_tot,
-                        self.f_tot,
-                        self.m,
+                        i_c=self.i_c,
+                        s_c=self.s_c,
+                        l_c=self.l_c,
+                        s_r=self.s_r,
+                        l_r=self.l_r,
+                        j_c=float(j_c),
+                        j_r=float(j_r),
+                        j_tot=self.j_tot,
+                        f_tot=self.f_tot,
+                        m=self.m,
                         species=self.species,
                     )
                 except InvalidQuantumNumbersError:
@@ -346,6 +357,15 @@ class AngularKetLS(AngularKetBase):
 
 class AngularKetJJ(AngularKetBase):
     """Spin ket in JJ coupling."""
+
+    __slots__ = ("j_c", "j_r", "j_tot")
+
+    j_c: float
+    """Total core electron angular quantum number (s_c + l_c)."""
+    j_r: float
+    """Total rydberg electron angular quantum number (s_r + l_r)."""
+    j_tot: float
+    """Total electron angular momentum quantum number (j_c + j_r)."""
 
     def __init__(
         self,
@@ -437,16 +457,16 @@ class AngularKetJJ(AngularKetBase):
             for l_tot in np.arange(abs(self.l_c - self.l_r), self.l_c + self.l_r + 1):
                 try:
                     ls_ket = AngularKetLS(
-                        self.i_c,
-                        self.s_c,
-                        self.l_c,
-                        self.s_r,
-                        self.l_r,
-                        float(s_tot),
-                        int(l_tot),
-                        self.j_tot,
-                        self.f_tot,
-                        self.m,
+                        i_c=self.i_c,
+                        s_c=self.s_c,
+                        l_c=self.l_c,
+                        s_r=self.s_r,
+                        l_r=self.l_r,
+                        s_tot=float(s_tot),
+                        l_tot=int(l_tot),
+                        j_tot=self.j_tot,
+                        f_tot=self.f_tot,
+                        m=self.m,
                         species=self.species,
                     )
                 except InvalidQuantumNumbersError:
@@ -477,16 +497,16 @@ class AngularKetJJ(AngularKetBase):
         for f_c in np.arange(abs(self.j_c - self.i_c), self.j_c + self.i_c + 1):
             try:
                 fj_ket = AngularKetFJ(
-                    self.i_c,
-                    self.s_c,
-                    self.l_c,
-                    self.s_r,
-                    self.l_r,
-                    self.j_c,
-                    self.j_r,
-                    float(f_c),
-                    self.f_tot,
-                    self.m,
+                    i_c=self.i_c,
+                    s_c=self.s_c,
+                    l_c=self.l_c,
+                    s_r=self.s_r,
+                    l_r=self.l_r,
+                    j_c=self.j_c,
+                    f_c=float(f_c),
+                    j_r=self.j_r,
+                    f_tot=self.f_tot,
+                    m=self.m,
                     species=self.species,
                 )
             except InvalidQuantumNumbersError:
@@ -502,6 +522,15 @@ class AngularKetJJ(AngularKetBase):
 class AngularKetFJ(AngularKetBase):
     """Spin ket in FJ coupling."""
 
+    __slots__ = ("j_c", "f_c", "j_r")
+
+    j_c: float
+    """Total core electron angular quantum number (s_c + l_c)."""
+    f_c: float
+    """Total core angular quantum number (j_c + i_c)."""
+    j_r: float
+    """Total rydberg electron angular quantum number (s_r + l_r)."""
+
     def __init__(
         self,
         i_c: float | None = None,
@@ -510,8 +539,8 @@ class AngularKetFJ(AngularKetBase):
         s_r: float = 0.5,
         l_r: int | None = None,
         j_c: float | None = None,
-        j_r: float | None = None,
         f_c: float | None = None,
+        j_r: float | None = None,
         f_tot: float | None = None,
         m: float | None = None,
         species: str | None = None,
@@ -609,16 +638,16 @@ class AngularKetFJ(AngularKetBase):
         for j_tot in np.arange(abs(self.j_c - self.j_r), self.j_c + self.j_r + 1):
             try:
                 jj_ket = AngularKetJJ(
-                    self.i_c,
-                    self.s_c,
-                    self.l_c,
-                    self.s_r,
-                    self.l_r,
-                    self.j_c,
-                    self.j_r,
-                    float(j_tot),
-                    self.f_tot,
-                    self.m,
+                    i_c=self.i_c,
+                    s_c=self.s_c,
+                    l_c=self.l_c,
+                    s_r=self.s_r,
+                    l_r=self.l_r,
+                    j_c=self.j_c,
+                    j_r=self.j_r,
+                    j_tot=float(j_tot),
+                    f_tot=self.f_tot,
+                    m=self.m,
                     species=self.species,
                 )
             except InvalidQuantumNumbersError:
