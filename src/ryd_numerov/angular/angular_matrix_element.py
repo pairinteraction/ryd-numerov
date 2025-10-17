@@ -30,7 +30,7 @@ def calc_reduced_angular_matrix_element(
 
     .. math::
         \langle \gamma_{2}, s2, l2, j2 || \hat{O}_{k0} || \gamma_{1}, s2, l1, j1 \rangle
-        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2j1 + 1} \text{wigner_6j}(l2, j2, s2, j1, l1, \kappa)
+        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2j1 + 1} \mathrm{Wigner6j}(l2, j2, s2, j1, l1, \kappa)
         \langle \gamma_{2}, l2 || \hat{O}_{k0} || \gamma_{1}, l1 \rangle
 
     And for :math:`l2 = l1` (i.e. when :math:`\hat{O}_{k0}` only acts on :math:`s`),
@@ -38,7 +38,7 @@ def calc_reduced_angular_matrix_element(
 
     .. math::
         \langle \gamma_{2}, s2, l2, j2 || \hat{O}_{k0} || \gamma_{1}, s1, l2, j1 \rangle
-        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2 * j1 + 1} \text{wigner_6j}(s2, j2, l2, j1, s1, \kappa)
+        = (-1)^{s2 + l2 + j1 + \kappa} \sqrt{2j + 1} \sqrt{2 * j1 + 1} \mathrm{Wigner6j}(s2, j2, l2, j1, s1, \kappa)
         \langle \gamma_{2}, s2 || \hat{O}_{k0} || \gamma_{1}, s1 \rangle
 
     Note we changed the formulas to match the pairinteraction paper convention:
@@ -193,8 +193,8 @@ def calc_prefactor_of_operator_in_coupled_scheme(
 
     .. math::
         \langle f1, f2, f12 || \hat{O}_{\kappa} || i1, i2, i12 \rangle
-        = (-1)^{f1 + i2 + i12 + \kappa} * sqrt((2 * f12 + 1)(2 * i12 + 1)) * \text{Wigner6j}(f1, f12, i2; i12, i1, \kappa)
-            * \langle f1 || \hat{O}_{\kappa} || i1 \rangle
+        = (-1)^{f1 + i2 + i12 + \kappa} * sqrt((2 * f12 + 1)(2 * i12 + 1))
+            * \mathrm{Wigner6j}(f1, f12, i2; i12, i1, \kappa) * \langle f1 || \hat{O}_{\kappa} || i1 \rangle
         = prefactor  * \langle f1 || \hat{O}_{\kappa} || i1 \rangle
 
     This function calculates and returns the prefactor.
