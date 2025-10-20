@@ -60,9 +60,24 @@ def _calc_wigner_3j(j1: float, j2: float, j3: float, m1: float, m2: float, m3: f
     return float(sympy_wigner_3j(j1, j2, j3, m1, m2, m3).evalf())
 
 
+def calc_wigner_6j(j1: float, j2: float, j3: float, j4: float, j5: float, j6: float) -> float:
+    if not j1 <= j4:  # better use of caching
+        return calc_wigner_6j(j4, j2, j6, j1, j5, j3)
+
+    if not j2 <= j5:  # better use of caching
+        return calc_wigner_6j(j1, j5, j6, j4, j2, j3)
+
+    if not j1 <= j2 <= j3:  # better use of caching
+        args_nd = np.array([j1, j2, j3, j4, j5, j6])
+        inds = np.argsort(args_nd[:3])
+        return calc_wigner_6j(*args_nd[:3][inds], *args_nd[3:][inds])
+
+    return _calc_wigner_6j(j1, j2, j3, j4, j5, j6)
+
+
 @lru_cache(maxsize=10_000)
 @sympify_args
-def calc_wigner_6j(j1: float, j2: float, j3: float, j4: float, j5: float, j6: float) -> float:
+def _calc_wigner_6j(j1: float, j2: float, j3: float, j4: float, j5: float, j6: float) -> float:
     return float(sympy_wigner_6j(j1, j2, j3, j4, j5, j6).evalf())
 
 
