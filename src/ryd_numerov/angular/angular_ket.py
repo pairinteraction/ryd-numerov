@@ -241,7 +241,7 @@ class AngularKetBase(ABC):
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
-    def calc_reduced_matrix_element(self: Self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:
+    def calc_reduced_matrix_element(self: Self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:  # noqa: C901
         r"""Calculate the reduced angular matrix element.
 
         We follow equation (7.1.7) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
@@ -259,38 +259,33 @@ class AngularKetBase(ABC):
         if operator in get_args(AngularMomentumQuantumNumbers) and operator not in self._spin_quantum_number_names:
             return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
 
-
+        qn_name: AngularMomentumQuantumNumbers
         if operator == "SPHERICAL":
-            if self._kronecker_delta_non_involved_spins(other, "l_r") == 0:
-                return 0
+            qn_name = "l_r"
             complete_reduced_matrix_element = calc_reduced_spherical_matrix_element(self.l_r, other.l_r, kappa)
-            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, "l_r", kappa)
-            return prefactor * complete_reduced_matrix_element
-
-        if operator in self._spin_quantum_number_names:
+        elif operator in self._spin_quantum_number_names:
             if not kappa == 1:
                 raise ValueError("Only kappa=1 is supported for spin operators.")
-            if self._kronecker_delta_non_involved_spins(other, operator) == 0:
-                return 0
+            qn_name = operator
             complete_reduced_matrix_element = calc_reduced_spin_matrix_element(
                 self.get_qn(operator), other.get_qn(operator)
             )
-            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
-            return prefactor * complete_reduced_matrix_element
-
-        if operator.startswith("identity"):
+        elif operator.startswith("identity_"):
             if not kappa == 0:
                 raise ValueError("Only kappa=0 is supported for identity operator.")
-            operator = operator.replace("identity_", "")
-            if self._kronecker_delta_non_involved_spins(other, operator) == 0:
-                return 0
+            qn_name = operator.replace("identity_", "")
             complete_reduced_matrix_element = calc_reduced_identity_matrix_element(
-                self.get_qn(operator), other.get_qn(operator)
+                self.get_qn(qn_name), other.get_qn(qn_name)
             )
-            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
-            return prefactor * complete_reduced_matrix_element
+        else:
+            raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
 
-        raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
+        if complete_reduced_matrix_element == 0:
+            return 0
+        if self._kronecker_delta_non_involved_spins(other, qn_name) == 0:
+            return 0
+        prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, qn_name, kappa)
+        return prefactor * complete_reduced_matrix_element
 
     def calc_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int, q: int) -> float:
         r"""Calculate the dimensionless angular matrix element.
