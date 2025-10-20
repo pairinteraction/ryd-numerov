@@ -10,8 +10,8 @@ from ryd_numerov.angular.angular_ket import (
     AngularKetFJ,
     AngularKetJJ,
     AngularKetLS,
-    AngularMomentumQuantumNumbers,
 )
+from ryd_numerov.units import AngularMomentumQuantumNumbers
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

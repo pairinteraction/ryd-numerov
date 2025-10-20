@@ -14,7 +14,7 @@ from ryd_numerov.angular.angular_matrix_element import (
 )
 from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements import BaseElement
-from ryd_numerov.units import OperatorType
+from ryd_numerov.units import AngularMomentumQuantumNumbers, OperatorType
 
 if TYPE_CHECKING:
     from ryd_numerov.angular.angular_state import AngularState
@@ -22,9 +22,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 CouplingScheme = Literal["LS", "JJ", "FJ"]
-AngularMomentumQuantumNumbers = Literal[
-    "i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_c", "j_r", "j_tot", "f_c", "f_tot"
-]
 
 
 class InvalidQuantumNumbersError(ValueError):
