@@ -65,7 +65,7 @@ def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) 
     state = RadialState(species, n=n, nu=nu, l_r=l)
     state.create_wavefunction()
 
-    exp_value_numerov = {i: state.calc_matrix_element(state, i, unit="bohr") for i in range(3)}
+    exp_value_numerov = {i: state.calc_matrix_element(state, i, unit=f"bohr^{i}" if i > 0 else "") for i in range(3)}
     exp_value_analytic = {
         0: 1,
         1: 0.5 * (3 * n**2 - l * (l + 1)),

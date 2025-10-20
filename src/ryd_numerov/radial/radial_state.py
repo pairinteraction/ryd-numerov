@@ -10,7 +10,7 @@ from ryd_numerov.radial.grid import Grid
 from ryd_numerov.radial.model import Model
 from ryd_numerov.radial.radial_matrix_element import calc_radial_matrix_element_from_w_z
 from ryd_numerov.radial.wavefunction import WavefunctionNumerov, WavefunctionWhittaker
-from ryd_numerov.units import BaseQuantities
+from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
     from ryd_numerov.radial.model import PotentialType
@@ -235,7 +235,7 @@ class RadialState:
 
         if unit == "a.u.":
             return radial_matrix_element_au
-        radial_matrix_element: PintFloat = radial_matrix_element_au * BaseQuantities["RADIAL_MATRIX_ELEMENT"]
+        radial_matrix_element: PintFloat = radial_matrix_element_au * ureg.Quantity(1, "a0") ** k_radial
         if unit is None:
             return radial_matrix_element
         return radial_matrix_element.to(unit).magnitude
