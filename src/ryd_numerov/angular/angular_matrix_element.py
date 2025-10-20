@@ -16,7 +16,12 @@ if TYPE_CHECKING:
 def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kappa: int) -> float:
     r"""Calculate the reduced spherical matrix element $(l_r_final || \hat{Y}_{k} || l_r_initial)$.
 
-    The matrix elements of the spherical operators are given by (see also: Gaunt coefficient)
+    We follow the convention of equation (5.4.5) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
+
+    See Also:
+        - https://en.wikipedia.org/wiki/3-j_symbol#Relation_to_spherical_harmonics;_Gaunt_coefficients
+
+    The matrix elements of the spherical operators are given by:
 
     .. math::
         (l_r_final || \hat{Y}_{k} || l_r_initial)
@@ -46,6 +51,7 @@ def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
 
     The spin operator \hat{s} must be the operator corresponding to the quantum number s_final and s_initial.
 
+    We follow the convention of equation (5.4.3) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
     The matrix elements of the spin operators are given by:
 
     .. math::

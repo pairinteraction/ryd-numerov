@@ -217,7 +217,7 @@ class AngularKetBase(ABC):
         if any(isinstance(s, AngularKetJJ) for s in kets) and any(isinstance(s, AngularKetFJ) for s in kets):
             jj = next(s for s in kets if isinstance(s, AngularKetJJ))
             fj = next(s for s in kets if isinstance(s, AngularKetFJ))
-            return clebsch_gordan_6j(fj.j_c, fj.j_r, jj.j_tot, fj.i_c, fj.f_c, fj.f_tot)
+            return clebsch_gordan_6j(fj.j_r, fj.j_c, fj.i_c, jj.j_tot, fj.f_c, fj.f_tot)
 
         # JJ - LS overlaps
         if any(isinstance(s, AngularKetJJ) for s in kets) and any(isinstance(s, AngularKetLS) for s in kets):
@@ -239,6 +239,7 @@ class AngularKetBase(ABC):
     def calc_reduced_matrix_element(self: Self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:
         r"""Calculate the reduced angular matrix element.
 
+        We follow equation (7.1.7) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
         This means, calculate the following matrix element:
 
         .. math::

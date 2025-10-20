@@ -74,55 +74,59 @@ def calc_wigner_9j(
     return float(sympy_wigner_9j(j1, j2, j3, j4, j5, j6, j7, j8, j9).evalf())
 
 
-def clebsch_gordan_6j(s1: float, s2: float, s_tot: float, l1: float, j1: float, j_tot: float) -> float:
-    """Calculate the overlap between <((s1,s2)s_tot,l1)j_tot|((s1,l1)j1,s2)j_tot>.
+def clebsch_gordan_6j(j1: float, j2: float, j3: float, j12: float, j23: float, j_tot: float) -> float:
+    """Calculate the overlap between <((j1,j2)j12,j3)j_tot|(j1,(j2,j3)j23)j_tot>.
+
+    We follow the convention of equation (6.1.5) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
 
     See Also:
-    - https://en.wikipedia.org/wiki/Racah_W-coefficient
-    - https://en.wikipedia.org/wiki/6-j_symbol
+        - https://en.wikipedia.org/wiki/Racah_W-coefficient
+        - https://en.wikipedia.org/wiki/6-j_symbol
 
     Args:
-        s1: Spin of electron 1.
-        s2: Spin of electron 2.
-        s_tot: Total spin of both electrons.
-        l1: Orbital angular momentum of electron 1.
-        j1: Total angular momentum of electron 1.
-        j_tot: Total angular momentum of both electrons.
+        j1: Spin quantum number 1.
+        j2: Spin quantum number 2.
+        j3: Spin quantum number 3.
+        j12: Total spin quantum number of j1 + j2.
+        j23: Total spin quantum number of j2 + j3.
+        j_tot: Total spin quantum number of j1 + j2 + j3.
 
     Returns:
-        The Clebsch-Gordan coefficient <((s1,s2)s_tot,l1)j_tot|((s1,l1)j1,s2)j_tot>.
+        The Clebsch-Gordan coefficient <((j1,j2)j12,j3)j_tot|(j1,(j2,j3)j23)j_tot>.
 
     """
-    racah_w = minus_one_pow(j_tot + l1 + s1 + s2) * calc_wigner_6j(j_tot, l1, s_tot, s1, s2, j1)
-    prefactor: float = np.sqrt((2 * s_tot + 1) * (2 * j1 + 1))
-    return prefactor * racah_w
+    prefactor: float = minus_one_pow(j1 + j2 + j3 + j_tot) * np.sqrt((2 * j12 + 1) * (2 * j23 + 1))
+    wigner_6j = calc_wigner_6j(j1, j2, j12, j3, j_tot, j23)
+    return prefactor * wigner_6j
 
 
 def clebsch_gordan_9j(
-    s1: float, s2: float, s_tot: float, l1: float, l2: float, l_tot: float, j1: float, j2: float, j_tot: float
+    j1: float, j2: float, j12: float, j3: float, j4: float, j34: float, j13: float, j24: float, j_tot: float
 ) -> float:
-    """Calculate the overlap between <((s1,s2)s_tot,(l1,l2)l_tot))j_tot|((s1,l1)j1,(s2,l2)j2))j_tot>.
+    """Calculate the overlap between <((j1,j2)j12,(j3,j4)j34))j_tot|((j1,j3)j13,(j2,j4)j24))j_tot>.
+
+    We follow the convention of equation (6.4.2) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
 
     See Also:
-    - https://en.wikipedia.org/wiki/9-j_symbol
+        - https://en.wikipedia.org/wiki/9-j_symbol
 
     Args:
-        s1: Spin of electron 1.
-        s2: Spin of electron 2.
-        s_tot: Total spin of both electrons.
-        l1: Orbital angular momentum of electron 1.
-        l2: Orbital angular momentum of electron 2.
-        l_tot: Total orbital angular momentum of both electrons.
-        j1: Total angular momentum of electron 1.
-        j2: Total angular momentum of electron 2.
-        j_tot: Total angular momentum of both electrons.
+        j1: Spin quantum number 1.
+        j2: Spin quantum number 2.
+        j12: Total spin quantum number of j1 + j2.
+        j3: Spin quantum number 1.
+        j4: Spin quantum number 2.
+        j34: Total spin quantum number of j1 + j2.
+        j13: Total spin quantum number of j1 + j3.
+        j24: Total spin quantum number of j2 + j4.
+        j_tot: Total spin quantum number of j1 + j2 + j3 + j4.
 
     Returns:
-        The Clebsch-Gordan coefficient <((s1,s2)s_tot,(l1,l2)l_tot))j_tot|((s1,l1)j1,(s2,l2)j2))j_tot>.
+        The Clebsch-Gordan coefficient <((j1,j2)j12,(j3,j4)j34))j_tot|((j1,j3)j13,(j2,j4)j24))j_tot>.
 
     """
-    prefactor: float = np.sqrt((2 * s_tot + 1) * (2 * l_tot + 1) * (2 * j1 + 1) * (2 * j2 + 1))
-    return prefactor * calc_wigner_9j(s1, s2, s_tot, l1, l2, l_tot, j1, j2, j_tot)
+    prefactor: float = np.sqrt((2 * j12 + 1) * (2 * j34 + 1) * (2 * j13 + 1) * (2 * j24 + 1))
+    return prefactor * calc_wigner_9j(j1, j2, j12, j3, j4, j34, j13, j24, j_tot)
 
 
 def minus_one_pow(n: float) -> int:
