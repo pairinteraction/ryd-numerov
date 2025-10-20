@@ -405,7 +405,10 @@ class BaseElement(ABC):
         where :math:`\mu` is the reduced mass factor and :math:`E` the energy in atomic units.
 
         """
-        return np.sqrt(0.5 * self.reduced_mass_factor / -energy_au)  # type: ignore [no-any-return]
+        nu: float = np.sqrt(0.5 * self.reduced_mass_factor / -energy_au)
+        if abs(nu - round(nu)) < 1e-10:
+            nu = round(nu)
+        return nu
 
     def calc_energy_from_nu(self, nu: float) -> float:
         r"""Calculate the energy from a given effective principal quantum number nu.
