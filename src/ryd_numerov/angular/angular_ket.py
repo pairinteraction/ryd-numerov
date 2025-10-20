@@ -224,7 +224,11 @@ class AngularKetBase(ABC):
         if any(isinstance(s, AngularKetJJ) for s in kets) and any(isinstance(s, AngularKetLS) for s in kets):
             jj = next(s for s in kets if isinstance(s, AngularKetJJ))
             ls = next(s for s in kets if isinstance(s, AngularKetLS))
-            return clebsch_gordan_9j(ls.s_r, ls.s_c, ls.s_tot, ls.l_r, ls.l_c, ls.l_tot, jj.j_r, jj.j_c, jj.j_tot)
+            # NOTE: it matters, whether you first put all 3 l's and then all 3 s's or the other way round
+            # (see symmetry properties of 9j symbol)
+            # this convention is used, such that all matrix elements work out correctly, no matter in which
+            # coupling scheme they are calculated
+            return clebsch_gordan_9j(ls.l_r, ls.l_c, ls.l_tot, ls.s_r, ls.s_c, ls.s_tot, jj.j_r, jj.j_c, jj.j_tot)
 
         # FJ - LS overlaps
         if any(isinstance(s, AngularKetFJ) for s in kets) and any(isinstance(s, AngularKetLS) for s in kets):
