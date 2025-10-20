@@ -9,7 +9,7 @@ from ryd_numerov.angular import AngularKetLS
 from ryd_numerov.angular.angular_ket import _try_trivial_spin_addition
 from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.radial import RadialState
-from ryd_numerov.units import BaseQuantities, OperatorType, ureg
+from ryd_numerov.units import BaseQuantities, MatrixElementType, ureg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -19,6 +19,13 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+OPERATOR_TO_KS = {  # operator: (k_radial, k_angular)
+    "MAGNETIC_DIPOLE": (0, 1),
+    "ELECTRIC_DIPOLE": (1, 1),
+    "ELECTRIC_QUADRUPOLE": (2, 2),
+    "ELECTRIC_OCTUPOLE": (3, 3),
+    "ELECTRIC_QUADRUPOLE_ZERO": (2, 0),
+}
 
 
 class RydbergStateBase(ABC):
@@ -78,36 +85,94 @@ class RydbergStateBase(ABC):
         return energy.to(unit, "spectroscopy").magnitude
 
     @overload
-    def calc_matrix_element(
-        self, other: Self, operator: OperatorType, k_radial: int, k_angular: int, q: int
-    ) -> PintFloat: ...
+    def calc_reduced_matrix_element(self, other: Self, operator: MatrixElementType, unit: None = None) -> PintFloat: ...
 
     @overload
-    def calc_matrix_element(
-        self, other: Self, operator: OperatorType, k_radial: int, k_angular: int, q: int, unit: str
-    ) -> float: ...
+    def calc_reduced_matrix_element(self, other: Self, operator: MatrixElementType, unit: str) -> float: ...
+
+    def calc_reduced_matrix_element(
+        self, other: Self, operator: MatrixElementType, unit: str | None = None
+    ) -> PintFloat | float:
+        r"""Calculate the reduced matrix element.
+
+        Calculate the reduced matrix element between self and other (ignoring m quantum numbers)
+
+        .. math::
+            \left\langle self || r^k_radial \hat{O}_{k_angular} || other \right\rangle
+
+        where \hat{O}_{k_angular} is the operator of rank k_angular for which to calculate the matrix element.
+        k_radial and k_angular are determined from the operator automatically.
+
+        Args:
+            other: The other Rydberg state for which to calculate the matrix element.
+            operator: The operator for which to calculate the matrix element.
+            unit: The unit to which to convert the radial matrix element.
+                Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
+                Default None will return a pint quantity.
+
+        Returns:
+            The reduced matrix element for the given operator.
+
+        """
+        if operator not in get_args(MatrixElementType):
+            raise ValueError(f"Operator {operator} not supported, must be one of {get_args(MatrixElementType)}")
+
+        k_radial, k_angular = OPERATOR_TO_KS[operator]
+        radial_matrix_element = self.radial.calc_matrix_element(other.radial, k_radial)
+
+        matrix_element: PintFloat
+        if operator == "MAGNETIC_DIPOLE":
+            # Magnetic dipole operator: mu = - mu_B (g_l <l_tot> + g_s <s_tot>)
+            g_s = 2.0023192
+            value_s_tot = self.angular.calc_reduced_matrix_element(other.angular, "s_tot", k_angular)
+            g_l = 1
+            value_l_tot = self.angular.calc_reduced_matrix_element(other.angular, "l_tot", k_angular)
+            angular_matrix_element = g_s * value_s_tot + g_l * value_l_tot
+
+            matrix_element = -ureg.Quantity(1, "bohr_magneton") * radial_matrix_element * angular_matrix_element
+            # Note: we use the convention, that the magnetic dipole moments are given
+            # as the same dimensionality as the Bohr magneton (mu = - mu_B (g_l l + g_s s_tot))
+            # such that - mu * B (where the magnetic field B is given in dimension Tesla) is an energy
+
+        elif operator in ["ELECTRIC_DIPOLE", "ELECTRIC_QUADRUPOLE", "ELECTRIC_OCTUPOLE", "ELECTRIC_QUADRUPOLE_ZERO"]:
+            # Electric multipole operator: p_{k,q} = e r^k_radial Y_{k_angular,q}(\theta, phi)
+            # # TODO factor sqrt(4pi / (2k+1))?
+            angular_matrix_element = self.angular.calc_reduced_matrix_element(other.angular, "SPHERICAL", k_angular)
+            matrix_element = ureg.Quantity(1, "e") * radial_matrix_element * angular_matrix_element
+
+        else:
+            raise NotImplementedError(f"Operator {operator} not implemented.")
+
+        if unit == "a.u.":
+            return matrix_element.to_base_units().magnitude
+        if unit is None:
+            return matrix_element
+        return matrix_element.to(unit).magnitude
+
+    @overload
+    def calc_matrix_element(self, other: Self, operator: MatrixElementType, q: int) -> PintFloat: ...
+
+    @overload
+    def calc_matrix_element(self, other: Self, operator: MatrixElementType, q: int, unit: str) -> float: ...
 
     def calc_matrix_element(
-        self, other: Self, operator: OperatorType, k_radial: int, k_angular: int, q: int, unit: str | None = None
+        self, other: Self, operator: MatrixElementType, q: int, unit: str | None = None
     ) -> PintFloat | float:
         r"""Calculate the matrix element.
 
-        Calculate the matrix element between two Rydberg states
-        \ket{self}=\ket{n',l',j_tot',s_tot',m'} and \ket{other}= \ket{n,l,j_tot,s_tot,m}.
+        Calculate the full matrix element between self and other,
+        also considering the magnetic quantum numbers m of self and other.
 
         .. math::
-            \langle n,l,j_tot,s_tot,m | r^k_radial \hat{O}_{k_angular,q} | n',l',j_tot',s_tot',m' \rangle
+            \left\langle self || r^k_radial \hat{O}_{k_angular} || other \right\rangle
 
-        where \hat{O}_{k_angular,q} is the operators of rank k_angular and component q,
-        for which to calculate the matrix element.
+        where \hat{O}_{k_angular} is the operator of rank k_angular for which to calculate the matrix element.
+        k_radial and k_angular are determined from the operator automatically.
 
         Args:
-            other: The other Rydberg state \ket{n,l,j_tot,s_tot,m} to which to calculate the matrix element.
-            operator: The operator type for which to calculate the matrix element.
-                Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
-            k_radial: The radial matrix element power k.
-            k_angular: The rank of the angular operator.
-            q: The component of the angular operator.
+            other: The other Rydberg state for which to calculate the matrix element.
+            operator: The operator for which to calculate the matrix element.
+            q: The component of the operator.
             unit: The unit to which to convert the radial matrix element.
                 Can be "a.u." for atomic units (so no conversion is done), or a specific unit.
                 Default None will return a pint quantity.
@@ -116,34 +181,10 @@ class RydbergStateBase(ABC):
             The matrix element for the given operator.
 
         """
-        assert operator in get_args(OperatorType), (
-            f"Operator {operator} not supported, must be one of {get_args(OperatorType)}"
-        )
-        radial_matrix_element_au = self.radial.calc_matrix_element(other.radial, k_radial, unit="a.u.")
-        angular_matrix_element_au = self.angular.calc_matrix_element(other.angular, operator, k_angular, q)
-        matrix_element_au = radial_matrix_element_au * angular_matrix_element_au
-
-        if operator == "MAGNETIC":
-            matrix_element_au *= -0.5  # - mu_B in atomic units
-        elif operator == "ELECTRIC":
-            pass  # e in atomic units is 1
-
-        if unit == "a.u.":
-            return matrix_element_au
-
-        matrix_element: PintFloat = matrix_element_au * (ureg.Quantity(1, "a0") ** k_radial)
-        if operator == "ELECTRIC":
-            matrix_element *= ureg.Quantity(1, "e")
-        elif operator == "MAGNETIC":
-            # 2 mu_B = hbar e / m_e = 1 a.u. = 1 atomic_unit_of_current * bohr ** 2
-            # Note: we use the convention, that the magnetic dipole moments are given
-            # as the same dimensionality as the Bohr magneton (mu = - mu_B (g_l l + g_s s_tot))
-            # such that - mu * B (where the magnetic field B is given in dimension Tesla) is an energy
-            matrix_element *= ureg.Quantity(2, "bohr_magneton")
-
-        if unit is None:
-            return matrix_element
-        return matrix_element.to(unit).magnitude
+        _k_radial, k_angular = OPERATOR_TO_KS[operator]
+        prefactor = self.angular._calc_wigner_eckart_prefactor(other.angular, k_angular, q)  # noqa: SLF001
+        reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, unit)
+        return prefactor * reduced_matrix_element
 
 
 class RydbergStateAlkali(RydbergStateBase):
