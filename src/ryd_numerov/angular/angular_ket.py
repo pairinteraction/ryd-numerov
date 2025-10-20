@@ -320,10 +320,13 @@ class AngularKetBase(ABC):
         if self.m is None or other.m is None:
             raise ValueError("m must be set to calculate the matrix element.")
 
-        prefactor: float = (-1) ** (self.f_tot - self.m)  # type: ignore [assignment]
-        wigner_3j = calc_wigner_3j(self.f_tot, kappa, other.f_tot, -self.m, q, other.m)
+        prefactor = self._calc_wigner_eckart_prefactor(other, kappa, q)
         reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, kappa)
-        return prefactor * wigner_3j * reduced_matrix_element
+        return prefactor * reduced_matrix_element
+
+    def _calc_wigner_eckart_prefactor(self, other: AngularKetBase, kappa: int, q: int) -> float:
+        assert self.m is not None and other.m is not None, "m must be set to calculate the Wigner-Eckart prefactor."  # noqa: PT018
+        return (-1) ** (self.f_tot - self.m) * calc_wigner_3j(self.f_tot, kappa, other.f_tot, -self.m, q, other.m)  # type: ignore [return-value]
 
     def _kronecker_delta_non_involved_spins(self, other: AngularKetBase, qn: AngularMomentumQuantumNumbers) -> int:
         """Calculate the Kronecker delta for non involved angular momentum quantum numbers.
