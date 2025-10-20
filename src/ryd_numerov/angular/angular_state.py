@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Generic, Self, TypeVar, get_args
 
 import numpy as np
 
-from ryd_numerov.angular.angular_ket import AngularKetBase, AngularKetFJ, AngularKetJJ, AngularKetLS
+from ryd_numerov.angular.angular_ket import (
+    AngularKetBase,
+    AngularKetFJ,
+    AngularKetJJ,
+    AngularKetLS,
+    AngularMomentumQuantumNumbers,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -149,6 +155,15 @@ class AngularState(Generic[_AngularKet]):
         """
         if isinstance(other, AngularKetBase):
             other = other.to_state()
+        if (
+            operator in get_args(AngularMomentumQuantumNumbers)
+            and operator not in self.kets[0]._spin_quantum_number_names
+        ):
+            for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
+                if operator in ket_class._spin_quantum_number_names:  # noqa: SLF001
+                    return self._to_coupling_scheme(ket_class.coupling_scheme).calc_reduced_matrix_element(
+                        other, operator, kappa
+                    )
 
         if self.coupling_scheme != other.coupling_scheme:
             other = other._to_coupling_scheme(self.coupling_scheme)  # noqa: SLF001

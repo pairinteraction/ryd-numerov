@@ -253,8 +253,12 @@ class AngularKetBase(ABC):
         """
         if operator not in get_args(OperatorType):
             raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
+
         if type(self) is not type(other):
             return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
+        if operator in get_args(AngularMomentumQuantumNumbers) and operator not in self._spin_quantum_number_names:
+            return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
+
 
         if operator == "SPHERICAL":
             if self._kronecker_delta_non_involved_spins(other, "l_r") == 0:
