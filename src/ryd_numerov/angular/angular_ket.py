@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, ClassVar, Literal, Self, TypeVar, get_args
 import numpy as np
 
 from ryd_numerov.angular.angular_matrix_element import (
+    AngularMomentumQuantumNumbers,
+    AngularOperatorType,
     calc_prefactor_of_operator_in_coupled_scheme,
     calc_reduced_identity_matrix_element,
     calc_reduced_spherical_matrix_element,
@@ -14,7 +16,6 @@ from ryd_numerov.angular.angular_matrix_element import (
 )
 from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
 from ryd_numerov.elements import BaseElement
-from ryd_numerov.units import AngularMomentumQuantumNumbers, OperatorType
 
 if TYPE_CHECKING:
     from ryd_numerov.angular.angular_state import AngularState
@@ -41,7 +42,9 @@ class AngularKetBase(ABC):
     spin_quantum_number_names: ClassVar[list[AngularMomentumQuantumNumbers]]
     """Names of all well defined spin quantum numbers (without the magnetic quantum number m) in this class."""
 
-    coupled_quantum_numbers: ClassVar[dict[AngularMomentumQuantumNumbers, tuple[str, str]]]
+    coupled_quantum_numbers: ClassVar[
+        dict[AngularMomentumQuantumNumbers, tuple[AngularMomentumQuantumNumbers, AngularMomentumQuantumNumbers]]
+    ]
     """Mapping of coupled quantum numbers to their constituent quantum numbers."""
 
     coupling_scheme: CouplingScheme
@@ -150,7 +153,7 @@ class AngularKetBase(ABC):
             return False
         if self.m != other.m:
             return False
-        return all(self.get_qn(k) == other.get_qn(k) for k in self.spin_quantum_numbers_dict)
+        return all(self.get_qn(q) == other.get_qn(q) for q in self.spin_quantum_numbers_dict)
 
     def __hash__(self) -> int:
         return hash(
@@ -161,7 +164,7 @@ class AngularKetBase(ABC):
         )
 
     @property
-    def spin_quantum_numbers_dict(self) -> dict[str, float | int]:
+    def spin_quantum_numbers_dict(self) -> dict[AngularMomentumQuantumNumbers, float | int]:
         """Return the spin quantum numbers (i.e. without the magnetic quantum number) as dictionary."""
         return {q: getattr(self, q) for q in self.spin_quantum_number_names}
 
@@ -238,7 +241,9 @@ class AngularKetBase(ABC):
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 
-    def calc_reduced_matrix_element(self: Self, other: AngularKetBase, operator: OperatorType, kappa: int) -> float:  # noqa: C901
+    def calc_reduced_matrix_element(  # noqa: C901
+        self: Self, other: AngularKetBase, operator: AngularOperatorType, kappa: int
+    ) -> float:
         r"""Calculate the reduced angular matrix element.
 
         We follow equation (7.1.7) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
@@ -248,7 +253,7 @@ class AngularKetBase(ABC):
             <self || \hat{O}^{(\kappa)} || other>
 
         """
-        if operator not in get_args(OperatorType):
+        if operator not in get_args(AngularOperatorType):
             raise NotImplementedError(f"calc_reduced_matrix_element is not implemented for operator {operator}.")
 
         if type(self) is not type(other):
@@ -263,14 +268,14 @@ class AngularKetBase(ABC):
         elif operator in self.spin_quantum_number_names:
             if not kappa == 1:
                 raise ValueError("Only kappa=1 is supported for spin operators.")
-            qn_name = operator
+            qn_name = operator  # type: ignore [assignment]
             complete_reduced_matrix_element = calc_reduced_spin_matrix_element(
-                self.get_qn(operator), other.get_qn(operator)
+                self.get_qn(qn_name), other.get_qn(qn_name)
             )
         elif operator.startswith("identity_"):
             if not kappa == 0:
                 raise ValueError("Only kappa=0 is supported for identity operator.")
-            qn_name = operator.replace("identity_", "")
+            qn_name = operator.replace("identity_", "")  # type: ignore [assignment]
             complete_reduced_matrix_element = calc_reduced_identity_matrix_element(
                 self.get_qn(qn_name), other.get_qn(qn_name)
             )
@@ -284,7 +289,7 @@ class AngularKetBase(ABC):
         prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, qn_name, kappa)
         return prefactor * complete_reduced_matrix_element
 
-    def calc_matrix_element(self, other: AngularKetBase, operator: OperatorType, kappa: int, q: int) -> float:
+    def calc_matrix_element(self, other: AngularKetBase, operator: AngularOperatorType, kappa: int, q: int) -> float:
         r"""Calculate the dimensionless angular matrix element.
 
         Use the Wigner-Eckart theorem to calculate the angular matrix element from the reduced matrix element.

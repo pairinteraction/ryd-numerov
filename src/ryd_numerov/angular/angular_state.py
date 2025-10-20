@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Generic, Self, TypeVar, get_args
+from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar, get_args
 
 import numpy as np
 
@@ -11,13 +11,13 @@ from ryd_numerov.angular.angular_ket import (
     AngularKetJJ,
     AngularKetLS,
 )
-from ryd_numerov.units import AngularMomentumQuantumNumbers
+from ryd_numerov.angular.angular_matrix_element import AngularMomentumQuantumNumbers
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from ryd_numerov.angular.angular_ket import CouplingScheme
-    from ryd_numerov.units import OperatorType
+    from ryd_numerov.angular.angular_matrix_element import AngularOperatorType
 
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ class AngularState(Generic[_AngularKet]):
         """Convert to state in FJ coupling."""
         return self._to_coupling_scheme("FJ")  # type: ignore [return-value]
 
-    def calc_exp_qn(self, q: str) -> float:
+    def calc_exp_qn(self, q: AngularMomentumQuantumNumbers) -> float:
         """Calculate the expectation value of a quantum number q.
 
         Args:
@@ -107,7 +107,7 @@ class AngularState(Generic[_AngularKet]):
 
         return np.sum(np.conjugate(self.coefficients) * self.coefficients * qs)  # type: ignore [no-any-return]
 
-    def calc_std_qn(self, q: str) -> float:
+    def calc_std_qn(self, q: AngularMomentumQuantumNumbers) -> float:
         """Calculate the standard deviation of a quantum number q.
 
         Args:
@@ -131,7 +131,7 @@ class AngularState(Generic[_AngularKet]):
             return 0
         return np.sqrt(exp_q2 - exp_q**2)  # type: ignore [no-any-return]
 
-    def calc_reduced_overlap(self, other: AngularState[AngularKetBase] | AngularKetBase) -> float:
+    def calc_reduced_overlap(self, other: AngularState[Any] | AngularKetBase) -> float:
         """Calculate the reduced (ignore any m) overlap <self||other>."""
         if isinstance(other, AngularKetBase):
             other = other.to_state()
@@ -143,7 +143,7 @@ class AngularState(Generic[_AngularKet]):
         return ov
 
     def calc_reduced_matrix_element(
-        self: Self, other: AngularState[AngularKetBase] | AngularKetBase, operator: OperatorType, kappa: int
+        self: Self, other: AngularState[Any] | AngularKetBase, operator: AngularOperatorType, kappa: int
     ) -> float:
         r"""Calculate the reduced angular matrix element.
 
