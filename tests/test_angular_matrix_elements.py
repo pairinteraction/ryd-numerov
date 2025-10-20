@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 from ryd_numerov.angular import AngularKetFJ, AngularKetJJ, AngularKetLS
-from ryd_numerov.units import OperatorType
 
 if TYPE_CHECKING:
     from ryd_numerov.angular import AngularKetBase
+    from ryd_numerov.units import OperatorType
 
 TEST_KET_PAIRS = [
     (
@@ -78,13 +78,13 @@ def test_reduced_identity(ket: AngularKetBase) -> None:
     state_jj = ket.to_jj()
     state_fj = ket.to_fj()
 
-    for op in state_ls.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+    for op in state_ls.kets[0].spin_quantum_number_names:
         assert np.isclose(reduced_identity, state_ls.calc_reduced_matrix_element(state_ls, "identity_" + op, kappa=0))
 
-    for op in state_jj.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+    for op in state_jj.kets[0].spin_quantum_number_names:
         assert np.isclose(reduced_identity, state_jj.calc_reduced_matrix_element(state_jj, "identity_" + op, kappa=0))
 
-    for op in state_fj.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+    for op in state_fj.kets[0].spin_quantum_number_names:
         assert np.isclose(reduced_identity, state_fj.calc_reduced_matrix_element(state_fj, "identity_" + op, kappa=0))
 
 

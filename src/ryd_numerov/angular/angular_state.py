@@ -96,9 +96,9 @@ class AngularState(Generic[_AngularKet]):
             q: The quantum number to calculate the expectation value for.
 
         """
-        if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+        if q not in self.kets[0].spin_quantum_number_names:
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
-                if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
+                if q in ket_class.spin_quantum_number_names:
                     return self._to_coupling_scheme(ket_class.coupling_scheme).calc_exp_qn(q)
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
@@ -114,9 +114,9 @@ class AngularState(Generic[_AngularKet]):
             q: The quantum number to calculate the standard deviation for.
 
         """
-        if q not in self.kets[0]._spin_quantum_number_names:  # noqa: SLF001
+        if q not in self.kets[0].spin_quantum_number_names:
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
-                if q in ket_class._spin_quantum_number_names:  # noqa: SLF001
+                if q in ket_class.spin_quantum_number_names:
                     return self._to_coupling_scheme(ket_class.coupling_scheme).calc_std_qn(q)
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
@@ -157,10 +157,10 @@ class AngularState(Generic[_AngularKet]):
             other = other.to_state()
         if (
             operator in get_args(AngularMomentumQuantumNumbers)
-            and operator not in self.kets[0]._spin_quantum_number_names
+            and operator not in self.kets[0].spin_quantum_number_names
         ):
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
-                if operator in ket_class._spin_quantum_number_names:  # noqa: SLF001
+                if operator in ket_class.spin_quantum_number_names:
                     return self._to_coupling_scheme(ket_class.coupling_scheme).calc_reduced_matrix_element(
                         other, operator, kappa
                     )
