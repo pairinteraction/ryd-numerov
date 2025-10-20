@@ -274,12 +274,14 @@ class AngularKetBase(ABC):
         r"""Calculate the dimensionless angular matrix element.
 
         Use the Wigner-Eckart theorem to calculate the angular matrix element from the reduced matrix element.
+        We stick to the convention from Edmonds 1985 "Angular Momentum in Quantum Mechanics", see equation (5.4.1).
         This means, calculate the following matrix element:
 
         .. math::
             <self| \hat{O}^{(\kappa)}_q |other>
             = <\alpha',f_{tot}',m'| \hat{O}^{(\kappa)}_q |\alpha,f_{tot},m>
-            = ... \cdot <\alpha',f_{tot}' || \hat{O}^{(\kappa)} || \alpha,f_{tot}>
+            = (-1)^{(f_{tot} - m)} \cdot \mathrm{Wigner3j}(f_{tot}', \kappa, f_{tot}, -m', q, m)
+                \cdot <\alpha',f_{tot}' || \hat{O}^{(\kappa)} || \alpha,f_{tot}>
 
         where alpha denotes all other quantum numbers
         and :math:`<\alpha',f_{tot}' || \hat{O}^{(\kappa)} || \alpha,f_{tot}>` is the reduced matrix element
@@ -299,10 +301,10 @@ class AngularKetBase(ABC):
         if self.m is None or other.m is None:
             raise ValueError("m must be set to calculate the matrix element.")
 
+        prefactor: float = (-1) ** (self.f_tot - self.m)  # type: ignore [assignment]
+        wigner_3j = calc_wigner_3j(self.f_tot, kappa, other.f_tot, -self.m, q, other.m)
         reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, kappa)
-        prefactor: float = (-1) ** (other.f_tot - other.m)  # type: ignore [assignment]
-        wigner_3j = calc_wigner_3j(other.f_tot, kappa, self.f_tot, -other.m, q, self.m)
-        return prefactor * reduced_matrix_element * wigner_3j
+        return prefactor * wigner_3j * reduced_matrix_element
 
     def _kronecker_delta_non_involved_spins(self, other: AngularKetBase, qn: AngularMomentumQuantumNumbers) -> int:
         """Calculate the Kronecker delta for non involed angular momentum quantum numbers.
