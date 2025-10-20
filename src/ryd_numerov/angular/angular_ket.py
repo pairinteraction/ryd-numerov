@@ -307,13 +307,13 @@ class AngularKetBase(ABC):
         return prefactor * wigner_3j * reduced_matrix_element
 
     def _kronecker_delta_non_involved_spins(self, other: AngularKetBase, qn: AngularMomentumQuantumNumbers) -> int:
-        """Calculate the Kronecker delta for non involed angular momentum quantum numbers.
+        """Calculate the Kronecker delta for non involved angular momentum quantum numbers.
 
         This means return 0 if any of the quantum numbers,
         that are not qn or a coupled quantum number resulting from qn differ between self and other.
         """
-        if qn not in get_args(AngularMomentumQuantumNumbers):
-            raise ValueError(f"Quantum number {qn} is not a valid angular momentum quantum number.")
+        if qn not in self._spin_quantum_number_names:
+            raise ValueError(f"Quantum number {qn} is not a valid angular momentum quantum number for {self!r}.")
 
         resulting_qns = [qn]
         while "f_tot" not in resulting_qns:
@@ -321,6 +321,10 @@ class AngularKetBase(ABC):
                 if resulting_qns[-1] in qs:
                     resulting_qns.append(key)
                     break
+            else:
+                raise ValueError(
+                    f"_kronecker_delta_non_involved_spins: {resulting_qns[-1]} not found in _coupled_quantum_numbers."
+                )
 
         for _qn in set(self._spin_quantum_number_names) - set(resulting_qns):
             if self.get_qn(_qn) != other.get_qn(_qn):
