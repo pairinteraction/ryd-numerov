@@ -132,7 +132,7 @@ class AngularState(Generic[_AngularKet]):
         return np.sqrt(exp_q2 - exp_q**2)  # type: ignore [no-any-return]
 
     def calc_reduced_overlap(self, other: AngularState[Any] | AngularKetBase) -> float:
-        """Calculate the reduced (ignore any m) overlap <self||other>."""
+        """Calculate the reduced overlap <self||other> (ignoring the magnetic quantum number m)."""
         if isinstance(other, AngularKetBase):
             other = other.to_state()
 
@@ -150,7 +150,7 @@ class AngularState(Generic[_AngularKet]):
         This means, calculate the following matrix element:
 
         .. math::
-            <self || \hat{O}^{(\kappa)} || other>
+            \left\langle self || \hat{O}^{(\kappa)} || other \right\rangle
 
         """
         if isinstance(other, AngularKetBase):

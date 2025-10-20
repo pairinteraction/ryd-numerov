@@ -198,7 +198,7 @@ class AngularKetBase(ABC):
         return create_angular_state([1], [self])
 
     def calc_reduced_overlap(self, other: AngularKetBase) -> float:
-        """Calculate the reduced (ignore any m) overlap <self||other>.
+        """Calculate the reduced overlap <self||other> (ignoring the magnetic quantum number m).
 
         If both kets are of the same type (=same coupling scheme), this is just a delta function
         of all spin quantum numbers.
@@ -250,7 +250,7 @@ class AngularKetBase(ABC):
         This means, calculate the following matrix element:
 
         .. math::
-            <self || \hat{O}^{(\kappa)} || other>
+            \left\langle self || \hat{O}^{(\kappa)} || other \right\rangle
 
         """
         if operator not in get_args(AngularOperatorType):
@@ -297,7 +297,7 @@ class AngularKetBase(ABC):
         This means, calculate the following matrix element:
 
         .. math::
-            <self| \hat{O}^{(\kappa)}_q |other>
+            \left\langle self | \hat{O}^{(\kappa)}_q | other \right\rangle
             = <\alpha',f_{tot}',m'| \hat{O}^{(\kappa)}_q |\alpha,f_{tot},m>
             = (-1)^{(f_{tot} - m)} \cdot \mathrm{Wigner3j}(f_{tot}', \kappa, f_{tot}, -m', q, m)
                 \cdot <\alpha',f_{tot}' || \hat{O}^{(\kappa)} || \alpha,f_{tot}>
