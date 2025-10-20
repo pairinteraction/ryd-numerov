@@ -71,6 +71,30 @@ def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
     return np.sqrt((2 * s_final + 1) * (s_final + 1) * s_final)  # type: ignore [no-any-return]
 
 
+def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> float:
+    r"""Calculate the reduced identity matrix element $(s_final || \id || s_initial)$.
+
+    We follow the convention from Edmonds 1985 "Angular Momentum in Quantum Mechanics"
+    (using equation (5.4.1) and (3.7.9)).
+    The reduced matrix elements of the identity operator is given by:
+
+    .. math::
+        (s_final || \id || s_initial)
+            = \sqrt{(2 * s_final + 1)} * \delta_{s_final, s_initial}
+
+    Args:
+        s_final: The spin quantum number of the final state.
+        s_initial: The spin quantum number of the initial state.
+
+    Returns:
+        The reduced matrix element :math:`(s_final || \id || s_initial)`.
+
+    """
+    if s_final != s_initial:
+        return 0
+    return np.sqrt(2 * s_final + 1)  # type: ignore [no-any-return]
+
+
 def calc_prefactor_of_operator_in_coupled_scheme(
     f1: float, f2: float, f12: float, i1: float, i2: float, i12: float, kappa: int
 ) -> float:

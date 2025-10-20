@@ -8,6 +8,7 @@ import numpy as np
 
 from ryd_numerov.angular.angular_matrix_element import (
     calc_prefactor_of_operator_in_coupled_scheme,
+    calc_reduced_identity_matrix_element,
     calc_reduced_spherical_matrix_element,
     calc_reduced_spin_matrix_element,
 )
@@ -264,6 +265,18 @@ class AngularKetBase(ABC):
             if self._kronecker_delta_non_involved_spins(other, operator) == 0:
                 return 0
             complete_reduced_matrix_element = calc_reduced_spin_matrix_element(
+                self.get_qn(operator), other.get_qn(operator)
+            )
+            prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
+            return prefactor * complete_reduced_matrix_element
+
+        if operator.startswith("identity"):
+            if not kappa == 0:
+                raise ValueError("Only kappa=0 is supported for identity operator.")
+            operator = operator.replace("identity_", "")
+            if self._kronecker_delta_non_involved_spins(other, operator) == 0:
+                return 0
+            complete_reduced_matrix_element = calc_reduced_identity_matrix_element(
                 self.get_qn(operator), other.get_qn(operator)
             )
             prefactor = self._calc_prefactor_of_operator_in_coupled_scheme(other, operator, kappa)
