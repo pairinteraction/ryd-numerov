@@ -395,7 +395,7 @@ class AngularKetLS(AngularKetBase):
         "s_tot": ("s_c", "s_r"),
         "l_tot": ("l_c", "l_r"),
         "j_tot": ("s_tot", "l_tot"),
-        "f_tot": ("j_tot", "i_c"),
+        "f_tot": ("i_c", "j_tot"),
     }
     coupling_scheme = "LS"
 
@@ -517,7 +517,7 @@ class AngularKetJJ(AngularKetBase):
         "j_c": ("s_c", "l_c"),
         "j_r": ("s_r", "l_r"),
         "j_tot": ("j_c", "j_r"),
-        "f_tot": ("j_tot", "i_c"),
+        "f_tot": ("i_c", "j_tot"),
     }
     coupling_scheme = "JJ"
 
@@ -649,7 +649,7 @@ class AngularKetFJ(AngularKetBase):
     spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "f_c", "j_r", "f_tot"]
     coupled_quantum_numbers: ClassVar = {
         "j_c": ("s_c", "l_c"),
-        "f_c": ("j_c", "i_c"),
+        "f_c": ("i_c", "j_c"),
         "j_r": ("s_r", "l_r"),
         "f_tot": ("f_c", "j_r"),
     }
