@@ -27,9 +27,9 @@ def calc_radial_matrix_element_from_w_z(
     Computes the integral
 
     .. math::
-        \int_{0}^{\infty} dz 2 z^{2 + 2\kappa} w_1(z) w_2(z)
-        = \int_{0}^{\infty} dx x^\kappa \tilde{u}_1(x) \tilde{u}_2(x)
-        = a_0^{-\kappa} \int_{0}^{\infty} dr r^2 r^\kappa R_1(r) R_2(r)
+        \int_{0}^{\infty} dz 2 z^{2 + 2 k_{radial}} w_1(z) w_2(z)
+        = \int_{0}^{\infty} dx x^k_{radial} \tilde{u}_1(x) \tilde{u}_2(x)
+        = a_0^{-k_{radial}} \int_{0}^{\infty} dr r^2 r^k_{radial} R_1(r) R_2(r)
 
     where R_1 and R_2 are the radial wavefunctions of the two states
     and w(z) = z^{-1/2} \tilde{u}(z^2) = (r/_a_0)^{1/4} \sqrt{a_0} r R(r).

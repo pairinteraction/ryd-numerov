@@ -37,7 +37,7 @@ AngularOperatorType = Literal[
 
 
 def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kappa: int) -> float:
-    r"""Calculate the reduced spherical matrix element $(l_r_final || \hat{Y}_{k} || l_r_initial)$.
+    r"""Calculate the reduced spherical matrix element (l_r_final || \hat{Y}_{k} || l_r_initial).
 
     We follow the convention of equation (5.4.5) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
 
@@ -57,7 +57,7 @@ def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kapp
         kappa: The quantum number :math:`\kappa` of the angular momentum operator.
 
     Returns:
-        The reduced matrix element :math:`(l2 || \hat{Y}_{k} || l1)`.
+        The reduced matrix element :math:`(l_r_final || \hat{Y}_{k} || l_r_initial)`.
 
     """
     prefactor = (
@@ -70,7 +70,7 @@ def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kapp
 
 
 def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
-    r"""Calculate the reduced spin matrix element $(s_final || \hat{s} || s_initial)$.
+    r"""Calculate the reduced spin matrix element (s_final || \hat{s} || s_initial).
 
     The spin operator \hat{s} must be the operator corresponding to the quantum number s_final and s_initial.
 
@@ -95,7 +95,7 @@ def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
 
 
 def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> float:
-    r"""Calculate the reduced identity matrix element $(s_final || \id || s_initial)$.
+    r"""Calculate the reduced identity matrix element (s_final || \id || s_initial).
 
     We follow the convention from Edmonds 1985 "Angular Momentum in Quantum Mechanics"
     (using equation (5.4.1) and (3.7.9)).
