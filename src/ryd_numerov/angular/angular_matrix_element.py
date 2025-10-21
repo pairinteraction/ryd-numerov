@@ -119,12 +119,19 @@ def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> fl
 
 
 def calc_prefactor_of_operator_in_coupled_scheme(
-    f1: float, f2: float, f12: float, i1: float, i2: float, i12: float, kappa: int
+    f1: float,
+    f2: float,
+    f12: float,
+    i1: float,
+    i2: float,
+    i12: float,
+    kappa: int,
+    operator_acts_on: Literal["first", "second"],
 ) -> float:
     r"""Calculate the prefactor of the reduced matrix element for an operator acting on a state in a coupled scheme.
 
-    Here we follow equation (7.1.7) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
-    This means, for f2 = i2 (i.e. the operator only acts on the first quantum number),
+    Here we follow equation (7.1.7) and (7.1.8) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
+    This means, if the operator only acts on the first quantum number (thus it must be f2 = i2),
     the reduced matrix element is given by
 
     .. math::
@@ -132,6 +139,15 @@ def calc_prefactor_of_operator_in_coupled_scheme(
         = (-1)^{f1 + i2 + i12 + \kappa} * sqrt((2 * f12 + 1)(2 * i12 + 1))
             * \mathrm{Wigner6j}(f1, f12, i2; i12, i1, \kappa) * \langle f1 || \hat{O}_{\kappa} || i1 \rangle
         = prefactor  * \langle f1 || \hat{O}_{\kappa} || i1 \rangle
+
+    and if the operator only acts on the second quantum number (thus it must be f1 = i1),
+    the reduced matrix element is given by
+
+    .. math::
+        \langle f1, f2, f12 || \hat{O}_{\kappa} || i1, i2, i12 \rangle
+        = (-1)^{i1 + i2 + f12 + \kappa} * sqrt((2 * f12 + 1)(2 * i12 + 1))
+            * \mathrm{Wigner6j}(f2, f12, i1; i12, i2, \kappa) * \langle f2 || \hat{O}_{\kappa} || i2 \rangle
+        = prefactor  * \langle f2 || \hat{O}_{\kappa} || i2 \rangle
 
     This function calculates and returns the prefactor.
 
@@ -143,12 +159,23 @@ def calc_prefactor_of_operator_in_coupled_scheme(
         i2: The quantum number of the second particle of the initial state.
         i12: The total quantum number of the initial state.
         kappa: The rank :math:`\kappa` of the operator.
+        operator_acts_on: Indicates on which particle the operator acts on (must be 'first' or 'second').
 
     """
-    if f2 != i2:
-        raise ValueError("calc_prefactor_of_operator_in_coupled_scheme is meant to be used for f2 == i2 only.")
-    return (  # type: ignore [no-any-return]
-        minus_one_pow(f1 + i2 + i12 + kappa)
-        * np.sqrt((2 * f12 + 1) * (2 * i12 + 1))
-        * calc_wigner_6j(f1, f12, i2, i12, i1, kappa)
-    )
+    if operator_acts_on == "first":
+        if f2 != i2:
+            raise ValueError("If operator_acts_on first, f2 must be equal to i2.")
+        return (  # type: ignore [no-any-return]
+            minus_one_pow(f1 + i2 + i12 + kappa)
+            * np.sqrt((2 * f12 + 1) * (2 * i12 + 1))
+            * calc_wigner_6j(f1, f12, i2, i12, i1, kappa)
+        )
+    if operator_acts_on == "second":
+        if f1 != i1:
+            raise ValueError("If operator_acts_on second, f1 must be equal to i1.")
+        return (  # type: ignore [no-any-return]
+            minus_one_pow(i1 + i2 + f12 + kappa)
+            * np.sqrt((2 * f12 + 1) * (2 * i12 + 1))
+            * calc_wigner_6j(f2, f12, i1, i12, i2, kappa)
+        )
+    raise ValueError("operator_acts_on must be 'first' or 'second' in calc_prefactor_of_operator_in_coupled_scheme.")

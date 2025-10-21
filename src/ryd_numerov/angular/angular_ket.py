@@ -371,17 +371,18 @@ class AngularKetBase(ABC):
         for key, qs in self.coupled_quantum_numbers.items():
             if qn in qs:
                 qn_combined = key
-                qn2 = qs[1] if qs[0] == qn else qs[0]
+                qn1, qn2 = qs
+                operator_acts_on = "first" if qn == qn1 else "second"
                 break
         else:  # no break
             raise ValueError(f"Quantum number {qn} not found in coupled_quantum_numbers.")
 
-        f1, f2, f_tot = (self.get_qn(qn), self.get_qn(qn2), self.get_qn(qn_combined))
-        i1, i2, i_tot = (other.get_qn(qn), other.get_qn(qn2), other.get_qn(qn_combined))
+        f1, f2, f_tot = (self.get_qn(qn1), self.get_qn(qn2), self.get_qn(qn_combined))
+        i1, i2, i_tot = (other.get_qn(qn1), other.get_qn(qn2), other.get_qn(qn_combined))
 
-        if f2 != i2:
+        if (operator_acts_on == "first" and f2 != i2) or (operator_acts_on == "second" and f1 != i1):
             return 0
-        prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa)
+        prefactor = calc_prefactor_of_operator_in_coupled_scheme(f1, f2, f_tot, i1, i2, i_tot, kappa, operator_acts_on)
         return prefactor * self._calc_prefactor_of_operator_in_coupled_scheme(other, qn_combined, kappa)
 
 
