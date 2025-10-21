@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import TYPE_CHECKING, Literal, overload
 
 import numpy as np
@@ -125,9 +126,9 @@ class RadialState:
                 element = BaseElement.from_species(self.species)
                 energy_au = element.calc_energy_from_nu(self.nu)
                 z_min = self.model.calc_turning_point_z(energy_au)
-                z_min = np.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
+                z_min = math.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
-            z_min = np.sqrt(x_min)
+            z_min = math.sqrt(x_min)
         # Since the potential diverges at z=0 we set the minimum z_min to dz
         z_min = max(z_min, dz)
 
@@ -136,7 +137,7 @@ class RadialState:
             # This is an empirical formula for the maximum value of the radial coordinate
             # it takes into account that for large n but small l the wavefunction is very extended
             x_max = 2 * n * (n + 15 + (n - self.l_r) / 4)
-        z_max = np.sqrt(x_max)
+        z_max = math.sqrt(x_max)
 
         self._grid = Grid(z_min, z_max, dz)
 

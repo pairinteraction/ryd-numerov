@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+import math
 import re
 from abc import ABC
 from fractions import Fraction
@@ -405,7 +406,7 @@ class BaseElement(ABC):
         where :math:`\mu` is the reduced mass factor and :math:`E` the energy in atomic units.
 
         """
-        nu: float = np.sqrt(0.5 * self.reduced_mass_factor / -energy_au)
+        nu = math.sqrt(0.5 * self.reduced_mass_factor / -energy_au)
         if abs(nu - round(nu)) < 1e-10:
             nu = round(nu)
         return nu

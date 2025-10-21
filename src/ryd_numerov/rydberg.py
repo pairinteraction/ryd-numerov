@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING, get_args, overload
@@ -141,7 +142,7 @@ class RydbergStateBase(ABC):
             angular_matrix_element = self.angular.calc_reduced_matrix_element(other.angular, "SPHERICAL", k_angular)
             matrix_element = (
                 ureg.Quantity(1, "e")
-                * np.sqrt(4 * np.pi / (2 * k_angular + 1))
+                * math.sqrt(4 * np.pi / (2 * k_angular + 1))
                 * radial_matrix_element
                 * angular_matrix_element
             )

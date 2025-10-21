@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Literal, TypeVar
 
 import numpy as np
@@ -60,13 +61,10 @@ def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kapp
         The reduced matrix element :math:`(l_r_final || \hat{Y}_{k} || l_r_initial)`.
 
     """
-    prefactor = (
-        minus_one_pow(l_r_final)
-        * np.sqrt((2 * l_r_final + 1) * (2 * l_r_initial + 1))
-        * np.sqrt((2 * kappa + 1) / (4 * np.pi))
-    )
+    prefactor: float = minus_one_pow(l_r_final)
+    prefactor *= math.sqrt((2 * l_r_final + 1) * (2 * l_r_initial + 1) * (2 * kappa + 1) / (4 * np.pi))
     wigner_3j = calc_wigner_3j(l_r_final, kappa, l_r_initial, 0, 0, 0)
-    return prefactor * wigner_3j  # type: ignore [no-any-return]
+    return prefactor * wigner_3j
 
 
 def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
@@ -91,7 +89,7 @@ def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
     """
     if s_final != s_initial:
         return 0
-    return np.sqrt((2 * s_final + 1) * (s_final + 1) * s_final)  # type: ignore [no-any-return]
+    return math.sqrt((2 * s_final + 1) * (s_final + 1) * s_final)
 
 
 def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> float:
@@ -115,7 +113,7 @@ def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> fl
     """
     if s_final != s_initial:
         return 0
-    return np.sqrt(2 * s_final + 1)  # type: ignore [no-any-return]
+    return math.sqrt(2 * s_final + 1)
 
 
 def calc_prefactor_of_operator_in_coupled_scheme(
@@ -165,17 +163,17 @@ def calc_prefactor_of_operator_in_coupled_scheme(
     if operator_acts_on == "first":
         if f2 != i2:
             raise ValueError("If operator_acts_on first, f2 must be equal to i2.")
-        return (  # type: ignore [no-any-return]
+        return (
             minus_one_pow(f1 + i2 + i12 + kappa)
-            * np.sqrt((2 * f12 + 1) * (2 * i12 + 1))
+            * math.sqrt((2 * f12 + 1) * (2 * i12 + 1))
             * calc_wigner_6j(f1, f12, i2, i12, i1, kappa)
         )
     if operator_acts_on == "second":
         if f1 != i1:
             raise ValueError("If operator_acts_on second, f1 must be equal to i1.")
-        return (  # type: ignore [no-any-return]
+        return (
             minus_one_pow(i1 + i2 + f12 + kappa)
-            * np.sqrt((2 * f12 + 1) * (2 * i12 + 1))
+            * math.sqrt((2 * f12 + 1) * (2 * i12 + 1))
             * calc_wigner_6j(f2, f12, i1, i12, i2, kappa)
         )
     raise ValueError("operator_acts_on must be 'first' or 'second' in calc_prefactor_of_operator_in_coupled_scheme.")

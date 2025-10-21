@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar, get_args
 
 import numpy as np
@@ -129,7 +130,7 @@ class AngularState(Generic[_AngularKet]):
 
         if abs(exp_q2 - exp_q**2) < 1e-10:
             return 0
-        return np.sqrt(exp_q2 - exp_q**2)  # type: ignore [no-any-return]
+        return math.sqrt(exp_q2 - exp_q**2)
 
     def calc_reduced_overlap(self, other: AngularState[Any] | AngularKetBase) -> float:
         """Calculate the reduced overlap <self||other> (ignoring the magnetic quantum number m)."""

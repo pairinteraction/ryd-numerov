@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Literal, Optional
 
@@ -201,7 +202,7 @@ class WavefunctionNumerov(Wavefunction):
             x_start, x_stop, dx = grid.z_min, grid.z_max, grid.dz
             g_list_directed = glist
             n = self.radial_state.n if self.radial_state.n is not None else self.radial_state.nu
-            x_min = np.sqrt(n * (n + 15))
+            x_min = math.sqrt(n * (n + 15))
 
         if _use_njit:
             w_list_list = run_numerov_integration(x_start, x_stop, dx, y0, y1, g_list_directed, x_min)
@@ -217,7 +218,7 @@ class WavefunctionNumerov(Wavefunction):
             grid.set_grid_range(step_stop=len(w_list))
 
         # normalize the wavefunction, see docstring
-        norm = np.sqrt(2 * np.sum(w_list * w_list * grid.z_list * grid.z_list) * grid.dz)
+        norm = math.sqrt(2 * np.sum(w_list * w_list * grid.z_list * grid.z_list) * grid.dz)
         w_list /= norm
 
         self._w_list = w_list
@@ -252,7 +253,7 @@ class WavefunctionNumerov(Wavefunction):
             first_ind = np.argwhere(w_list_abs < outer_max)[0][0]
             self._w_list = self._w_list[first_ind:]  # type: ignore [index]
             grid.set_grid_range(step_start=first_ind)
-            norm = np.sqrt(2 * np.sum(self.w_list * self.w_list * grid.z_list * grid.z_list) * grid.dz)
+            norm = math.sqrt(2 * np.sum(self.w_list * self.w_list * grid.z_list * grid.z_list) * grid.dz)
             self._w_list /= norm
 
         # Check the maximum of the wavefunction

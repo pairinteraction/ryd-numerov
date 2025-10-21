@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import math
 from functools import lru_cache, wraps
 from typing import TYPE_CHECKING, Callable, TypeVar
 
-import numpy as np
 from sympy import Integer
 from sympy.physics.wigner import (
     wigner_3j as sympy_wigner_3j,
@@ -160,7 +160,7 @@ def clebsch_gordan_6j(j1: float, j2: float, j3: float, j12: float, j23: float, j
         The Clebsch-Gordan coefficient <((j1,j2)j12,j3)j_tot|(j1,(j2,j3)j23)j_tot>.
 
     """
-    prefactor: float = minus_one_pow(j1 + j2 + j3 + j_tot) * np.sqrt((2 * j12 + 1) * (2 * j23 + 1))
+    prefactor = minus_one_pow(j1 + j2 + j3 + j_tot) * math.sqrt((2 * j12 + 1) * (2 * j23 + 1))
     wigner_6j = calc_wigner_6j(j1, j2, j12, j3, j_tot, j23)
     return prefactor * wigner_6j
 
@@ -190,7 +190,7 @@ def clebsch_gordan_9j(
         The Clebsch-Gordan coefficient <((j1,j2)j12,(j3,j4)j34))j_tot|((j1,j3)j13,(j2,j4)j24))j_tot>.
 
     """
-    prefactor: float = np.sqrt((2 * j12 + 1) * (2 * j34 + 1) * (2 * j13 + 1) * (2 * j24 + 1))
+    prefactor = math.sqrt((2 * j12 + 1) * (2 * j34 + 1) * (2 * j13 + 1) * (2 * j24 + 1))
     return prefactor * calc_wigner_9j(j1, j2, j12, j3, j4, j34, j13, j24, j_tot)
 
 

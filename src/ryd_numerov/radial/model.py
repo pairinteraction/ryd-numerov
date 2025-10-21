@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import TYPE_CHECKING, Literal, TypeVar, get_args
 
 import numpy as np
@@ -249,7 +250,7 @@ class Model:
             z_i: The inner hydrogen turning point z_i in the scaled dimensionless coordinate z_i = sqrt{r_i / a_0}.
 
         """
-        return np.sqrt(n * n - n * np.sqrt(n * n - l * (l + 1)))  # type: ignore [no-any-return]
+        return math.sqrt(n * n - n * math.sqrt(n * n - l * (l + 1)))
 
     def calc_turning_point_z(self, energy_au: float, dz: float = 1e-3) -> float:
         r"""Calculate the classical inner turning point z_i for the given state.
@@ -273,7 +274,7 @@ class Model:
         # for a given hydrogen turning point z_hyd, the classical turning point usually lies within z_hyd \pm 5
         # for a given l, the hydrogen turning point is bound by
         # z_lower = z_hyd(n=inf, l)  = \sqrt{l * (l+1) / 2} <= z_hyd(n, l) <= z_hyd(n=l+1, l) = z_upper
-        z_lower = np.sqrt(self.l * (self.l + 1) / 2)
+        z_lower = math.sqrt(self.l * (self.l + 1) / 2)
         z_upper = self.calc_hydrogen_turning_point_z(n=self.l + 1, l=self.l)
 
         z_min_orig, z_max_orig = max(z_lower - 5, dz), z_upper + 5
