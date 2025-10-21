@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Literal, TypeVar
+from functools import lru_cache
+from typing import TYPE_CHECKING, Callable, Literal, TypeVar
 
 import numpy as np
 
@@ -12,6 +13,9 @@ if TYPE_CHECKING:
 
     P = ParamSpec("P")
     R = TypeVar("R")
+
+    def lru_cache(maxsize: int) -> Callable[[Callable[P, R]], Callable[P, R]]: ...  # type: ignore [no-redef]
+
 
 AngularMomentumQuantumNumbers = Literal[
     "i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_c", "j_r", "j_tot", "f_c", "f_tot"
@@ -37,6 +41,7 @@ AngularOperatorType = Literal[
 ]
 
 
+@lru_cache(maxsize=10_000)
 def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kappa: int) -> float:
     r"""Calculate the reduced spherical matrix element (l_r_final || \hat{Y}_{k} || l_r_initial).
 
@@ -67,6 +72,7 @@ def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kapp
     return prefactor * wigner_3j
 
 
+@lru_cache(maxsize=1_000)
 def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
     r"""Calculate the reduced spin matrix element (s_final || \hat{s} || s_initial).
 
@@ -92,6 +98,7 @@ def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
     return math.sqrt((2 * s_final + 1) * (s_final + 1) * s_final)
 
 
+@lru_cache(maxsize=1_000)
 def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> float:
     r"""Calculate the reduced identity matrix element (s_final || \id || s_initial).
 
@@ -116,6 +123,7 @@ def calc_reduced_identity_matrix_element(s_final: float, s_initial: float) -> fl
     return math.sqrt(2 * s_final + 1)
 
 
+@lru_cache(maxsize=100_000)
 def calc_prefactor_of_operator_in_coupled_scheme(
     f1: float,
     f2: float,

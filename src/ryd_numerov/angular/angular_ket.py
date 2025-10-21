@@ -350,7 +350,8 @@ class AngularKetBase(ABC):
                     f"_kronecker_delta_non_involved_spins: {last_qn} not found in coupled_quantum_numbers."
                 )
 
-        for _qn in self.spin_quantum_number_names - resulting_qns:
+        non_involved_qns = self.spin_quantum_number_names - resulting_qns
+        for _qn in non_involved_qns:
             if self.get_qn(_qn) != other.get_qn(_qn):
                 return 0
         return 1
