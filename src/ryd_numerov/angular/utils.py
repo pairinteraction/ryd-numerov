@@ -40,18 +40,28 @@ def sympify_args(func: Callable[P, R]) -> Callable[P, R]:
 
 
 def calc_wigner_3j(j1: float, j2: float, j3: float, m1: float, m2: float, m3: float) -> float:
-    if not j1 <= j2 <= j3:  # better use of caching
-        args_nd = np.array([j1, j2, j3, m1, m2, m3])
-        inds = np.argsort(args_nd[:3])
-        wigner = calc_wigner_3j(*args_nd[:3][inds], *args_nd[3:][inds])
-        if (inds[1] - inds[0]) in [1, -2]:
-            return wigner
-        return minus_one_pow(j1 + j2 + j3) * wigner
+    """Calculate the Wigner 3j symbol using symmetries and lru_cache to improve performance."""
+    symmetry_factor: float = 1
 
-    if m3 < 0 or (m3 == 0 and m2 < 0):  # better use of caching
-        return minus_one_pow(j1 + j2 + j3) * calc_wigner_3j(j1, j2, j3, -m1, -m2, -m3)
+    # even permutation -> sort smallest j to be j1
+    if j2 < j1 and j2 < j3:
+        j1, j2, j3, m1, m2, m3 = j2, j3, j1, m2, m3, m1
+    elif j3 < j1 and j3 < j2:
+        j1, j2, j3, m1, m2, m3 = j3, j1, j2, m3, m1, m2
 
-    return _calc_wigner_3j(j1, j2, j3, m1, m2, m3)
+    # odd permutation -> sort seccond smallest j to be j2
+    if j3 < j2:
+        symmetry_factor *= minus_one_pow(j1 + j2 + j3)
+        j1, j2, j3, m1, m2, m3 = j1, j3, j2, m1, m3, m2  # noqa: PLW0127
+
+    # sign of m -> make m1 positive (or m2 if m1==0)
+    if m1 <= 0 or (m1 == 0 and m2 < 0):
+        symmetry_factor *= minus_one_pow(j1 + j2 + j3)
+        m1, m2, m3 = -m1, -m2, -m3
+
+    # TODO Regge symmetries
+
+    return symmetry_factor * _calc_wigner_3j(j1, j2, j3, m1, m2, m3)
 
 
 @lru_cache(maxsize=10_000)
@@ -61,16 +71,21 @@ def _calc_wigner_3j(j1: float, j2: float, j3: float, m1: float, m2: float, m3: f
 
 
 def calc_wigner_6j(j1: float, j2: float, j3: float, j4: float, j5: float, j6: float) -> float:
-    if not j1 <= j4:  # better use of caching
-        return calc_wigner_6j(j4, j2, j6, j1, j5, j3)
+    """Calculate the Wigner 6j symbol using symmetries and lru_cache to improve performance."""
+    # interchange upper and lower for 2 columns -> make j1 < j4 and j2 < j5
+    if j4 < j1:
+        j1, j2, j3, j4, j5, j6 = j4, j2, j6, j1, j5, j3  # noqa: PLW0127
+    if j5 < j2:
+        j1, j2, j3, j4, j5, j6 = j1, j5, j6, j4, j2, j3  # noqa: PLW0127
 
-    if not j2 <= j5:  # better use of caching
-        return calc_wigner_6j(j1, j5, j6, j4, j2, j3)
+    # any permutation of columns -> make j1 <= j2 <= j3
+    if j2 < j1 and j2 < j3:
+        j1, j2, j3, j4, j5, j6 = j2, j1, j3, j5, j4, j6  # noqa: PLW0127
+    elif j3 < j1 and j3 < j2:
+        j1, j2, j3, j4, j5, j6 = j3, j2, j1, j6, j5, j4  # noqa: PLW0127
 
-    if not j1 <= j2 <= j3:  # better use of caching
-        args_nd = np.array([j1, j2, j3, j4, j5, j6])
-        inds = np.argsort(args_nd[:3])
-        return calc_wigner_6j(*args_nd[:3][inds], *args_nd[3:][inds])
+    if j3 < j2:
+        j1, j2, j3, j4, j5, j6 = j1, j3, j2, j4, j6, j5  # noqa: PLW0127
 
     return _calc_wigner_6j(j1, j2, j3, j4, j5, j6)
 
@@ -81,9 +96,44 @@ def _calc_wigner_6j(j1: float, j2: float, j3: float, j4: float, j5: float, j6: f
     return float(sympy_wigner_6j(j1, j2, j3, j4, j5, j6).evalf())
 
 
+def calc_wigner_9j(
+    j1: float, j2: float, j3: float, j4: float, j5: float, j6: float, j7: float, j8: float, j9: float
+) -> float:
+    """Calculate the Wigner 9j symbol using symmetries and lru_cache to improve performance."""
+    symmetry_factor: float = 1
+    js = [j1, j2, j3, j4, j5, j6, j7, j8, j9]
+
+    # even permutation of rows and columns -> make smallest j to be j1
+    min_j = min(js)
+    if min_j not in js[:3]:
+        if min_j in js[3:6]:
+            js = [*js[3:6], *js[6:9], *js[0:3]]
+        elif min_j in js[6:9]:
+            js = [*js[6:9], *js[0:3], *js[3:6]]
+    if js[0] != min_j:
+        if js[1] == min_j:
+            js = [js[1], js[2], js[0], js[4], js[5], js[3], js[7], js[8], js[6]]
+        elif js[2] == min_j:
+            js = [js[2], js[0], js[1], js[5], js[3], js[4], js[8], js[6], js[7]]
+
+    # odd permutations of rows and columns-> make j2 <= j3 and j4 <= j7
+    if js[2] < js[1]:
+        symmetry_factor *= minus_one_pow(sum(js))
+        js = [js[0], js[2], js[1], js[3], js[5], js[4], js[6], js[8], js[7]]
+    if js[6] < js[3]:
+        symmetry_factor *= minus_one_pow(sum(js))
+        js = [*js[0:3], *js[6:9], *js[3:6]]
+
+    # reflection about diagonal -> make j2 <= j4
+    if js[3] < js[1]:
+        js = [js[0], js[3], js[6], js[1], js[4], js[7], js[2], js[5], js[8]]
+
+    return symmetry_factor * _calc_wigner_9j(*js)
+
+
 @lru_cache(maxsize=10_000)
 @sympify_args
-def calc_wigner_9j(
+def _calc_wigner_9j(
     j1: float, j2: float, j3: float, j4: float, j5: float, j6: float, j7: float, j8: float, j9: float
 ) -> float:
     return float(sympy_wigner_9j(j1, j2, j3, j4, j5, j6, j7, j8, j9).evalf())
