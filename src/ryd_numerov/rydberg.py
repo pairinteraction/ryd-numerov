@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING, get_args, overload
 
+import numpy as np
+
 from ryd_numerov.angular import AngularKetLS
 from ryd_numerov.angular.angular_ket import _try_trivial_spin_addition
 from ryd_numerov.elements.base_element import BaseElement
@@ -135,10 +137,14 @@ class RydbergStateBase(ABC):
             # such that - mu * B (where the magnetic field B is given in dimension Tesla) is an energy
 
         elif operator in ["ELECTRIC_DIPOLE", "ELECTRIC_QUADRUPOLE", "ELECTRIC_OCTUPOLE", "ELECTRIC_QUADRUPOLE_ZERO"]:
-            # Electric multipole operator: p_{k,q} = e r^k_radial Y_{k_angular,q}(\theta, phi)
-            # # TODO factor sqrt(4pi / (2k+1))?
+            # Electric multipole operator: p_{k,q} = e r^k_radial * sqrt(4pi / (2k+1)) * Y_{k_angular,q}(\theta, phi)
             angular_matrix_element = self.angular.calc_reduced_matrix_element(other.angular, "SPHERICAL", k_angular)
-            matrix_element = ureg.Quantity(1, "e") * radial_matrix_element * angular_matrix_element
+            matrix_element = (
+                ureg.Quantity(1, "e")
+                * np.sqrt(4 * np.pi / (2 * k_angular + 1))
+                * radial_matrix_element
+                * angular_matrix_element
+            )
 
         else:
             raise NotImplementedError(f"Operator {operator} not implemented.")
