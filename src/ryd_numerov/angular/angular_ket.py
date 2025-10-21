@@ -39,7 +39,7 @@ class AngularKetBase(ABC):
     # We use __slots__ to prevent dynamic attributes and make the objects immutable after initialization
     __slots__ = ("i_c", "s_c", "l_c", "s_r", "l_r", "f_tot", "m", "_initialized")
 
-    spin_quantum_number_names: ClassVar[list[AngularMomentumQuantumNumbers]]
+    spin_quantum_number_names: ClassVar[set[AngularMomentumQuantumNumbers]]
     """Names of all well defined spin quantum numbers (without the magnetic quantum number m) in this class."""
 
     coupled_quantum_numbers: ClassVar[
@@ -205,7 +205,7 @@ class AngularKetBase(ABC):
         If the kets are of different types, the overlap is calculated using the corresponding
         Clebsch-Gordan coefficients (/ Wigner-j symbols).
         """
-        for q in set(self.spin_quantum_number_names) & set(other.spin_quantum_number_names):
+        for q in self.spin_quantum_number_names & other.spin_quantum_number_names:
             if self.get_qn(q) != other.get_qn(q):
                 return 0
 
@@ -337,18 +337,20 @@ class AngularKetBase(ABC):
         if qn not in self.spin_quantum_number_names:
             raise ValueError(f"Quantum number {qn} is not a valid angular momentum quantum number for {self!r}.")
 
-        resulting_qns = [qn]
-        while "f_tot" not in resulting_qns:
+        resulting_qns = {qn}
+        last_qn = qn
+        while last_qn != "f_tot":
             for key, qs in self.coupled_quantum_numbers.items():
-                if resulting_qns[-1] in qs:
-                    resulting_qns.append(key)
+                if last_qn in qs:
+                    resulting_qns.add(key)
+                    last_qn = key
                     break
             else:
                 raise ValueError(
-                    f"_kronecker_delta_non_involved_spins: {resulting_qns[-1]} not found in coupled_quantum_numbers."
+                    f"_kronecker_delta_non_involved_spins: {last_qn} not found in coupled_quantum_numbers."
                 )
 
-        for _qn in set(self.spin_quantum_number_names) - set(resulting_qns):
+        for _qn in self.spin_quantum_number_names - resulting_qns:
             if self.get_qn(_qn) != other.get_qn(_qn):
                 return 0
         return 1
@@ -392,7 +394,7 @@ class AngularKetLS(AngularKetBase):
     """Spin ket in LS coupling."""
 
     __slots__ = ("s_tot", "l_tot", "j_tot")
-    spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_tot", "f_tot"]
+    spin_quantum_number_names: ClassVar = {"i_c", "s_c", "l_c", "s_r", "l_r", "s_tot", "l_tot", "j_tot", "f_tot"}
     coupled_quantum_numbers: ClassVar = {
         "s_tot": ("s_c", "s_r"),
         "l_tot": ("l_c", "l_r"),
@@ -514,7 +516,7 @@ class AngularKetJJ(AngularKetBase):
     """Spin ket in JJ coupling."""
 
     __slots__ = ("j_c", "j_r", "j_tot")
-    spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "j_r", "j_tot", "f_tot"]
+    spin_quantum_number_names: ClassVar = {"i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "j_r", "j_tot", "f_tot"}
     coupled_quantum_numbers: ClassVar = {
         "j_c": ("s_c", "l_c"),
         "j_r": ("s_r", "l_r"),
@@ -648,7 +650,7 @@ class AngularKetFJ(AngularKetBase):
     """Spin ket in FJ coupling."""
 
     __slots__ = ("j_c", "f_c", "j_r")
-    spin_quantum_number_names: ClassVar = ["i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "f_c", "j_r", "f_tot"]
+    spin_quantum_number_names: ClassVar = {"i_c", "s_c", "l_c", "s_r", "l_r", "j_c", "f_c", "j_r", "f_tot"}
     coupled_quantum_numbers: ClassVar = {
         "j_c": ("s_c", "l_c"),
         "f_c": ("i_c", "j_c"),
