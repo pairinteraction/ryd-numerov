@@ -247,6 +247,63 @@ class RydbergStateAlkali(RydbergStateBase):
         return self.element.calc_nu_from_energy(energy_au)
 
 
+class RydbergStateAlkaliHyperfine(RydbergStateBase):
+    """Create an Alkali Rydberg state, including the radial and angular states."""
+
+    def __init__(
+        self,
+        species: str,
+        n: int,
+        l: int,
+        j: float | None = None,
+        f: float | None = None,
+        m: float | None = None,
+    ) -> None:
+        r"""Initialize the Rydberg state.
+
+        Args:
+            species: Atomic species.
+            n: Principal quantum number of the rydberg electron.
+            l: Orbital angular momentum quantum number of the rydberg electron.
+            j: Angular momentum quantum number of the rydberg electron.
+            f: Total angular momentum quantum number of the atom (rydberg electron + core)
+            m: Total magnetic quantum number.
+              Optional, only needed for concrete angular matrix elements.
+
+        """
+        element = BaseElement.from_species(species)
+
+        self.species = species
+        self.n = n
+        self.l = l
+        self.j = _try_trivial_spin_addition(l, 0.5, j, "j")
+        self.f = _try_trivial_spin_addition(self.j, element.i_c, f, "f")
+        self.m = m
+
+        if element.number_valence_electrons != 1:
+            raise ValueError(f"The element {species} is not an alkali atom.")
+        if not element.is_allowed_shell(n, l, s_tot=1 / 2):
+            raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
+
+    @cached_property
+    def angular(self) -> AngularKetLS:
+        """The angular/spin state of the Rydberg electron."""
+        return AngularKetLS(l_r=self.l, j_tot=self.j, m=self.m, f_tot=self.f, species=self.species)
+
+    @cached_property
+    def radial(self) -> RadialState:
+        """The radial state of the Rydberg electron."""
+        return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
+
+    def __repr__(self) -> str:
+        species, n, l, j, f, m = self.species, self.n, self.l, self.j, self.f, self.m
+        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {j=}, {f=}, {m=})"
+
+    def get_nu(self) -> float:
+        energy_au = self.element.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
+        return self.element.calc_nu_from_energy(energy_au)
+
+
 class RydbergStateAlkalineLS(RydbergStateBase):
     """Create an Alkaline Rydberg state, including the radial and angular states."""
 
