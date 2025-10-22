@@ -20,6 +20,9 @@ if TYPE_CHECKING:
     def lru_cache(maxsize: int) -> Callable[[Callable[P, R]], Callable[P, R]]: ...  # type: ignore [no-redef]
 
 
+USE_SYMMETRIES = False
+
+
 def sympify_args(func: Callable[P, R]) -> Callable[P, R]:
     """Check that quantum numbers are valid and convert to sympy.Integer (and half-integer)."""
 
@@ -204,3 +207,9 @@ def minus_one_pow(n: float) -> int:
 
 def check_triangular(j1: float, j2: float, j3: float) -> bool:
     return abs(j1 - j2) <= j3 <= j1 + j2
+
+
+if not USE_SYMMETRIES:
+    calc_wigner_3j = _calc_wigner_3j
+    calc_wigner_6j = _calc_wigner_6j
+    calc_wigner_9j = _calc_wigner_9j
