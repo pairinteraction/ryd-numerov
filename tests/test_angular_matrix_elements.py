@@ -79,13 +79,14 @@ def test_reduced_identity(ket: AngularKetBase) -> None:
     state_jj = ket.to_jj()
     state_fj = ket.to_fj()
 
-    for op in state_ls.kets[0].spin_quantum_number_names:
+    op: AngularMomentumQuantumNumbers
+    for op in state_ls.kets[0].quantum_number_names:
         assert np.isclose(reduced_identity, state_ls.calc_reduced_matrix_element(state_ls, "identity_" + op, kappa=0))  # type: ignore [arg-type]
 
-    for op in state_jj.kets[0].spin_quantum_number_names:
+    for op in state_jj.kets[0].quantum_number_names:
         assert np.isclose(reduced_identity, state_jj.calc_reduced_matrix_element(state_jj, "identity_" + op, kappa=0))  # type: ignore [arg-type]
 
-    for op in state_fj.kets[0].spin_quantum_number_names:
+    for op in state_fj.kets[0].quantum_number_names:
         assert np.isclose(reduced_identity, state_fj.calc_reduced_matrix_element(state_fj, "identity_" + op, kappa=0))  # type: ignore [arg-type]
 
 
