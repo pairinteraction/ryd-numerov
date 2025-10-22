@@ -372,13 +372,14 @@ class AngularKetBase(ABC):
             return 1
 
         for key, qs in self.coupled_quantum_numbers.items():
-            if qn in qs:
-                qn_combined = key
-                # NOTE: the order does actually matter for the sign of some matrix elements
-                # we use this to convention to stay consistent with the old pairinteraction database signs
-                qn2, qn1 = qs
-                operator_acts_on: Literal["first", "second"] = "first" if qn == qn1 else "second"
-                break
+            if qn not in qs:
+                continue
+            qn_combined = key
+            # NOTE: the order does actually matter for the sign of some matrix elements
+            # we use this to convention to stay consistent with the old pairinteraction database signs
+            qn2, qn1 = qs
+            operator_acts_on: Literal["first", "second"] = "first" if qn == qn1 else "second"
+            break
         else:  # no break
             raise ValueError(f"Quantum number {qn} not found in coupled_quantum_numbers.")
 
