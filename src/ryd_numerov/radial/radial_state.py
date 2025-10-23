@@ -205,7 +205,7 @@ class RadialState:
         *,
         integration_method: INTEGRATION_METHODS = "sum",
     ) -> PintFloat | float:
-        r"""Calculate the radial matrix element between two Rydberg states.
+        r"""Calculate the radial matrix element <self | r^k_radial | other>.
 
         Computes the integral
 
