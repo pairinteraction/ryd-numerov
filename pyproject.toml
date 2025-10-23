@@ -47,7 +47,7 @@ dependencies = [
 tests = [
   "pytest >= 8.0",
   "nbmake >= 1.3",
-  "ryd-numerov[benchmark]",
+  "ryd-numerov[comparison]",
 ]
 docs = [
   "sphinx >= 7",
@@ -60,9 +60,9 @@ docs = [
   "matplotlib >= 3.7.4",
   "myst-parser >= 3.0",
 ]
-benchmark = [
+comparison = [
   "pairinteraction < 1.0",
-  "arc-alkali-rydberg-calculator >= 3.7.0",
+  "arc-alkali-rydberg-calculator < 3.9",
 ]
 jupyter = [
   "pip",
@@ -75,7 +75,7 @@ mypy = [
 
 [dependency-groups]
 dev = [
-  "ryd-numerov[docs,tests,benchmark,jupyter,mypy]",
+  "ryd-numerov[docs,tests,comparison,jupyter,mypy]",
   "check-wheel-contents >= 0.6",
 ]
 
