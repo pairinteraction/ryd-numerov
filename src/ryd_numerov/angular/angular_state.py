@@ -28,7 +28,9 @@ _AngularKet = TypeVar("_AngularKet", bound=AngularKetBase)
 
 
 class AngularState(Generic[_AngularKet]):
-    def __init__(self, coefficients: list[float], kets: list[_AngularKet]) -> None:
+    def __init__(
+        self, coefficients: list[float], kets: list[_AngularKet], *, warn_if_not_normalized: bool = True
+    ) -> None:
         self.coefficients = np.array(coefficients)
         self.kets = kets
 
@@ -38,8 +40,8 @@ class AngularState(Generic[_AngularKet]):
             raise ValueError("All kets must be of the same type.")
         if len(set(kets)) != len(kets):
             raise ValueError("AngularState initialized with duplicate kets.")
-        if abs(self.norm - 1) > 1e-10:
-            raise ValueError(f"Coefficients must be normalized, but {coefficients=}, {kets=}.")
+        if abs(self.norm - 1) > 1e-10 and warn_if_not_normalized:
+            logger.warning("AngularState initialized with non-normalized coefficients: %s, %s", coefficients, kets)
         if self.norm > 1:
             self.coefficients /= self.norm
 
