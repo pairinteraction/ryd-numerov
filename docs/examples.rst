@@ -2,21 +2,36 @@ Examples
 ========
 
 
+RadialState
+-----------
 
-.. rubric:: Examples
-
-Here we show the usage of the API.
+Some examples demonstrating the usage of the RadialState class, which uses the Numerov method for solving the radial Schrödinger equation.
 
 .. nbgallery::
-   examples/hydrogen_wavefunction
-   examples/rubidium_wavefunction
+   examples/radial/hydrogen_wavefunction
+   examples/radial/rubidium_wavefunction
+
+AngularState
+------------
+
+Examples demonstrating the usage of the AngularState class.
+
+.. nbgallery::
+   examples/angular/angular_state
+
+RydbergState
+------------
+
+Some examples demonstrating the usage of the RydbergState class.
+
+.. nbgallery::
    examples/dipole_matrix_elements
-   examples/angular_state
 
 
-.. rubric:: Comparisons
+Comparisons
+-----------
 
-Some comparisons to pairinteraction and ARC
+Some comparisons to old versions of pairinteraction and ARC
 
 .. nbgallery::
    examples/comparisons/compare_wavefunctions.ipynb
