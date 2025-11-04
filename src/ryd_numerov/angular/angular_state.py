@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar, get_args
+from typing import TYPE_CHECKING, Any, Generic, Literal, Self, TypeVar, get_args, overload
 
 import numpy as np
 
@@ -66,12 +66,29 @@ class AngularState(Generic[_AngularKet]):
         """Return the norm of the state (should be 1)."""
         return np.linalg.norm(self.coefficients)  # type: ignore [return-value]
 
-    def _to_coupling_scheme(self, coupling_scheme: CouplingScheme) -> AngularState[AngularKetBase]:
-        """Convert to specified coupling scheme."""
+    @overload
+    def to(self, coupling_scheme: Literal["LS"]) -> AngularState[AngularKetLS]: ...
+
+    @overload
+    def to(self, coupling_scheme: Literal["JJ"]) -> AngularState[AngularKetJJ]: ...
+
+    @overload
+    def to(self, coupling_scheme: Literal["FJ"]) -> AngularState[AngularKetFJ]: ...
+
+    def to(self, coupling_scheme: CouplingScheme) -> AngularState[Any]:
+        """Convert to specified coupling scheme.
+
+        Args:
+            coupling_scheme: The coupling scheme to convert to (e.g. "LS", "JJ", "FJ").
+
+        Returns:
+            The angular state in the specified coupling scheme.
+
+        """
         kets: list[AngularKetBase] = []
         coefficients: list[float] = []
         for coeff, ket in self:
-            for scheme_coeff, scheme_ket in ket._to_coupling_scheme(coupling_scheme):  # noqa: SLF001
+            for scheme_coeff, scheme_ket in ket.to_state(coupling_scheme):
                 if scheme_ket in kets:
                     index = kets.index(scheme_ket)
                     coefficients[index] += coeff * scheme_coeff
@@ -79,18 +96,6 @@ class AngularState(Generic[_AngularKet]):
                     kets.append(scheme_ket)
                     coefficients.append(coeff * scheme_coeff)
         return AngularState(coefficients, kets)
-
-    def to_ls(self) -> AngularState[AngularKetLS]:
-        """Convert to state in LS coupling."""
-        return self._to_coupling_scheme("LS")  # type: ignore [return-value]
-
-    def to_jj(self) -> AngularState[AngularKetJJ]:
-        """Convert to state in JJ coupling."""
-        return self._to_coupling_scheme("JJ")  # type: ignore [return-value]
-
-    def to_fj(self) -> AngularState[AngularKetFJ]:
-        """Convert to state in FJ coupling."""
-        return self._to_coupling_scheme("FJ")  # type: ignore [return-value]
 
     def calc_exp_qn(self, q: AngularMomentumQuantumNumbers) -> float:
         """Calculate the expectation value of a quantum number q.
@@ -102,7 +107,7 @@ class AngularState(Generic[_AngularKet]):
         if q not in self.kets[0].quantum_number_names:
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if q in ket_class.quantum_number_names:
-                    return self._to_coupling_scheme(ket_class.coupling_scheme).calc_exp_qn(q)
+                    return self.to(ket_class.coupling_scheme).calc_exp_qn(q)
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
@@ -120,7 +125,7 @@ class AngularState(Generic[_AngularKet]):
         if q not in self.kets[0].quantum_number_names:
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if q in ket_class.quantum_number_names:
-                    return self._to_coupling_scheme(ket_class.coupling_scheme).calc_std_qn(q)
+                    return self.to(ket_class.coupling_scheme).calc_std_qn(q)
 
         qs = np.array([ket.get_qn(q) for ket in self.kets])
         if all(q_val == qs[0] for q_val in qs):
@@ -161,12 +166,10 @@ class AngularState(Generic[_AngularKet]):
         if operator in get_args(AngularMomentumQuantumNumbers) and operator not in self.kets[0].quantum_number_names:
             for ket_class in [AngularKetLS, AngularKetJJ, AngularKetFJ]:
                 if operator in ket_class.quantum_number_names:
-                    return self._to_coupling_scheme(ket_class.coupling_scheme).calc_reduced_matrix_element(
-                        other, operator, kappa
-                    )
+                    return self.to(ket_class.coupling_scheme).calc_reduced_matrix_element(other, operator, kappa)
 
         if self.coupling_scheme != other.coupling_scheme:
-            other = other._to_coupling_scheme(self.coupling_scheme)  # noqa: SLF001
+            other = other.to(self.coupling_scheme)
 
         value = 0
         for coeff1, ket1 in self:

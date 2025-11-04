@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, Literal, Self, TypeVar, get_args
-
-import numpy as np
+from abc import ABC
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, get_args, overload
 
 from ryd_numerov.angular.angular_matrix_element import (
     AngularMomentumQuantumNumbers,
@@ -19,6 +17,7 @@ from ryd_numerov.angular.utils import (
     check_spin_addition_rule,
     clebsch_gordan_6j,
     clebsch_gordan_9j,
+    get_possible_quantum_number_list,
     try_trivial_spin_addition,
 )
 from ryd_numerov.elements import BaseElement
@@ -181,28 +180,145 @@ class AngularKetBase(ABC):
             raise ValueError(f"Quantum number {qn} not found in {self!r}.")
         return getattr(self, qn)  # type: ignore [no-any-return]
 
-    def _to_coupling_scheme(self, coupling_scheme: CouplingScheme) -> AngularState[AngularKetBase]:
-        """Convert to specified coupling scheme."""
+    @overload
+    def to_state(self, coupling_scheme: Literal["LS"]) -> AngularState[AngularKetLS]: ...
+
+    @overload
+    def to_state(self, coupling_scheme: Literal["JJ"]) -> AngularState[AngularKetJJ]: ...
+
+    @overload
+    def to_state(self, coupling_scheme: Literal["FJ"]) -> AngularState[AngularKetFJ]: ...
+
+    @overload
+    def to_state(self: Self) -> AngularState[Self]: ...
+
+    def to_state(self, coupling_scheme: CouplingScheme | None = None) -> AngularState[Any]:
+        """Convert to state in the specified coupling scheme.
+
+        Args:
+            coupling_scheme: The coupling scheme to convert to (e.g. "LS", "JJ", "FJ").
+                If None, the state will be a trivial state (one component) in the current coupling scheme.
+
+        Returns:
+            The angular state in the specified coupling scheme.
+
+        """
+        from ryd_numerov.angular.angular_state import AngularState  # noqa: PLC0415
+
+        if coupling_scheme is None or coupling_scheme == self.coupling_scheme:
+            return AngularState([1], [self])
         if coupling_scheme == "LS":
-            return self.to_ls()  # type: ignore [return-value]
+            return self._to_state_ls()
         if coupling_scheme == "JJ":
-            return self.to_jj()  # type: ignore [return-value]
+            return self._to_state_jj()
         if coupling_scheme == "FJ":
-            return self.to_fj()  # type: ignore [return-value]
-        raise NotImplementedError(f"Coupling scheme {coupling_scheme} is not implemented.")
+            return self._to_state_fj()
+        raise ValueError(f"Unknown coupling scheme {coupling_scheme!r}.")
 
-    @abstractmethod
-    def to_ls(self) -> AngularState[AngularKetLS]: ...
+    def _to_state_ls(self) -> AngularState[AngularKetLS]:
+        """Convert a single ket to state in LS coupling."""
+        kets: list[AngularKetLS] = []
+        coefficients: list[float] = []
 
-    @abstractmethod
-    def to_jj(self) -> AngularState[AngularKetJJ]: ...
+        s_tot_list = get_possible_quantum_number_list(self.s_c, self.s_r, getattr(self, "s_tot", None))
+        l_tot_list = get_possible_quantum_number_list(self.l_c, self.l_r, getattr(self, "l_tot", None))
+        for s_tot in s_tot_list:
+            for l_tot in l_tot_list:
+                j_tot_list = get_possible_quantum_number_list(s_tot, l_tot, getattr(self, "j_tot", None))
+                for j_tot in j_tot_list:
+                    try:
+                        ls_ket = AngularKetLS(
+                            i_c=self.i_c,
+                            s_c=self.s_c,
+                            l_c=self.l_c,
+                            s_r=self.s_r,
+                            l_r=self.l_r,
+                            s_tot=s_tot,
+                            l_tot=int(l_tot),
+                            j_tot=j_tot,
+                            f_tot=self.f_tot,
+                            m=self.m,
+                        )
+                    except InvalidQuantumNumbersError:
+                        continue
+                    coeff = self.calc_reduced_overlap(ls_ket)
+                    if coeff != 0:
+                        kets.append(ls_ket)
+                        coefficients.append(coeff)
 
-    @abstractmethod
-    def to_fj(self) -> AngularState[AngularKetFJ]: ...
+        from ryd_numerov.angular.angular_state import AngularState  # noqa: PLC0415
 
-    def to_state(self: Self) -> AngularState[Self]:
-        """Convert the ket to a trivial AngularState with one component."""
-        return create_angular_state([1], [self])
+        return AngularState(coefficients, kets)
+
+    def _to_state_jj(self) -> AngularState[AngularKetJJ]:
+        """Convert a single ket to state in JJ coupling."""
+        kets: list[AngularKetJJ] = []
+        coefficients: list[float] = []
+
+        j_c_list = get_possible_quantum_number_list(self.s_c, self.l_c, getattr(self, "j_c", None))
+        j_r_list = get_possible_quantum_number_list(self.s_r, self.l_r, getattr(self, "j_r", None))
+        for j_c in j_c_list:
+            for j_r in j_r_list:
+                j_tot_list = get_possible_quantum_number_list(j_c, j_r, getattr(self, "j_tot", None))
+                for j_tot in j_tot_list:
+                    try:
+                        jj_ket = AngularKetJJ(
+                            i_c=self.i_c,
+                            s_c=self.s_c,
+                            l_c=self.l_c,
+                            s_r=self.s_r,
+                            l_r=self.l_r,
+                            j_c=j_c,
+                            j_r=j_r,
+                            j_tot=j_tot,
+                            f_tot=self.f_tot,
+                            m=self.m,
+                        )
+                    except InvalidQuantumNumbersError:
+                        continue
+                    coeff = self.calc_reduced_overlap(jj_ket)
+                    if coeff != 0:
+                        kets.append(jj_ket)
+                        coefficients.append(coeff)
+
+        from ryd_numerov.angular.angular_state import AngularState  # noqa: PLC0415
+
+        return AngularState(coefficients, kets)
+
+    def _to_state_fj(self) -> AngularState[AngularKetFJ]:
+        """Convert a single ket to state in FJ coupling."""
+        kets: list[AngularKetFJ] = []
+        coefficients: list[float] = []
+
+        j_c_list = get_possible_quantum_number_list(self.s_c, self.l_c, getattr(self, "j_c", None))
+        j_r_list = get_possible_quantum_number_list(self.s_r, self.l_r, getattr(self, "j_r", None))
+        for j_c in j_c_list:
+            f_c_list = get_possible_quantum_number_list(j_c, self.i_c, getattr(self, "f_c", None))
+            for f_c in f_c_list:
+                for j_r in j_r_list:
+                    try:
+                        fj_ket = AngularKetFJ(
+                            i_c=self.i_c,
+                            s_c=self.s_c,
+                            l_c=self.l_c,
+                            s_r=self.s_r,
+                            l_r=self.l_r,
+                            j_c=j_c,
+                            f_c=f_c,
+                            j_r=j_r,
+                            f_tot=self.f_tot,
+                            m=self.m,
+                        )
+                    except InvalidQuantumNumbersError:
+                        continue
+                    coeff = self.calc_reduced_overlap(fj_ket)
+                    if coeff != 0:
+                        kets.append(fj_ket)
+                        coefficients.append(coeff)
+
+        from ryd_numerov.angular.angular_state import AngularState  # noqa: PLC0415
+
+        return AngularState(coefficients, kets)
 
     def calc_reduced_overlap(self, other: AngularKetBase) -> float:
         """Calculate the reduced overlap <self||other> (ignoring the magnetic quantum number m).
@@ -242,7 +358,7 @@ class AngularKetBase(ABC):
             fj = next(s for s in kets if isinstance(s, AngularKetFJ))
             ls = next(s for s in kets if isinstance(s, AngularKetLS))
             ov: float = 0
-            for coeff, jj_ket in fj.to_jj():
+            for coeff, jj_ket in fj.to_state("JJ"):
                 ov += coeff * ls.calc_reduced_overlap(jj_ket)
             return ov
 
@@ -461,65 +577,6 @@ class AngularKetLS(AngularKetBase):
 
         super().sanity_check(msgs)
 
-    def to_ls(self) -> AngularState[AngularKetLS]:
-        """Convert to state in LS coupling.
-
-        Note, this object is already in LS coupling,
-        so this method transforms the ket to a trivial state with one component.
-        """
-        return self.to_state()
-
-    def to_jj(self) -> AngularState[AngularKetJJ]:
-        """Convert to state in JJ coupling.
-
-        Note, a state is in general a superposition of multiple kets in the same coupling scheme.
-        """
-        kets: list[AngularKetJJ] = []
-        coefficients: list[float] = []
-
-        for j_c in np.arange(abs(self.s_c - self.l_c), self.s_c + self.l_c + 1):
-            for j_r in np.arange(abs(self.s_r - self.l_r), self.s_r + self.l_r + 1):
-                try:
-                    jj_ket = AngularKetJJ(
-                        i_c=self.i_c,
-                        s_c=self.s_c,
-                        l_c=self.l_c,
-                        s_r=self.s_r,
-                        l_r=self.l_r,
-                        j_c=float(j_c),
-                        j_r=float(j_r),
-                        j_tot=self.j_tot,
-                        f_tot=self.f_tot,
-                        m=self.m,
-                    )
-                except InvalidQuantumNumbersError:
-                    continue
-                coeff = self.calc_reduced_overlap(jj_ket)
-                if coeff != 0:
-                    kets.append(jj_ket)
-                    coefficients.append(coeff)
-
-        return create_angular_state(coefficients, kets)
-
-    def to_fj(self) -> AngularState[AngularKetFJ]:
-        """Convert to state in FJ coupling.
-
-        Note, a state is in general a superposition of multiple kets in the same coupling scheme.
-        """
-        jj_state = self.to_jj()
-        kets: list[AngularKetFJ] = []
-        coefficients: list[float] = []
-        for jj_coeff, jj_ket in jj_state:
-            for fj_coeff, fj_ket in jj_ket.to_fj():
-                if fj_ket in kets:
-                    idx = kets.index(fj_ket)
-                    coefficients[idx] += jj_coeff * fj_coeff
-                else:
-                    kets.append(fj_ket)
-                    coefficients.append(jj_coeff * fj_coeff)
-
-        return create_angular_state(coefficients, kets)
-
 
 class AngularKetJJ(AngularKetBase):
     """Spin ket in JJ coupling."""
@@ -583,77 +640,6 @@ class AngularKetJJ(AngularKetBase):
 
         super().sanity_check(msgs)
 
-    def to_ls(self) -> AngularState[AngularKetLS]:
-        """Convert to state in LS coupling.
-
-        Note, a state is in general a superposition of multiple kets in the same coupling scheme.
-        """
-        kets: list[AngularKetLS] = []
-        coefficients: list[float] = []
-
-        for s_tot in np.arange(abs(self.s_c - self.s_r), self.s_c + self.s_r + 1):
-            for l_tot in np.arange(abs(self.l_c - self.l_r), self.l_c + self.l_r + 1):
-                try:
-                    ls_ket = AngularKetLS(
-                        i_c=self.i_c,
-                        s_c=self.s_c,
-                        l_c=self.l_c,
-                        s_r=self.s_r,
-                        l_r=self.l_r,
-                        s_tot=float(s_tot),
-                        l_tot=int(l_tot),
-                        j_tot=self.j_tot,
-                        f_tot=self.f_tot,
-                        m=self.m,
-                    )
-                except InvalidQuantumNumbersError:
-                    continue
-                coeff = self.calc_reduced_overlap(ls_ket)
-                if coeff != 0:
-                    kets.append(ls_ket)
-                    coefficients.append(coeff)
-
-        return create_angular_state(coefficients, kets)
-
-    def to_jj(self) -> AngularState[AngularKetJJ]:
-        """Convert to state in JJ coupling.
-
-        Note, this object is already in JJ coupling,
-        so this method transforms the ket to a trivial state with one component.
-        """
-        return self.to_state()
-
-    def to_fj(self) -> AngularState[AngularKetFJ]:
-        """Convert to state in FJ coupling.
-
-        Note, a state is in general a superposition of multiple kets in the same coupling scheme.
-        """
-        kets: list[AngularKetFJ] = []
-        coefficients: list[float] = []
-
-        for f_c in np.arange(abs(self.j_c - self.i_c), self.j_c + self.i_c + 1):
-            try:
-                fj_ket = AngularKetFJ(
-                    i_c=self.i_c,
-                    s_c=self.s_c,
-                    l_c=self.l_c,
-                    s_r=self.s_r,
-                    l_r=self.l_r,
-                    j_c=self.j_c,
-                    f_c=float(f_c),
-                    j_r=self.j_r,
-                    f_tot=self.f_tot,
-                    m=self.m,
-                )
-            except InvalidQuantumNumbersError:
-                continue
-            coeff = self.calc_reduced_overlap(fj_ket)
-            if coeff != 0:
-                kets.append(fj_ket)
-                coefficients.append(coeff)
-
-        return create_angular_state(coefficients, kets)
-
 
 class AngularKetFJ(AngularKetBase):
     """Spin ket in FJ coupling."""
@@ -716,76 +702,3 @@ class AngularKetFJ(AngularKetBase):
             msgs.append(f"{self.f_c=}, {self.j_r=}, {self.f_tot=} don't satisfy spin addition rule.")
 
         super().sanity_check(msgs)
-
-    def to_ls(self) -> AngularState[AngularKetLS]:
-        """Convert to state in LS coupling.
-
-        Note, a state is in general a superposition of multiple kets in the same coupling scheme.
-        """
-        jj_state = self.to_jj()
-        kets: list[AngularKetLS] = []
-        coefficients: list[float] = []
-        for jj_coeff, jj_ket in jj_state:
-            for ls_coeff, ls_ket in jj_ket.to_ls():
-                if ls_ket in kets:
-                    idx = kets.index(ls_ket)
-                    coefficients[idx] += jj_coeff * ls_coeff
-                else:
-                    kets.append(ls_ket)
-                    coefficients.append(jj_coeff * ls_coeff)
-        return create_angular_state(coefficients, kets)
-
-    def to_jj(self) -> AngularState[AngularKetJJ]:
-        """Convert to state in JJ coupling.
-
-        Note, a state is in general a superposition of multiple kets in the same coupling scheme.
-        """
-        kets: list[AngularKetJJ] = []
-        coefficients: list[float] = []
-
-        for j_tot in np.arange(abs(self.j_c - self.j_r), self.j_c + self.j_r + 1):
-            try:
-                jj_ket = AngularKetJJ(
-                    i_c=self.i_c,
-                    s_c=self.s_c,
-                    l_c=self.l_c,
-                    s_r=self.s_r,
-                    l_r=self.l_r,
-                    j_c=self.j_c,
-                    j_r=self.j_r,
-                    j_tot=float(j_tot),
-                    f_tot=self.f_tot,
-                    m=self.m,
-                )
-            except InvalidQuantumNumbersError:
-                continue
-            coeff = self.calc_reduced_overlap(jj_ket)
-            if coeff != 0:
-                kets.append(jj_ket)
-                coefficients.append(coeff)
-
-        return create_angular_state(coefficients, kets)
-
-    def to_fj(self) -> AngularState[AngularKetFJ]:
-        """Convert to state in FJ coupling.
-
-        Note, this object is already in FJ coupling,
-        so this method transforms the ket to a trivial state with one component.
-        """
-        return self.to_state()
-
-
-_AngularKet = TypeVar("_AngularKet", bound=AngularKetBase)
-
-
-def create_angular_state(
-    coefficients: list[float],
-    kets: list[_AngularKet],
-) -> AngularState[_AngularKet]:
-    """Create an AngularState from the given coefficients and kets.
-
-    This is just a convenience function to avoid importing AngularState directly.
-    """
-    from ryd_numerov.angular.angular_state import AngularState  # noqa: PLC0415
-
-    return AngularState(coefficients, kets)
