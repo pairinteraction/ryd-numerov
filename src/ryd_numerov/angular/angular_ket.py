@@ -14,7 +14,13 @@ from ryd_numerov.angular.angular_matrix_element import (
     calc_reduced_spherical_matrix_element,
     calc_reduced_spin_matrix_element,
 )
-from ryd_numerov.angular.utils import calc_wigner_3j, clebsch_gordan_6j, clebsch_gordan_9j
+from ryd_numerov.angular.utils import (
+    calc_wigner_3j,
+    check_spin_addition_rule,
+    clebsch_gordan_6j,
+    clebsch_gordan_9j,
+    try_trivial_spin_addition,
+)
 from ryd_numerov.elements import BaseElement
 
 if TYPE_CHECKING:
@@ -430,10 +436,10 @@ class AngularKetLS(AngularKetBase):
         """Initialize the Spin ket."""
         super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
 
-        self.s_tot = _try_trivial_spin_addition(self.s_c, self.s_r, s_tot, "s_tot")
-        self.l_tot = int(_try_trivial_spin_addition(self.l_c, self.l_r, l_tot, "l_tot"))
-        self.j_tot = _try_trivial_spin_addition(self.l_tot, self.s_tot, j_tot, "j_tot")
-        self.f_tot = _try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
+        self.s_tot = try_trivial_spin_addition(self.s_c, self.s_r, s_tot, "s_tot")
+        self.l_tot = int(try_trivial_spin_addition(self.l_c, self.l_r, l_tot, "l_tot"))
+        self.j_tot = try_trivial_spin_addition(self.l_tot, self.s_tot, j_tot, "j_tot")
+        self.f_tot = try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
 
         super()._post_init()
 
@@ -441,16 +447,16 @@ class AngularKetLS(AngularKetBase):
         """Check that the quantum numbers are valid."""
         msgs = msgs if msgs is not None else []
 
-        if not _check_spin_addition_rule(self.l_r, self.l_c, self.l_tot):
+        if not check_spin_addition_rule(self.l_r, self.l_c, self.l_tot):
             msgs.append(f"{self.l_r=}, {self.l_c=}, {self.l_tot=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.s_r, self.s_c, self.s_tot):
+        if not check_spin_addition_rule(self.s_r, self.s_c, self.s_tot):
             msgs.append(f"{self.s_r=}, {self.s_c=}, {self.s_tot=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.l_tot, self.s_tot, self.j_tot):
+        if not check_spin_addition_rule(self.l_tot, self.s_tot, self.j_tot):
             msgs.append(f"{self.l_tot=}, {self.s_tot=}, {self.j_tot=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.j_tot, self.i_c, self.f_tot):
+        if not check_spin_addition_rule(self.j_tot, self.i_c, self.f_tot):
             msgs.append(f"{self.j_tot=}, {self.i_c=}, {self.f_tot=} don't satisfy spin addition rule.")
 
         super().sanity_check(msgs)
@@ -552,10 +558,10 @@ class AngularKetJJ(AngularKetBase):
         """Initialize the Spin ket."""
         super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
 
-        self.j_c = _try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
-        self.j_r = _try_trivial_spin_addition(self.l_r, self.s_r, j_r, "j_r")
-        self.j_tot = _try_trivial_spin_addition(self.j_c, self.j_r, j_tot, "j_tot")
-        self.f_tot = _try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
+        self.j_c = try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
+        self.j_r = try_trivial_spin_addition(self.l_r, self.s_r, j_r, "j_r")
+        self.j_tot = try_trivial_spin_addition(self.j_c, self.j_r, j_tot, "j_tot")
+        self.f_tot = try_trivial_spin_addition(self.j_tot, self.i_c, f_tot, "f_tot")
 
         super()._post_init()
 
@@ -563,16 +569,16 @@ class AngularKetJJ(AngularKetBase):
         """Check that the quantum numbers are valid."""
         msgs = msgs if msgs is not None else []
 
-        if not _check_spin_addition_rule(self.l_c, self.s_c, self.j_c):
+        if not check_spin_addition_rule(self.l_c, self.s_c, self.j_c):
             msgs.append(f"{self.l_c=}, {self.s_c=}, {self.j_c=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.l_r, self.s_r, self.j_r):
+        if not check_spin_addition_rule(self.l_r, self.s_r, self.j_r):
             msgs.append(f"{self.l_r=}, {self.s_r=}, {self.j_r=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.j_c, self.j_r, self.j_tot):
+        if not check_spin_addition_rule(self.j_c, self.j_r, self.j_tot):
             msgs.append(f"{self.j_c=}, {self.j_r=}, {self.j_tot=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.j_tot, self.i_c, self.f_tot):
+        if not check_spin_addition_rule(self.j_tot, self.i_c, self.f_tot):
             msgs.append(f"{self.j_tot=}, {self.i_c=}, {self.f_tot=} don't satisfy spin addition rule.")
 
         super().sanity_check(msgs)
@@ -686,10 +692,10 @@ class AngularKetFJ(AngularKetBase):
         """Initialize the Spin ket."""
         super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
 
-        self.j_c = _try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
-        self.j_r = _try_trivial_spin_addition(self.l_r, self.s_r, j_r, "j_r")
-        self.f_c = _try_trivial_spin_addition(self.j_c, self.i_c, f_c, "f_c")
-        self.f_tot = _try_trivial_spin_addition(self.f_c, self.j_r, f_tot, "f_tot")
+        self.j_c = try_trivial_spin_addition(self.l_c, self.s_c, j_c, "j_c")
+        self.j_r = try_trivial_spin_addition(self.l_r, self.s_r, j_r, "j_r")
+        self.f_c = try_trivial_spin_addition(self.j_c, self.i_c, f_c, "f_c")
+        self.f_tot = try_trivial_spin_addition(self.f_c, self.j_r, f_tot, "f_tot")
 
         super()._post_init()
 
@@ -697,16 +703,16 @@ class AngularKetFJ(AngularKetBase):
         """Check that the quantum numbers are valid."""
         msgs = msgs if msgs is not None else []
 
-        if not _check_spin_addition_rule(self.l_c, self.s_c, self.j_c):
+        if not check_spin_addition_rule(self.l_c, self.s_c, self.j_c):
             msgs.append(f"{self.l_c=}, {self.s_c=}, {self.j_c=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.l_r, self.s_r, self.j_r):
+        if not check_spin_addition_rule(self.l_r, self.s_r, self.j_r):
             msgs.append(f"{self.l_r=}, {self.s_r=}, {self.j_r=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.j_c, self.i_c, self.f_c):
+        if not check_spin_addition_rule(self.j_c, self.i_c, self.f_c):
             msgs.append(f"{self.j_c=}, {self.i_c=}, {self.f_c=} don't satisfy spin addition rule.")
 
-        if not _check_spin_addition_rule(self.f_c, self.j_r, self.f_tot):
+        if not check_spin_addition_rule(self.f_c, self.j_r, self.f_tot):
             msgs.append(f"{self.f_c=}, {self.j_r=}, {self.f_tot=} don't satisfy spin addition rule.")
 
         super().sanity_check(msgs)
@@ -767,30 +773,6 @@ class AngularKetFJ(AngularKetBase):
         so this method transforms the ket to a trivial state with one component.
         """
         return self.to_state()
-
-
-def _try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name: str) -> float:
-    """Try to determine s_tot from s_1 and s_2 if it is not given.
-
-    If s_tot is None and cannot be uniquely determined from s_1 and s_2, raise an error.
-    Otherwise return s_tot or the trivial sum s_1 + s_2.
-    """
-    if s_tot is None:
-        if s_1 != 0 and s_2 != 0:
-            msg = f"{name} must be set if both parts ({s_1=} and {s_2=}) are non-zero."
-            raise ValueError(msg)
-        s_tot = s_1 + s_2
-    return float(s_tot)
-
-
-def _check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
-    """Check if the spin addition rule is satisfied.
-
-    This means check the following conditions:
-    - |s_1 - s_2| <= s_tot <= s_1 + s_2
-    - s_1 + s_2 + s_tot is an integer
-    """
-    return abs(s_1 - s_2) <= s_tot <= s_1 + s_2 and (s_1 + s_2 + s_tot) % 1 == 0
 
 
 _AngularKet = TypeVar("_AngularKet", bound=AngularKetBase)

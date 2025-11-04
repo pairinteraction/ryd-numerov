@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, get_args, overload
 import numpy as np
 
 from ryd_numerov.angular import AngularKetLS
-from ryd_numerov.angular.angular_ket import _try_trivial_spin_addition
+from ryd_numerov.angular.utils import try_trivial_spin_addition
 from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.radial import RadialState
 from ryd_numerov.units import BaseQuantities, MatrixElementType, ureg
@@ -219,7 +219,7 @@ class RydbergStateAlkali(RydbergStateBase):
         self.species = species
         self.n = n
         self.l = l
-        self.j = _try_trivial_spin_addition(l, 0.5, j, "j")
+        self.j = try_trivial_spin_addition(l, 0.5, j, "j")
         self.m = m
 
         element = BaseElement.from_species(species)
@@ -278,8 +278,8 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
         self.species = species
         self.n = n
         self.l = l
-        self.j = _try_trivial_spin_addition(l, 0.5, j, "j")
-        self.f = _try_trivial_spin_addition(self.j, element.i_c, f, "f")
+        self.j = try_trivial_spin_addition(l, 0.5, j, "j")
+        self.f = try_trivial_spin_addition(self.j, element.i_c, f, "f")
         self.m = m
 
         if element.number_valence_electrons != 1:
@@ -336,7 +336,7 @@ class RydbergStateAlkalineLS(RydbergStateBase):
         self.n = n
         self.l = l
         self.s_tot = s_tot
-        self.j_tot = _try_trivial_spin_addition(l, s_tot, j_tot, "j_tot")
+        self.j_tot = try_trivial_spin_addition(l, s_tot, j_tot, "j_tot")
         self.m = m
 
         element = BaseElement.from_species(species)
