@@ -62,7 +62,8 @@ def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) 
     energy_au = element.calc_energy(n, l, j_tot, unit="hartree")
     nu = element.calc_nu_from_energy(energy_au)
 
-    state = RadialState(species, n=n, nu=nu, l_r=l)
+    state = RadialState(species, nu=nu, l_r=l)
+    state.set_n_for_sanity_check(n)
     state.create_wavefunction()
 
     exp_value_numerov = {i: state.calc_matrix_element(state, i, unit=f"bohr^{i}" if i > 0 else "") for i in range(3)}

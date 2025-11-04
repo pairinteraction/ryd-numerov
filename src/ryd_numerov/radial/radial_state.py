@@ -23,15 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 class RadialState:
-    species: str
-    n: int | None
-    l_r: int
+    r"""Class representing a radial Rydberg state."""
 
     def __init__(
         self,
         species: str,
-        *,
-        n: int | None = None,
         nu: float,
         l_r: int,
     ) -> None:
@@ -41,17 +37,12 @@ class RadialState:
             species: Atomic species.
             nu: Effective principal quantum number of the rydberg electron,
                 which is used to calculate the energy of the state.
-            n: Principal quantum number of the rydberg electron.
             l_r: Orbital angular momentum quantum number of the rydberg electron.
-            energy_au: The energy of the Rydberg state in atomic units ("hartree").
-                Either `nu` or `energy_au` must be provided.
 
         """
         self.species = species
 
-        self.n = n
-        if n is not None and nu > n and abs(nu - n) < 1e-10:
-            nu = n  # avoid numerical issues
+        self.n: int | None = None
         self.nu = nu
         self.l_r = l_r
 
@@ -59,15 +50,32 @@ class RadialState:
         if not nu > 0:
             raise ValueError(f"nu must be larger than 0, but is {nu=}")
 
-        if n is not None and not (isinstance(n, (int, np.integer)) and n >= 1 and n >= nu):
-            raise ValueError(f"n must be an integer larger than 0 and larger (or equal) than nu, but is {n=}, {nu=}")
+    def set_n_for_sanity_check(self, n: int) -> None:
+        """Provide n for additional sanity checks of the radial wavefunction.
 
-        if not (isinstance(l_r, (int, np.integer)) and l_r >= 0 and (n is None or l_r <= n - 1)):
-            raise ValueError(f"l_r must be an integer, and between 0 and n - 1, but is {l_r=}, {n=}")
+        E.g. if n is provided, we can check whether the number of nodes in the wavefunction matches n - l - 1.
+
+        Args:
+            n: Principal quantum number of the rydberg electron.
+
+        """
+        self.n = n
+
+        if self.nu > n and abs(self.nu - n) < 1e-10:
+            self.nu = n  # avoid numerical issues
+
+        if n is not None and not (isinstance(n, (int, np.integer)) and n >= 1 and n >= self.nu):
+            raise ValueError(
+                f"n must be an integer larger than 0 and larger (or equal) than nu, but is {n=}, {self.nu=}"
+            )
+
+        if not (isinstance(self.l_r, (int, np.integer)) and self.l_r >= 0 and (n is None or self.l_r <= n - 1)):
+            raise ValueError(f"l_r must be an integer, and between 0 and n - 1, but is {self.l_r=}, {n=}")
 
     def __repr__(self) -> str:
-        species, nu, n, l_r = self.species, self.nu, self.n, self.l_r
-        return f"{self.__class__.__name__}({species}, {n=}, {nu=}, {l_r=})"
+        species, nu, l_r, n = self.species, self.nu, self.l_r, self.n
+        n_str = "" if n is None else f", ({n=})"
+        return f"{self.__class__.__name__}({species}, {nu=}, {l_r=}{n_str})"
 
     def __str__(self) -> str:
         return self.__repr__()

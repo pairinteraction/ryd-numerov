@@ -236,7 +236,9 @@ class RydbergStateAlkali(RydbergStateBase):
     @cached_property
     def radial(self) -> RadialState:
         """The radial state of the Rydberg electron."""
-        return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
+        radial_state = RadialState(self.species, nu=self.get_nu(), l_r=self.l)
+        radial_state.set_n_for_sanity_check(self.n)
+        return radial_state
 
     def __repr__(self) -> str:
         species, n, l, j, m = self.species, self.n, self.l, self.j, self.m
@@ -293,7 +295,9 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
     @cached_property
     def radial(self) -> RadialState:
         """The radial state of the Rydberg electron."""
-        return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
+        radial_state = RadialState(self.species, nu=self.get_nu(), l_r=self.l)
+        radial_state.set_n_for_sanity_check(self.n)
+        return radial_state
 
     def __repr__(self) -> str:
         species, n, l, j, f, m = self.species, self.n, self.l, self.j, self.f, self.m
@@ -349,7 +353,9 @@ class RydbergStateAlkalineLS(RydbergStateBase):
     @cached_property
     def radial(self) -> RadialState:
         """The radial state of the Rydberg electron."""
-        return RadialState(self.species, n=self.n, l_r=self.l, nu=self.get_nu())
+        radial_state = RadialState(self.species, nu=self.get_nu(), l_r=self.l)
+        radial_state.set_n_for_sanity_check(self.n)
+        return radial_state
 
     def __repr__(self) -> str:
         species, n, l, s_tot, j_tot, m = self.species, self.n, self.l, self.s_tot, self.j_tot, self.m
