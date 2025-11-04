@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from ryd_numerov.rydberg import RydbergStateAlkali
+from ryd_numerov.rydberg_state import RydbergStateAlkali
 from ryd_numerov.units import BaseUnits, ureg
 
 

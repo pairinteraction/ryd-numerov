@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from ryd_numerov.elements import BaseElement
 from ryd_numerov.radial import RadialState
-from ryd_numerov.rydberg import RydbergStateAlkali
+from ryd_numerov.rydberg_state import RydbergStateAlkali
 
 
 @pytest.mark.parametrize(

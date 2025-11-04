@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from ryd_numerov.rydberg import RydbergStateAlkali
+from ryd_numerov.rydberg_state import RydbergStateAlkali
 from sympy.abc import r as sympy_r
 from sympy.physics import hydrogen as sympy_hydrogen
 from sympy.utilities.lambdify import lambdify

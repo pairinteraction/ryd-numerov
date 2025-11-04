@@ -1,5 +1,5 @@
 from ryd_numerov import angular, elements, radial
-from ryd_numerov.rydberg import RydbergStateAlkali, RydbergStateAlkaliHyperfine, RydbergStateAlkalineLS
+from ryd_numerov.rydberg_state import RydbergStateAlkali, RydbergStateAlkaliHyperfine, RydbergStateAlkalineLS
 from ryd_numerov.units import ureg
 
 __all__ = [
