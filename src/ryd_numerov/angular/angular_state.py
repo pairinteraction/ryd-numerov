@@ -176,3 +176,34 @@ class AngularState(Generic[_AngularKet]):
             for coeff2, ket2 in other:
                 value += np.conjugate(coeff1) * coeff2 * ket1.calc_reduced_matrix_element(ket2, operator, kappa)
         return value
+
+    def calc_matrix_element(
+        self: Self, other: AngularState[Any] | AngularKetBase, operator: AngularOperatorType, kappa: int, q: int
+    ) -> float:
+        r"""Calculate the dimensionless angular matrix element.
+
+        This means, calculate the following matrix element:
+
+        .. math::
+            \left\langle self | \hat{O}^{(\kappa)}_q | other \right\rangle
+        """
+        if isinstance(other, AngularKetBase):
+            other = other.to_state()
+
+        states: list[AngularState[Any]] = [self, other]
+        for state in states:
+            if not all(ket.f_tot == state.kets[0].f_tot for ket in state.kets):
+                raise NotImplementedError(
+                    "Different f_tot values are not supported yet for AngularState.calc_matrix_element."
+                )
+            if not all(ket.m == state.kets[0].m for ket in state.kets):
+                raise NotImplementedError(
+                    "Different m values are not supported yet for AngularState.calc_matrix_element."
+                )
+
+        if self.kets[0].m is None or other.kets[0].m is None:
+            raise ValueError("m must be set for all kets to calculate the matrix element.")
+
+        prefactor = self.kets[0]._calc_wigner_eckart_prefactor(other.kets[0], kappa, q)  # noqa: SLF001
+        reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, kappa)
+        return prefactor * reduced_matrix_element
