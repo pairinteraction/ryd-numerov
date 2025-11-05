@@ -28,7 +28,7 @@ jobs:
         uv pip install dist/ryd_numerov*.whl
         uv run --no-project pytest
     - name: Upload wheels
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: dist
         path: dist/ryd_numerov*
@@ -49,7 +49,7 @@ jobs:
 
     steps:
     - name: Download all the dists
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         path: dist
         pattern: dist
