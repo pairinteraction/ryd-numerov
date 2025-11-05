@@ -4,7 +4,7 @@ import logging
 import math
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING, get_args, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 
@@ -13,23 +13,16 @@ from ryd_numerov.angular.utils import try_trivial_spin_addition
 from ryd_numerov.radial import RadialState
 from ryd_numerov.species.species_object import SpeciesObject
 from ryd_numerov.species.utils import calc_energy_from_nu
-from ryd_numerov.units import BaseQuantities, MatrixElementType, ureg
+from ryd_numerov.units import BaseQuantities, MatrixElementOperatorRanks, ureg
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ryd_numerov.angular.angular_ket import AngularKetBase
-    from ryd_numerov.units import PintFloat
+    from ryd_numerov.units import MatrixElementOperator, PintFloat
 
 
 logger = logging.getLogger(__name__)
-OPERATOR_TO_KS = {  # operator: (k_radial, k_angular)
-    "MAGNETIC_DIPOLE": (0, 1),
-    "ELECTRIC_DIPOLE": (1, 1),
-    "ELECTRIC_QUADRUPOLE": (2, 2),
-    "ELECTRIC_OCTUPOLE": (3, 3),
-    "ELECTRIC_QUADRUPOLE_ZERO": (2, 0),
-}
 
 
 class RydbergStateBase(ABC):
@@ -70,19 +63,21 @@ class RydbergStateBase(ABC):
         energy_au = calc_energy_from_nu(self.species.reduced_mass_au, nu)
         if unit == "a.u.":
             return energy_au
-        energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
+        energy: PintFloat = energy_au * BaseQuantities["energy"]
         if unit is None:
             return energy
         return energy.to(unit, "spectroscopy").magnitude
 
     @overload
-    def calc_reduced_matrix_element(self, other: Self, operator: MatrixElementType, unit: None = None) -> PintFloat: ...
+    def calc_reduced_matrix_element(
+        self, other: Self, operator: MatrixElementOperator, unit: None = None
+    ) -> PintFloat: ...
 
     @overload
-    def calc_reduced_matrix_element(self, other: Self, operator: MatrixElementType, unit: str) -> float: ...
+    def calc_reduced_matrix_element(self, other: Self, operator: MatrixElementOperator, unit: str) -> float: ...
 
     def calc_reduced_matrix_element(
-        self, other: Self, operator: MatrixElementType, unit: str | None = None
+        self, other: Self, operator: MatrixElementOperator, unit: str | None = None
     ) -> PintFloat | float:
         r"""Calculate the reduced matrix element.
 
@@ -105,14 +100,16 @@ class RydbergStateBase(ABC):
             The reduced matrix element for the given operator.
 
         """
-        if operator not in get_args(MatrixElementType):
-            raise ValueError(f"Operator {operator} not supported, must be one of {get_args(MatrixElementType)}")
+        if operator not in MatrixElementOperatorRanks:
+            raise ValueError(
+                f"Operator {operator} not supported, must be one of {list(MatrixElementOperatorRanks.keys())}."
+            )
 
-        k_radial, k_angular = OPERATOR_TO_KS[operator]
+        k_radial, k_angular = MatrixElementOperatorRanks[operator]
         radial_matrix_element = self.radial.calc_matrix_element(other.radial, k_radial)
 
         matrix_element: PintFloat
-        if operator == "MAGNETIC_DIPOLE":
+        if operator == "magnetic_dipole":
             # Magnetic dipole operator: mu = - mu_B (g_l <l_tot> + g_s <s_tot>)
             g_s = 2.0023192
             value_s_tot = self.angular.calc_reduced_matrix_element(other.angular, "s_tot", k_angular)
@@ -125,9 +122,9 @@ class RydbergStateBase(ABC):
             # as the same dimensionality as the Bohr magneton (mu = - mu_B (g_l l + g_s s_tot))
             # such that - mu * B (where the magnetic field B is given in dimension Tesla) is an energy
 
-        elif operator in ["ELECTRIC_DIPOLE", "ELECTRIC_QUADRUPOLE", "ELECTRIC_OCTUPOLE", "ELECTRIC_QUADRUPOLE_ZERO"]:
+        elif operator in ["electric_dipole", "electric_quadrupole", "electric_octupole", "electric_quadrupole_zero"]:
             # Electric multipole operator: p_{k,q} = e r^k_radial * sqrt(4pi / (2k+1)) * Y_{k_angular,q}(\theta, phi)
-            angular_matrix_element = self.angular.calc_reduced_matrix_element(other.angular, "SPHERICAL", k_angular)
+            angular_matrix_element = self.angular.calc_reduced_matrix_element(other.angular, "spherical", k_angular)
             matrix_element = (
                 ureg.Quantity(1, "e")
                 * math.sqrt(4 * np.pi / (2 * k_angular + 1))
@@ -145,13 +142,13 @@ class RydbergStateBase(ABC):
         return matrix_element.to(unit).magnitude
 
     @overload
-    def calc_matrix_element(self, other: Self, operator: MatrixElementType, q: int) -> PintFloat: ...
+    def calc_matrix_element(self, other: Self, operator: MatrixElementOperator, q: int) -> PintFloat: ...
 
     @overload
-    def calc_matrix_element(self, other: Self, operator: MatrixElementType, q: int, unit: str) -> float: ...
+    def calc_matrix_element(self, other: Self, operator: MatrixElementOperator, q: int, unit: str) -> float: ...
 
     def calc_matrix_element(
-        self, other: Self, operator: MatrixElementType, q: int, unit: str | None = None
+        self, other: Self, operator: MatrixElementOperator, q: int, unit: str | None = None
     ) -> PintFloat | float:
         r"""Calculate the matrix element.
 
@@ -176,7 +173,7 @@ class RydbergStateBase(ABC):
             The matrix element for the given operator.
 
         """
-        _k_radial, k_angular = OPERATOR_TO_KS[operator]
+        _k_radial, k_angular = MatrixElementOperatorRanks[operator]
         prefactor = self.angular._calc_wigner_eckart_prefactor(other.angular, k_angular, q)  # noqa: SLF001
         reduced_matrix_element = self.calc_reduced_matrix_element(other, operator, unit)
         return prefactor * reduced_matrix_element

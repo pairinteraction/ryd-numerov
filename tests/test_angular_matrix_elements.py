@@ -79,10 +79,10 @@ def test_reduced_identity(ket: AngularKetBase) -> None:
 @pytest.mark.parametrize(("ket1", "ket2"), TEST_KET_PAIRS)
 def test_matrix_elements_in_different_coupling_schemes(ket1: AngularKetBase, ket2: AngularKetBase) -> None:
     example_list: list[tuple[AngularOperatorType, int]] = [
-        ("SPHERICAL", 0),
-        ("SPHERICAL", 1),
-        ("SPHERICAL", 2),
-        ("SPHERICAL", 3),
+        ("spherical", 0),
+        ("spherical", 1),
+        ("spherical", 2),
+        ("spherical", 3),
         ("s_tot", 1),
         ("l_r", 1),
         ("i_c", 1),
