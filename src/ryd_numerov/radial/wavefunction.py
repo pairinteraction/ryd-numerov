@@ -10,7 +10,7 @@ from mpmath import whitw
 from scipy.special import gamma
 
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
-from ryd_numerov.species.base_element import BaseElement
+from ryd_numerov.species.species_object import BaseElement
 
 if TYPE_CHECKING:
     from ryd_numerov.radial import Grid, Model

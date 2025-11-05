@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.species.base_element import BaseElement
+from ryd_numerov.species.species_object import BaseElement
 
 
 class _RubidiumAbstract(BaseElement):
