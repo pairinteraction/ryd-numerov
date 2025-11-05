@@ -213,7 +213,7 @@ class RydbergStateAlkali(RydbergStateBase):
 
         if species.number_valence_electrons != 1:
             raise ValueError(f"The species {species.name} is not an alkali atom.")
-        if not species.is_allowed_shell(n, l, s_tot=1 / 2):
+        if not species.is_allowed_shell(n, l):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
@@ -272,7 +272,7 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
 
         if species.number_valence_electrons != 1:
             raise ValueError(f"The species {species.name} is not an alkali atom.")
-        if not species.is_allowed_shell(n, l, s_tot=1 / 2):
+        if not species.is_allowed_shell(n, l):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
