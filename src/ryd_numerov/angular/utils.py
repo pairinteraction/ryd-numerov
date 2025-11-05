@@ -245,8 +245,8 @@ def check_spin_addition_rule(s_1: float, s_2: float, s_tot: float) -> bool:
     return abs(s_1 - s_2) <= s_tot <= s_1 + s_2 and (s_1 + s_2 + s_tot) % 1 == 0
 
 
-def get_possible_quantum_number_list(s_1: float, s_2: float, s_tot: float | None) -> list[float]:
-    """Determine a list of possible s_tot from s_1 and s_2 if s_tot is not given, else return [s_tot]."""
+def get_possible_quantum_number_values(s_1: float, s_2: float, s_tot: float | None) -> list[float]:
+    """Determine a list of possible s_tot values from s_1 and s_2 if s_tot is not given, else return [s_tot]."""
     if s_tot is not None:
         return [s_tot]
     return [float(s) for s in np.arange(abs(s_1 - s_2), s_1 + s_2 + 1, 1)]
