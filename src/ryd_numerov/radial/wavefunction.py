@@ -10,6 +10,7 @@ from mpmath import whitw
 from scipy.special import gamma
 
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
+from ryd_numerov.species.utils import calc_energy_from_nu
 
 if TYPE_CHECKING:
     from ryd_numerov.radial import Grid, Model
@@ -172,7 +173,7 @@ class WavefunctionNumerov(Wavefunction):
         grid = self.grid
 
         species = self.radial_state.species
-        energy_au = species.calc_energy_from_nu(self.radial_state.nu)
+        energy_au = calc_energy_from_nu(species.reduced_mass_factor, self.radial_state.nu)
         v_eff = self.model.calc_total_effective_potential(grid.x_list)
         glist = 8 * species.reduced_mass_factor * grid.z_list * grid.z_list * (energy_au - v_eff)
 

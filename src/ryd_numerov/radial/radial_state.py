@@ -11,6 +11,7 @@ from ryd_numerov.radial.model import Model
 from ryd_numerov.radial.radial_matrix_element import calc_radial_matrix_element_from_w_z
 from ryd_numerov.radial.wavefunction import WavefunctionNumerov, WavefunctionWhittaker
 from ryd_numerov.species import SpeciesObject
+from ryd_numerov.species.utils import calc_energy_from_nu
 from ryd_numerov.units import ureg
 
 if TYPE_CHECKING:
@@ -133,7 +134,7 @@ class RadialState:
             if self.l_r <= 10:
                 z_min = 0.0
             else:
-                energy_au = self.species.calc_energy_from_nu(self.nu)
+                energy_au = calc_energy_from_nu(self.species.reduced_mass_factor, self.nu)
                 z_min = self.model.calc_turning_point_z(energy_au)
                 z_min = math.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
