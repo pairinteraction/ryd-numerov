@@ -18,6 +18,7 @@ from ryd_numerov.angular.utils import (
     clebsch_gordan_6j,
     clebsch_gordan_9j,
     get_possible_quantum_number_list,
+    minus_one_pow,
     try_trivial_spin_addition,
 )
 from ryd_numerov.elements import BaseElement
@@ -449,7 +450,7 @@ class AngularKetBase(ABC):
 
     def _calc_wigner_eckart_prefactor(self, other: AngularKetBase, kappa: int, q: int) -> float:
         assert self.m is not None and other.m is not None, "m must be set to calculate the Wigner-Eckart prefactor."  # noqa: PT018
-        return (-1) ** (self.f_tot - self.m) * calc_wigner_3j(self.f_tot, kappa, other.f_tot, -self.m, q, other.m)  # type: ignore [return-value]
+        return minus_one_pow(self.f_tot - self.m) * calc_wigner_3j(self.f_tot, kappa, other.f_tot, -self.m, q, other.m)
 
     def _kronecker_delta_non_involved_spins(self, other: AngularKetBase, qn: AngularMomentumQuantumNumbers) -> int:
         """Calculate the Kronecker delta for non involved angular momentum quantum numbers.

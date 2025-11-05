@@ -76,7 +76,8 @@ def calc_reduced_spherical_matrix_element(l_r_final: int, l_r_initial: int, kapp
 def calc_reduced_spin_matrix_element(s_final: float, s_initial: float) -> float:
     r"""Calculate the reduced spin matrix element (s_final || \hat{s} || s_initial).
 
-    The spin operator \hat{s} must be the operator corresponding to the quantum number s_final and s_initial.
+    The spin operator \hat{s} can be any of the AngularMomentumQuantumNumbers,
+    but must be corresponding to the given quantum number s_final and s_initial.
 
     We follow the convention of equation (5.4.3) from Edmonds 1985 "Angular Momentum in Quantum Mechanics".
     The matrix elements of the spin operators are given by:

@@ -17,7 +17,7 @@ from ryd_numerov.units import BaseQuantities, MatrixElementType, ureg
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ryd_numerov.angular import AngularKetBase
+    from ryd_numerov.angular.angular_ket import AngularKetBase
     from ryd_numerov.units import PintFloat
 
 
