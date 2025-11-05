@@ -1,4 +1,4 @@
-from ryd_numerov import angular, elements, radial
+from ryd_numerov import angular, radial, species
 from ryd_numerov.rydberg_state import RydbergStateAlkali, RydbergStateAlkaliHyperfine, RydbergStateAlkalineLS
 from ryd_numerov.units import ureg
 
@@ -7,8 +7,8 @@ __all__ = [
     "RydbergStateAlkaliHyperfine",
     "RydbergStateAlkalineLS",
     "angular",
-    "elements",
     "radial",
+    "species",
     "ureg",
 ]
 

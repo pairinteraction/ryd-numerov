@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
 import pytest
-from ryd_numerov.elements import BaseElement
 from ryd_numerov.rydberg_state import RydbergStateAlkali, RydbergStateAlkalineLS
+from ryd_numerov.species import BaseElement
 
 if TYPE_CHECKING:
     from ryd_numerov.rydberg_state import RydbergStateBase

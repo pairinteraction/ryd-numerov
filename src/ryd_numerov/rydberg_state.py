@@ -10,8 +10,8 @@ import numpy as np
 
 from ryd_numerov.angular import AngularKetLS
 from ryd_numerov.angular.utils import try_trivial_spin_addition
-from ryd_numerov.elements.base_element import BaseElement
 from ryd_numerov.radial import RadialState
+from ryd_numerov.species.base_element import BaseElement
 from ryd_numerov.units import BaseQuantities, MatrixElementType, ureg
 
 if TYPE_CHECKING:
