@@ -36,7 +36,7 @@ def test_circular_matrix_element(species: str, n: int, dn: int, dl: int) -> None
 
 
 @pytest.mark.parametrize(
-    ("species", "n", "l", "j_tot"),
+    ("species_name", "n", "l", "j_tot"),
     [
         # for hydrogen the expectation value of r is exact for all states
         ("H", 1, 0, 0.5),
@@ -49,7 +49,7 @@ def test_circular_matrix_element(species: str, n: int, dn: int, dl: int) -> None
         ("Rb", 88, 87, 86.5),
     ],
 )
-def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) -> None:
+def test_circular_expectation_value(species_name: str, n: int, l: int, j_tot: float) -> None:
     """For circular states, the expectation value of r should be the same as for the hydrogen atom.
 
     For hydrogen the expectation values of r and r^2 are given by
@@ -58,9 +58,9 @@ def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) 
         <r>_{nl} = 1/2 (3 n^2 - l(l+1))
         <r^2>_{nl} = n^2/2 (5 n^2 - 3 l(l+1) + 1)
     """
-    element = SpeciesObject.from_name(species)
-    energy_au = element.calc_energy(n, l, j_tot, unit="hartree")
-    nu = element.calc_nu_from_energy(energy_au)
+    species = SpeciesObject.from_name(species_name)
+    energy_au = species.calc_energy(n, l, j_tot, unit="hartree")
+    nu = species.calc_nu_from_energy(energy_au)
 
     state = RadialState(species, nu=nu, l_r=l)
     state.set_n_for_sanity_check(n)

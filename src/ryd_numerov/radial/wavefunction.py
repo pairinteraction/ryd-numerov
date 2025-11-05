@@ -10,7 +10,6 @@ from mpmath import whitw
 from scipy.special import gamma
 
 from ryd_numerov.radial.numerov import _run_numerov_integration_python, run_numerov_integration
-from ryd_numerov.species.species_object import SpeciesObject
 
 if TYPE_CHECKING:
     from ryd_numerov.radial import Grid, Model
@@ -172,10 +171,10 @@ class WavefunctionNumerov(Wavefunction):
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
-        element = SpeciesObject.from_name(self.radial_state.species)
-        energy_au = element.calc_energy_from_nu(self.radial_state.nu)
+        species = self.radial_state.species
+        energy_au = species.calc_energy_from_nu(self.radial_state.nu)
         v_eff = self.model.calc_total_effective_potential(grid.x_list)
-        glist = 8 * element.reduced_mass_factor * grid.z_list * grid.z_list * (energy_au - v_eff)
+        glist = 8 * species.reduced_mass_factor * grid.z_list * grid.z_list * (energy_au - v_eff)
 
         if run_backward:
             # During the Numerov integration we define the wavefunction such that it should always stop

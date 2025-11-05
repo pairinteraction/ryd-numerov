@@ -172,6 +172,9 @@ class SpeciesObject(ABC):
         if len(self._nist_energy_levels) == 0:
             raise ValueError(f"No NIST energy levels found for species {self.name} in file {file}.")
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
+
     @classmethod
     @cache
     def from_name(cls, name: str, use_nist_data: bool = True) -> SpeciesObject:

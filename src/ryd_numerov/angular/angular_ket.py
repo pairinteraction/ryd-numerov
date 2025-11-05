@@ -86,7 +86,7 @@ class AngularKetBase(ABC):
         l_r: int | None = None,
         f_tot: float | None = None,  # noqa: ARG002
         m: float | None = None,
-        species: str | None = None,
+        species: str | SpeciesObject | None = None,
     ) -> None:
         """Initialize the Spin ket.
 
@@ -95,11 +95,12 @@ class AngularKetBase(ABC):
         Not used for calculation, only for convenience to infer the core electron spin and nuclear spin quantum numbers.
         """
         if species is not None:
-            element = SpeciesObject.from_name(species)
-            if i_c is not None and i_c != element.i_c:
-                raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
-            i_c = element.i_c
-            s_c = 0.5 * (element.number_valence_electrons - 1)
+            if isinstance(species, str):
+                species = SpeciesObject.from_name(species)
+            if i_c is not None and i_c != species.i_c:
+                raise ValueError(f"Nuclear spin i_c={i_c} does not match the species {species} with i_c={species.i_c}.")
+            i_c = species.i_c
+            s_c = 0.5 * (species.number_valence_electrons - 1)
         if i_c is None:
             raise ValueError("Nuclear spin i_c must be set or a species must be given.")
         self.i_c = float(i_c)
@@ -548,7 +549,7 @@ class AngularKetLS(AngularKetBase):
         j_tot: float | None = None,
         f_tot: float | None = None,
         m: float | None = None,
-        species: str | None = None,
+        species: str | SpeciesObject | None = None,
     ) -> None:
         """Initialize the Spin ket."""
         super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
@@ -611,7 +612,7 @@ class AngularKetJJ(AngularKetBase):
         j_tot: float | None = None,
         f_tot: float | None = None,
         m: float | None = None,
-        species: str | None = None,
+        species: str | SpeciesObject | None = None,
     ) -> None:
         """Initialize the Spin ket."""
         super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
@@ -674,7 +675,7 @@ class AngularKetFJ(AngularKetBase):
         j_r: float | None = None,
         f_tot: float | None = None,
         m: float | None = None,
-        species: str | None = None,
+        species: str | SpeciesObject | None = None,
     ) -> None:
         """Initialize the Spin ket."""
         super().__init__(i_c, s_c, l_c, s_r, l_r, f_tot, m, species)
