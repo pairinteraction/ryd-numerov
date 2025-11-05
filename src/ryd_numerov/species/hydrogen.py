@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from ryd_numerov.species.base_element import BaseElement
+from ryd_numerov.species.species_object import BaseElement
 from ryd_numerov.units import rydberg_constant
 
 
