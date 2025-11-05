@@ -216,7 +216,7 @@ class SpeciesObject(ABC):
         """
         return sorted([subclass.name for subclass in cls._get_concrete_subclasses()])
 
-    def is_allowed_shell(self, n: int, l: int, s_tot: float) -> bool:
+    def is_allowed_shell(self, n: int, l: int, s_tot: float | None = None) -> bool:
         """Check if the quantum numbers describe an allowed shell.
 
         I.e. whether the shell is above the ground state shell.
@@ -230,14 +230,17 @@ class SpeciesObject(ABC):
             True if the quantum numbers specify a shell equal to or above the ground state shell, False otherwise.
 
         """
-        assert (self.number_valence_electrons == 1 and s_tot == 1 / 2) or (
-            self.number_valence_electrons == 2 and s_tot in (0, 1)
-        ), f"Invalid spin {s_tot=} for {self.name}."
+        if s_tot is None:
+            if self.number_valence_electrons > 1:
+                raise ValueError("s_tot must be specified for species with more than one valence electron.")
+            s_tot = self.number_valence_electrons / 2
+        if (self.number_valence_electrons / 2) % 1 != s_tot % 1 or s_tot > self.number_valence_electrons / 2:
+            raise ValueError(f"Invalid spin {s_tot=} for {self.name}.")
 
-        if self.number_valence_electrons == 2 and s_tot == 1 and (n, l) == self.ground_state_shell:
-            return False  # For alkaline earth atoms, the triplet state of the ground state shell is not allowed
+        if (n, l) == self.ground_state_shell:
+            return s_tot != 1  # For alkaline earth atoms, the triplet state of the ground state shell is not allowed
         if n < 1 or l < 0 or l >= n:
-            raise ValueError(f"Invalid shell: (n={n}, l={l}). Must be n >= 1 and 0 <= l < n.")
+            raise ValueError(f"Invalid shell: (n={n}, l={l}). Must be n >= 1 and 0 <= l <= n-1.")
         if (n, l) >= self.ground_state_shell:
             return True
         return (n, l) in self._additional_allowed_shells
