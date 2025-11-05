@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal, TypeVar, get_args
 
 import numpy as np
 
-from ryd_numerov.elements import BaseElement
+from ryd_numerov.species import BaseElement
 
 if TYPE_CHECKING:
     from ryd_numerov.units import NDArray

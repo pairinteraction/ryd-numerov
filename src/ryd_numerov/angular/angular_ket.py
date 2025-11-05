@@ -21,7 +21,7 @@ from ryd_numerov.angular.utils import (
     minus_one_pow,
     try_trivial_spin_addition,
 )
-from ryd_numerov.elements import BaseElement
+from ryd_numerov.species import BaseElement
 
 if TYPE_CHECKING:
     from ryd_numerov.angular.angular_state import AngularState

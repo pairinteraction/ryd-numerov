@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.elements.base_element import BaseElement
+from ryd_numerov.species.base_element import BaseElement
 
 
 class Cesium(BaseElement):
