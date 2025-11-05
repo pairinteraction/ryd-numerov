@@ -32,23 +32,10 @@ OPERATOR_TO_KS = {  # operator: (k_radial, k_angular)
 
 
 class RydbergStateBase(ABC):
-    species: str
+    species: SpeciesObject
 
     def __str__(self) -> str:
         return self.__repr__()
-
-    @property
-    def element(self) -> SpeciesObject:
-        """The element of the Rydberg state."""
-        if not hasattr(self, "_element"):
-            self.create_element()
-        return self._element
-
-    def create_element(self, *, use_nist_data: bool = True) -> None:
-        """Create the element for the Rydberg state."""
-        if hasattr(self, "_element"):
-            raise RuntimeError("The element was already created, you should not create it again.")
-        self._element = SpeciesObject.from_name(self.species, use_nist_data=use_nist_data)
 
     @property
     @abstractmethod
@@ -79,7 +66,7 @@ class RydbergStateBase(ABC):
         where `\mu = R_M/R_\infty` is the reduced mass and `\nu` the effective principal quantum number.
         """
         nu = self.get_nu()
-        energy_au = self.element.calc_energy_from_nu(nu)
+        energy_au = self.species.calc_energy_from_nu(nu)
         if unit == "a.u.":
             return energy_au
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
@@ -199,7 +186,7 @@ class RydbergStateAlkali(RydbergStateBase):
 
     def __init__(
         self,
-        species: str,
+        species: str | SpeciesObject,
         n: int,
         l: int,
         j: float | None = None,
@@ -216,16 +203,17 @@ class RydbergStateAlkali(RydbergStateBase):
               Optional, only needed for concrete angular matrix elements.
 
         """
+        if isinstance(species, str):
+            species = SpeciesObject.from_name(species)
         self.species = species
         self.n = n
         self.l = l
         self.j = try_trivial_spin_addition(l, 0.5, j, "j")
         self.m = m
 
-        element = SpeciesObject.from_name(species)
-        if element.number_valence_electrons != 1:
-            raise ValueError(f"The element {species} is not an alkali atom.")
-        if not element.is_allowed_shell(n, l, s_tot=1 / 2):
+        if species.number_valence_electrons != 1:
+            raise ValueError(f"The species {species.name} is not an alkali atom.")
+        if not species.is_allowed_shell(n, l, s_tot=1 / 2):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
@@ -242,11 +230,11 @@ class RydbergStateAlkali(RydbergStateBase):
 
     def __repr__(self) -> str:
         species, n, l, j, m = self.species, self.n, self.l, self.j, self.m
-        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {j=}, {m=})"
+        return f"{self.__class__.__name__}({species.name}, {n=}, {l=}, {j=}, {m=})"
 
     def get_nu(self) -> float:
-        energy_au = self.element.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
-        return self.element.calc_nu_from_energy(energy_au)
+        energy_au = self.species.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
+        return self.species.calc_nu_from_energy(energy_au)
 
 
 class RydbergStateAlkaliHyperfine(RydbergStateBase):
@@ -254,7 +242,7 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
 
     def __init__(
         self,
-        species: str,
+        species: str | SpeciesObject,
         n: int,
         l: int,
         j: float | None = None,
@@ -273,18 +261,18 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
               Optional, only needed for concrete angular matrix elements.
 
         """
-        element = SpeciesObject.from_name(species)
-
+        if isinstance(species, str):
+            species = SpeciesObject.from_name(species)
         self.species = species
         self.n = n
         self.l = l
         self.j = try_trivial_spin_addition(l, 0.5, j, "j")
-        self.f = try_trivial_spin_addition(self.j, element.i_c, f, "f")
+        self.f = try_trivial_spin_addition(self.j, species.i_c, f, "f")
         self.m = m
 
-        if element.number_valence_electrons != 1:
-            raise ValueError(f"The element {species} is not an alkali atom.")
-        if not element.is_allowed_shell(n, l, s_tot=1 / 2):
+        if species.number_valence_electrons != 1:
+            raise ValueError(f"The species {species.name} is not an alkali atom.")
+        if not species.is_allowed_shell(n, l, s_tot=1 / 2):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
@@ -301,11 +289,11 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
 
     def __repr__(self) -> str:
         species, n, l, j, f, m = self.species, self.n, self.l, self.j, self.f, self.m
-        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {j=}, {f=}, {m=})"
+        return f"{self.__class__.__name__}({species.name}, {n=}, {l=}, {j=}, {f=}, {m=})"
 
     def get_nu(self) -> float:
-        energy_au = self.element.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
-        return self.element.calc_nu_from_energy(energy_au)
+        energy_au = self.species.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
+        return self.species.calc_nu_from_energy(energy_au)
 
 
 class RydbergStateAlkalineLS(RydbergStateBase):
@@ -313,7 +301,7 @@ class RydbergStateAlkalineLS(RydbergStateBase):
 
     def __init__(
         self,
-        species: str,
+        species: str | SpeciesObject,
         n: int,
         l: int,
         s_tot: float,
@@ -332,6 +320,8 @@ class RydbergStateAlkalineLS(RydbergStateBase):
               Optional, only needed for concrete angular matrix elements.
 
         """
+        if isinstance(species, str):
+            species = SpeciesObject.from_name(species)
         self.species = species
         self.n = n
         self.l = l
@@ -339,10 +329,9 @@ class RydbergStateAlkalineLS(RydbergStateBase):
         self.j_tot = try_trivial_spin_addition(l, s_tot, j_tot, "j_tot")
         self.m = m
 
-        element = SpeciesObject.from_name(species)
-        if element.number_valence_electrons != 2:
-            raise ValueError(f"The element {species} is not an alkaline atom.")
-        if not element.is_allowed_shell(n, l, s_tot=s_tot):
+        if species.number_valence_electrons != 2:
+            raise ValueError(f"The species {species.name} is not an alkaline atom.")
+        if not species.is_allowed_shell(n, l, s_tot=s_tot):
             raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
 
     @cached_property
@@ -359,8 +348,8 @@ class RydbergStateAlkalineLS(RydbergStateBase):
 
     def __repr__(self) -> str:
         species, n, l, s_tot, j_tot, m = self.species, self.n, self.l, self.s_tot, self.j_tot, self.m
-        return f"{self.__class__.__name__}({species}, {n=}, {l=}, {s_tot=}, {j_tot=}, {m=})"
+        return f"{self.__class__.__name__}({species.name}, {n=}, {l=}, {s_tot=}, {j_tot=}, {m=})"
 
     def get_nu(self) -> float:
-        energy_au = self.element.calc_energy(self.n, self.l, self.j_tot, s_tot=self.s_tot, unit="a.u.")
-        return self.element.calc_nu_from_energy(energy_au)
+        energy_au = self.species.calc_energy(self.n, self.l, self.j_tot, s_tot=self.s_tot, unit="a.u.")
+        return self.species.calc_nu_from_energy(energy_au)

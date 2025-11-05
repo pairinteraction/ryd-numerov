@@ -24,7 +24,7 @@ class Model:
 
     def __init__(
         self,
-        species: str,
+        species: str | SpeciesObject,
         l: int,
         potential_type: PotentialType | None = None,
     ) -> None:
@@ -36,11 +36,13 @@ class Model:
             potential_type: Which potential to use for the model.
 
         """
-        self.element = SpeciesObject.from_name(species)
+        if isinstance(species, str):
+            species = SpeciesObject.from_name(species)
+        self.species = species
         self.l = l
 
         if potential_type is None:
-            potential_type = self.element.potential_type_default
+            potential_type = self.species.potential_type_default
             if potential_type is None:
                 potential_type = "coulomb"
         if potential_type not in get_args(PotentialType):
@@ -91,23 +93,23 @@ class Model:
             V_{mp,marinescu}: The four parameter potential V_{mp,marinescu}(x) in atomic units.
 
         """
-        parameter_dict = self.element.model_potential_parameter_marinescu_1993
+        parameter_dict = self.species.model_potential_parameter_marinescu_1993
         if len(parameter_dict) == 0:
-            raise ValueError("No parametric model potential parameters defined for this element.")
+            raise ValueError(f"No parametric model potential parameters defined for the species {self.species}.")
         # default to parameters for the maximum l
         a1, a2, a3, a4 = parameter_dict.get(self.l, parameter_dict[max(parameter_dict.keys())])
         exp_a1 = np.exp(-a1 * x)
         exp_a2 = np.exp(-a2 * x)
-        z_nl: XType = 1 + (self.element.Z - 1) * exp_a1 - x * (a3 + a4 * x) * exp_a2
+        z_nl: XType = 1 + (self.species.Z - 1) * exp_a1 - x * (a3 + a4 * x) * exp_a2
         v_c = -z_nl / x
 
-        alpha_c = self.element.alpha_c_marinescu_1993
+        alpha_c = self.species.alpha_c_marinescu_1993
         if alpha_c == 0:
             v_p = 0
         else:
-            r_c_dict = self.element.r_c_dict_marinescu_1993
+            r_c_dict = self.species.r_c_dict_marinescu_1993
             if len(r_c_dict) == 0:
-                raise ValueError("No parametric model potential parameters defined for this element.")
+                raise ValueError(f"No parametric model potential parameters defined for the species {self.species}.")
             # default to x_c for the maximum l
             x_c = r_c_dict.get(self.l, r_c_dict[max(r_c_dict.keys())])
             x2: XType = x * x
@@ -137,10 +139,10 @@ class Model:
             V_{mp,fei}: The four parameter potential V_{mp,fei}(x) in atomic units.
 
         """
-        delta, alpha, beta, gamma = self.element.model_potential_parameter_fei_2009
+        delta, alpha, beta, gamma = self.species.model_potential_parameter_fei_2009
         with np.errstate(over="ignore"):
             denom: XType = 1 - alpha + alpha * np.exp(beta * x**delta + gamma * x ** (2.0 * delta))
-            return -1 / x - (self.element.Z - 1) / (x * denom)
+            return -1 / x - (self.species.Z - 1) / (x * denom)
 
     def calc_effective_potential_centrifugal(self, x: XType) -> XType:
         r"""Calculate the effective centrifugal potential V_l(x) in atomic units.
@@ -160,7 +162,7 @@ class Model:
 
         """
         x2 = x * x
-        return (1 / self.element.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
+        return (1 / self.species.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
 
     def calc_effective_potential_sqrt(self, x: XType) -> XType:
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
@@ -181,7 +183,7 @@ class Model:
 
         """
         x2 = x * x
-        return (1 / self.element.reduced_mass_factor) * (3 / 32) / x2
+        return (1 / self.species.reduced_mass_factor) * (3 / 32) / x2
 
     def calc_total_effective_potential(self, x: XType) -> XType:
         r"""Calculate the total effective potential V_eff(x) in atomic units.

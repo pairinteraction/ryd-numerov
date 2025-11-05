@@ -27,7 +27,7 @@ class RadialState:
 
     def __init__(
         self,
-        species: str,
+        species: str | SpeciesObject,
         nu: float,
         l_r: int,
     ) -> None:
@@ -40,6 +40,8 @@ class RadialState:
             l_r: Orbital angular momentum quantum number of the rydberg electron.
 
         """
+        if isinstance(species, str):
+            species = SpeciesObject.from_name(species)
         self.species = species
 
         self.n: int | None = None
@@ -75,7 +77,7 @@ class RadialState:
     def __repr__(self) -> str:
         species, nu, l_r, n = self.species, self.nu, self.l_r, self.n
         n_str = "" if n is None else f", ({n=})"
-        return f"{self.__class__.__name__}({species}, {nu=}, {l_r=}{n_str})"
+        return f"{self.__class__.__name__}({species.name}, {nu=}, {l_r=}{n_str})"
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -131,8 +133,7 @@ class RadialState:
             if self.l_r <= 10:
                 z_min = 0.0
             else:
-                element = SpeciesObject.from_name(self.species)
-                energy_au = element.calc_energy_from_nu(self.nu)
+                energy_au = self.species.calc_energy_from_nu(self.nu)
                 z_min = self.model.calc_turning_point_z(energy_au)
                 z_min = math.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:
