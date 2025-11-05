@@ -320,9 +320,7 @@ class BaseElement(ABC):
             \mu = \frac{R_M}{R_\infty}
 
         """
-        return (  # type: ignore [no-any-return]  # pint typing .to(unit)
-            self.get_corrected_rydberg_constant("hartree") / rydberg_constant.to("hartree").m
-        )
+        return self.get_corrected_rydberg_constant("hartree") / rydberg_constant.to("hartree").m
 
     @overload
     def calc_energy(

@@ -12,10 +12,9 @@ if TYPE_CHECKING:
     NDArray: TypeAlias = npt.NDArray[Any]
     PintFloat: TypeAlias = PlainQuantity[float]
     PintArray: TypeAlias = PlainQuantity[NDArray]
-    # type ignore because pint has no type support for complex
-    PintComplex: TypeAlias = PlainQuantity[complex]  # type: ignore [type-var]
+    PintComplex: TypeAlias = PlainQuantity[complex]
 
-ureg = UnitRegistry(system="atomic")
+ureg: UnitRegistry[float] = UnitRegistry(system="atomic")
 
 
 MatrixElementType = Literal[
