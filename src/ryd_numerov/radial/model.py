@@ -36,7 +36,7 @@ class Model:
             potential_type: Which potential to use for the model.
 
         """
-        self.element = SpeciesObject.from_species(species)
+        self.element = SpeciesObject.from_name(species)
         self.l = l
 
         if potential_type is None:

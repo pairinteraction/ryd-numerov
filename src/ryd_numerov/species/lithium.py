@@ -5,7 +5,7 @@ from ryd_numerov.species.species_object import SpeciesObject
 
 
 class Lithium(SpeciesObject):
-    species = "Li"
+    name = "Li"
     Z = 3
     number_valence_electrons = 1
     ground_state_shell = (2, 0)

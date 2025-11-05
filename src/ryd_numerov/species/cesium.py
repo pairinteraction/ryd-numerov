@@ -5,7 +5,7 @@ from ryd_numerov.species.species_object import SpeciesObject
 
 
 class Cesium(SpeciesObject):
-    species = "Cs"
+    name = "Cs"
     Z = 55
     number_valence_electrons = 1
     ground_state_shell = (6, 0)

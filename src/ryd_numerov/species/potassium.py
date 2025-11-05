@@ -5,7 +5,7 @@ from ryd_numerov.species.species_object import SpeciesObject
 
 
 class Potassium(SpeciesObject):
-    species = "K"
+    name = "K"
     Z = 19
     number_valence_electrons = 1
     ground_state_shell = (4, 0)

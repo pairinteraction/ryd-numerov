@@ -54,7 +54,7 @@ class _RubidiumAbstract(SpeciesObject):
 
 
 class Rubidium87(_RubidiumAbstract):
-    species = "Rb87"
+    name = "Rb87"
     i_c = 3 / 2
 
     _corrected_rydberg_constant = (109736.62301604665, None, "1/cm")
@@ -62,12 +62,12 @@ class Rubidium87(_RubidiumAbstract):
 
 class Rubidium(_RubidiumAbstract):
     # no hyperfine structure, use rydberg constant of Rb87
-    species = "Rb"
+    name = "Rb"
     _corrected_rydberg_constant = (109736.62301604665, None, "1/cm")
 
 
 class Rubidium85(_RubidiumAbstract):
-    species = "Rb85"
+    name = "Rb85"
     i_c = 5 / 2
 
     _corrected_rydberg_constant = (109736.605, None, "1/cm")
