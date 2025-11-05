@@ -12,6 +12,7 @@ from ryd_numerov.angular import AngularKetLS
 from ryd_numerov.angular.utils import try_trivial_spin_addition
 from ryd_numerov.radial import RadialState
 from ryd_numerov.species.species_object import SpeciesObject
+from ryd_numerov.species.utils import calc_energy_from_nu, calc_nu_from_energy
 from ryd_numerov.units import BaseQuantities, MatrixElementType, ureg
 
 if TYPE_CHECKING:
@@ -66,7 +67,7 @@ class RydbergStateBase(ABC):
         where `\mu = R_M/R_\infty` is the reduced mass and `\nu` the effective principal quantum number.
         """
         nu = self.get_nu()
-        energy_au = self.species.calc_energy_from_nu(nu)
+        energy_au = calc_energy_from_nu(self.species.reduced_mass_factor, nu)
         if unit == "a.u.":
             return energy_au
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
@@ -234,7 +235,7 @@ class RydbergStateAlkali(RydbergStateBase):
 
     def get_nu(self) -> float:
         energy_au = self.species.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
-        return self.species.calc_nu_from_energy(energy_au)
+        return calc_nu_from_energy(self.species.reduced_mass_factor, energy_au)
 
 
 class RydbergStateAlkaliHyperfine(RydbergStateBase):
@@ -293,7 +294,7 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
 
     def get_nu(self) -> float:
         energy_au = self.species.calc_energy(self.n, self.l, self.j, s_tot=1 / 2, unit="a.u.")
-        return self.species.calc_nu_from_energy(energy_au)
+        return calc_nu_from_energy(self.species.reduced_mass_factor, energy_au)
 
 
 class RydbergStateAlkalineLS(RydbergStateBase):
@@ -352,4 +353,4 @@ class RydbergStateAlkalineLS(RydbergStateBase):
 
     def get_nu(self) -> float:
         energy_au = self.species.calc_energy(self.n, self.l, self.j_tot, s_tot=self.s_tot, unit="a.u.")
-        return self.species.calc_nu_from_energy(energy_au)
+        return calc_nu_from_energy(self.species.reduced_mass_factor, energy_au)

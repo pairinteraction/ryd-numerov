@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import logging
-import math
 import re
 from abc import ABC
 from fractions import Fraction
@@ -11,6 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, overload
 
 import numpy as np
 
+from ryd_numerov.species.utils import calc_energy_from_nu, convert_electron_configuration
 from ryd_numerov.units import rydberg_constant, ureg
 
 if TYPE_CHECKING:
@@ -420,7 +420,7 @@ class SpeciesObject(ABC):
             d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
             delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
             n_star = n - delta_nlj
-            energy_au = self.calc_energy_from_nu(n_star)
+            energy_au = calc_energy_from_nu(self.reduced_mass_factor, n_star)
 
         energy: PintFloat = ureg.Quantity(energy_au, "hartree")
         if unit is None:
@@ -428,52 +428,3 @@ class SpeciesObject(ABC):
         if unit == "a.u.":
             return energy.magnitude
         return energy.to(unit, "spectroscopy").magnitude
-
-    def calc_nu_from_energy(self, energy_au: float) -> float:
-        r"""Calculate the effective principal quantum number nu from a given energy.
-
-        The effective principal quantum number is given by
-
-        .. math::
-            \nu = \sqrt{\frac{1}{2} \frac{\mu}{-E}}
-
-        where :math:`\mu` is the reduced mass factor and :math:`E` the energy in atomic units.
-
-        """
-        nu = math.sqrt(0.5 * self.reduced_mass_factor / -energy_au)
-        if abs(nu - round(nu)) < 1e-10:
-            nu = round(nu)
-        return nu
-
-    def calc_energy_from_nu(self, nu: float) -> float:
-        r"""Calculate the energy from a given effective principal quantum number nu.
-
-        The energy is given by
-
-        .. math::
-            E = -\frac{1}{2} \frac{\mu}{\nu^2}
-
-        where :math:`\mu` is the reduced mass factor and :math:`\nu` the effective principal quantum number.
-        """
-        return -0.5 * self.reduced_mass_factor / nu**2
-
-
-def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:
-    """Convert an electron configuration string to a list of tuples [(n, l, number), ...].
-
-    This means convert a string representing the outermost electrons
-    like "4f14.6s" to [(4, 2, 14), (6, 0, 1)].
-    """
-    l_str2int = {"s": 0, "p": 1, "d": 2, "f": 3, "g": 4, "h": 5, "i": 6, "k": 7, "l": 8, "m": 9}
-    parts = config.split(".")
-    converted_parts = []
-    for part in parts:
-        match = re.match(r"^(\d+)([a-z])(\d*)$", part)
-        if match is None:
-            raise ValueError(f"Invalid configuration format: {config}.")
-        n = int(match.group(1))
-        l = l_str2int[match.group(2)]
-        number = int(match.group(3)) if match.group(3) else 1
-        converted_parts.append((n, l, number))
-
-    return converted_parts
