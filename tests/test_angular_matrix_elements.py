@@ -9,6 +9,7 @@ from ryd_numerov.angular.angular_matrix_element import AngularMomentumQuantumNum
 
 if TYPE_CHECKING:
     from ryd_numerov.angular import AngularKetBase
+    from ryd_numerov.angular.angular_ket import CouplingScheme
     from ryd_numerov.angular.angular_matrix_element import AngularOperatorType
 
 TEST_KET_PAIRS = [
@@ -55,39 +56,25 @@ def test_exp_q_different_coupling_schemes(ket: AngularKetBase) -> None:
 @pytest.mark.parametrize(("ket1", "ket2"), TEST_KET_PAIRS)
 def test_overlap_different_coupling_schemes(ket1: AngularKetBase, ket2: AngularKetBase) -> None:
     ov = ket1.calc_reduced_overlap(ket2)
-    state1 = ket1.to_state()
-    state2 = ket2.to_state()
-    assert np.isclose(ov, state1.calc_reduced_overlap(ket2.to_state("LS")))
-    assert np.isclose(ov, state1.calc_reduced_overlap(ket2.to_state("JJ")))
-    assert np.isclose(ov, state1.calc_reduced_overlap(ket2.to_state("FJ")))
-    assert np.isclose(ov, ket1.to_state("LS").calc_reduced_overlap(state2))
-    assert np.isclose(ov, ket1.to_state("JJ").calc_reduced_overlap(state2))
-    assert np.isclose(ov, ket1.to_state("FJ").calc_reduced_overlap(state2))
 
-    assert np.isclose(1, ket2.to_state("LS").calc_reduced_overlap(ket2))
-    assert np.isclose(1, ket2.to_state("JJ").calc_reduced_overlap(ket2))
-    assert np.isclose(1, ket2.to_state("FJ").calc_reduced_overlap(ket2))
-    assert np.isclose(1, ket2.to_state("LS").calc_reduced_overlap(ket2))
-    assert np.isclose(1, ket2.to_state("JJ").calc_reduced_overlap(ket2))
-    assert np.isclose(1, ket2.to_state("FJ").calc_reduced_overlap(ket2))
+    coupling_schemes: list[CouplingScheme] = ["LS", "JJ", "FJ"]
+    for scheme in coupling_schemes:
+        assert np.isclose(ov, ket1.to_state().calc_reduced_overlap(ket2.to_state(scheme)))
+        assert np.isclose(ov, ket1.to_state(scheme).calc_reduced_overlap(ket2))
+        assert np.isclose(1, ket1.to_state(scheme).calc_reduced_overlap(ket1))
+        assert np.isclose(1, ket2.to_state(scheme).calc_reduced_overlap(ket2))
 
 
 @pytest.mark.parametrize("ket", TEST_KETS)
 def test_reduced_identity(ket: AngularKetBase) -> None:
     reduced_identity = np.sqrt(2 * ket.f_tot + 1)
-    state_ls = ket.to_state("LS")
-    state_jj = ket.to_state("JJ")
-    state_fj = ket.to_state("FJ")
 
     op: AngularMomentumQuantumNumbers
-    for op in state_ls.kets[0].quantum_number_names:
-        assert np.isclose(reduced_identity, state_ls.calc_reduced_matrix_element(state_ls, "identity_" + op, kappa=0))  # type: ignore [arg-type]
-
-    for op in state_jj.kets[0].quantum_number_names:
-        assert np.isclose(reduced_identity, state_jj.calc_reduced_matrix_element(state_jj, "identity_" + op, kappa=0))  # type: ignore [arg-type]
-
-    for op in state_fj.kets[0].quantum_number_names:
-        assert np.isclose(reduced_identity, state_fj.calc_reduced_matrix_element(state_fj, "identity_" + op, kappa=0))  # type: ignore [arg-type]
+    coupling_schemes: list[CouplingScheme] = ["LS", "JJ", "FJ"]
+    for scheme in coupling_schemes:
+        state = ket.to_state(scheme)
+        for op in state.kets[0].quantum_number_names:
+            assert np.isclose(reduced_identity, state.calc_reduced_matrix_element(state, "identity_" + op, kappa=0))  # type: ignore [arg-type]
 
 
 @pytest.mark.parametrize(("ket1", "ket2"), TEST_KET_PAIRS)
@@ -103,14 +90,14 @@ def test_matrix_elements_in_different_coupling_schemes(ket1: AngularKetBase, ket
         ("f_tot", 1),
         ("j_tot", 1),
     ]
-    for operator, kappa in example_list:
-        msg = f"{operator=}, {kappa=}, {ket1=}, {ket2=}"
-        val = ket1.calc_reduced_matrix_element(ket2, operator, kappa)
-        state1 = ket1.to_state("LS")
-        state2 = ket2.to_state("LS")
-        assert np.isclose(val, state1.calc_reduced_matrix_element(ket2.to_state("LS"), operator, kappa)), msg
-        assert np.isclose(val, state1.calc_reduced_matrix_element(ket2.to_state("JJ"), operator, kappa)), msg
-        assert np.isclose(val, state1.calc_reduced_matrix_element(ket2.to_state("FJ"), operator, kappa)), msg
-        assert np.isclose(val, ket1.to_state("LS").calc_reduced_matrix_element(state2, operator, kappa)), msg
-        assert np.isclose(val, ket1.to_state("JJ").calc_reduced_matrix_element(state2, operator, kappa)), msg
-        assert np.isclose(val, ket1.to_state("FJ").calc_reduced_matrix_element(state2, operator, kappa)), msg
+    coupling_schemes: list[CouplingScheme] = ["LS", "JJ", "FJ"]
+
+    for scheme in coupling_schemes:
+        for operator, kappa in example_list:
+            msg = f"{operator=}, {kappa=}, {ket1=}, {ket2=}, {scheme=}"
+            val = ket1.calc_reduced_matrix_element(ket2, operator, kappa)
+
+            assert np.isclose(
+                val, ket1.to_state().calc_reduced_matrix_element(ket2.to_state(scheme), operator, kappa)
+            ), msg
+            assert np.isclose(val, ket1.to_state(scheme).calc_reduced_matrix_element(ket2, operator, kappa)), msg
