@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal, TypeVar, get_args
 
 import numpy as np
 
-from ryd_numerov.species import BaseElement
+from ryd_numerov.species import SpeciesObject
 
 if TYPE_CHECKING:
     from ryd_numerov.units import NDArray
@@ -36,7 +36,7 @@ class Model:
             potential_type: Which potential to use for the model.
 
         """
-        self.element = BaseElement.from_species(species)
+        self.element = SpeciesObject.from_species(species)
         self.l = l
 
         if potential_type is None:

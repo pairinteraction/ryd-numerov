@@ -1,10 +1,10 @@
 from typing import ClassVar
 
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 from ryd_numerov.units import rydberg_constant
 
 
-class Hydrogen(BaseElement):
+class Hydrogen(SpeciesObject):
     species = "H"
     Z = 1
     number_valence_electrons = 1
@@ -20,7 +20,7 @@ class Hydrogen(BaseElement):
     _corrected_rydberg_constant = (109677.58340280356, None, "1/cm")
 
 
-class HydrogenTextBook(BaseElement):
+class HydrogenTextBook(SpeciesObject):
     """Hydrogen from QM textbook with infinite nucleus mass and no spin orbit coupling."""
 
     species = "H_textbook"

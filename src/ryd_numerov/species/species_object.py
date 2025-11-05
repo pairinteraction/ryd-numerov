@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class BaseElement(ABC):
+class SpeciesObject(ABC):
     """Abstract base class for all elements.
 
     For the electronic ground state configurations and sorted shells,
@@ -174,13 +174,13 @@ class BaseElement(ABC):
 
     @classmethod
     @cache
-    def from_species(cls, species: str, use_nist_data: bool = True) -> BaseElement:
+    def from_species(cls, species: str, use_nist_data: bool = True) -> SpeciesObject:
         """Create an instance of the element class from the species string.
 
-        This method searches through all subclasses of BaseElement until it finds one with a matching species attribute.
+        This method searches through all subclasses of SpeciesObject until it finds one with a matching species attribute.
         This approach allows for easy extension of the library with new elements.
-        A user can even subclass BaseElement in his code (without modifying the ryd-numerov library),
-        e.g. `class CustomRubidium(BaseElement): species = "Custom_Rb" ...`
+        A user can even subclass SpeciesObject in his code (without modifying the ryd-numerov library),
+        e.g. `class CustomRubidium(SpeciesObject): species = "Custom_Rb" ...`
         and then use the new element by calling RydbergStateAlkali("Custom_Rb", ...)
 
         Args:
@@ -200,7 +200,7 @@ class BaseElement(ABC):
         )
 
     @classmethod
-    def _get_concrete_subclasses(cls) -> list[type[BaseElement]]:
+    def _get_concrete_subclasses(cls) -> list[type[SpeciesObject]]:
         subclasses = []
         for subclass in cls.__subclasses__():
             if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
@@ -212,7 +212,7 @@ class BaseElement(ABC):
     def get_available_species(cls) -> list[str]:
         """Get a list of all available species in the library.
 
-        This method returns a list of species strings for all concrete subclasses of BaseElement.
+        This method returns a list of species strings for all concrete subclasses of SpeciesObject.
 
         Returns:
             List of species strings.

@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 from ryd_numerov.units import electron_mass, rydberg_constant
 
 
-class _StrontiumAbstract(BaseElement):
+class _StrontiumAbstract(SpeciesObject):
     Z = 38
     number_valence_electrons = 2
     ground_state_shell = (5, 0)

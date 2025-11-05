@@ -4,12 +4,11 @@ from ryd_numerov.species.lithium import Lithium
 from ryd_numerov.species.potassium import Potassium
 from ryd_numerov.species.rubidium import Rubidium
 from ryd_numerov.species.sodium import Sodium
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 from ryd_numerov.species.strontium import Strontium87, Strontium88
 from ryd_numerov.species.ytterbium import Ytterbium171, Ytterbium173, Ytterbium174
 
 __all__ = [
-    "BaseElement",
     "Cesium",
     "Hydrogen",
     "HydrogenTextBook",
@@ -17,6 +16,7 @@ __all__ = [
     "Potassium",
     "Rubidium",
     "Sodium",
+    "SpeciesObject",
     "Strontium87",
     "Strontium88",
     "Ytterbium171",

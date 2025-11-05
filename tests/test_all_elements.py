@@ -2,16 +2,16 @@ from typing import TYPE_CHECKING
 
 import pytest
 from ryd_numerov.rydberg_state import RydbergStateAlkali, RydbergStateAlkalineLS
-from ryd_numerov.species import BaseElement
+from ryd_numerov.species import SpeciesObject
 
 if TYPE_CHECKING:
     from ryd_numerov.rydberg_state import RydbergStateBase
 
 
-@pytest.mark.parametrize("species", BaseElement.get_available_species())
+@pytest.mark.parametrize("species", SpeciesObject.get_available_species())
 def test_magnetic(species: str) -> None:
     """Test magnetic units."""
-    element = BaseElement.from_species(species)
+    element = SpeciesObject.from_species(species)
 
     state: RydbergStateBase
     if element.number_valence_electrons == 1:

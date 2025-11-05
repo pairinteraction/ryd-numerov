@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from ryd_numerov.radial import RadialState
 from ryd_numerov.rydberg_state import RydbergStateAlkali
-from ryd_numerov.species import BaseElement
+from ryd_numerov.species import SpeciesObject
 
 
 @pytest.mark.parametrize(
@@ -58,7 +58,7 @@ def test_circular_expectation_value(species: str, n: int, l: int, j_tot: float) 
         <r>_{nl} = 1/2 (3 n^2 - l(l+1))
         <r^2>_{nl} = n^2/2 (5 n^2 - 3 l(l+1) + 1)
     """
-    element = BaseElement.from_species(species)
+    element = SpeciesObject.from_species(species)
     energy_au = element.calc_energy(n, l, j_tot, unit="hartree")
     nu = element.calc_nu_from_energy(energy_au)
 
