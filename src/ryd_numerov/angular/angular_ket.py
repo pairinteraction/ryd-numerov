@@ -95,7 +95,7 @@ class AngularKetBase(ABC):
         Not used for calculation, only for convenience to infer the core electron spin and nuclear spin quantum numbers.
         """
         if species is not None:
-            element = SpeciesObject.from_species(species)
+            element = SpeciesObject.from_name(species)
             if i_c is not None and i_c != element.i_c:
                 raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
             i_c = element.i_c

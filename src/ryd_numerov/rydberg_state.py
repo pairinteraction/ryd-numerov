@@ -48,7 +48,7 @@ class RydbergStateBase(ABC):
         """Create the element for the Rydberg state."""
         if hasattr(self, "_element"):
             raise RuntimeError("The element was already created, you should not create it again.")
-        self._element = SpeciesObject.from_species(self.species, use_nist_data=use_nist_data)
+        self._element = SpeciesObject.from_name(self.species, use_nist_data=use_nist_data)
 
     @property
     @abstractmethod
@@ -222,7 +222,7 @@ class RydbergStateAlkali(RydbergStateBase):
         self.j = try_trivial_spin_addition(l, 0.5, j, "j")
         self.m = m
 
-        element = SpeciesObject.from_species(species)
+        element = SpeciesObject.from_name(species)
         if element.number_valence_electrons != 1:
             raise ValueError(f"The element {species} is not an alkali atom.")
         if not element.is_allowed_shell(n, l, s_tot=1 / 2):
@@ -273,7 +273,7 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
               Optional, only needed for concrete angular matrix elements.
 
         """
-        element = SpeciesObject.from_species(species)
+        element = SpeciesObject.from_name(species)
 
         self.species = species
         self.n = n
@@ -339,7 +339,7 @@ class RydbergStateAlkalineLS(RydbergStateBase):
         self.j_tot = try_trivial_spin_addition(l, s_tot, j_tot, "j_tot")
         self.m = m
 
-        element = SpeciesObject.from_species(species)
+        element = SpeciesObject.from_name(species)
         if element.number_valence_electrons != 2:
             raise ValueError(f"The element {species} is not an alkaline atom.")
         if not element.is_allowed_shell(n, l, s_tot=s_tot):

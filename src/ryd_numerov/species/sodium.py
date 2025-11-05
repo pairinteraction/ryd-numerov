@@ -5,7 +5,7 @@ from ryd_numerov.species.species_object import SpeciesObject
 
 
 class Sodium(SpeciesObject):
-    species = "Na"
+    name = "Na"
     Z = 11
     number_valence_electrons = 1
     ground_state_shell = (3, 0)

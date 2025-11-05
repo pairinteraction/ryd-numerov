@@ -23,17 +23,17 @@ logger = logging.getLogger(__name__)
 
 
 class SpeciesObject(ABC):
-    """Abstract base class for all elements.
+    """Abstract base class for all species objects.
 
     For the electronic ground state configurations and sorted shells,
     see e.g. https://www.webelements.com/atoms.html
 
     """
 
-    species: ClassVar[str]
-    """Atomic species."""
+    name: ClassVar[str]
+    """The name of the atomic species."""
     Z: ClassVar[int]
-    """Atomic number of the element."""
+    """Atomic number of the species."""
     i_c: ClassVar[float] = 0
     """Nuclear spin, (default 0 to ignore hyperfine structure)."""
     number_valence_electrons: ClassVar[int]
@@ -58,7 +58,7 @@ class SpeciesObject(ABC):
     r"""Corrected Rydberg constant stored as (value, uncertainty, unit)"""
 
     potential_type_default: PotentialType | None = None
-    """Default potential type to use for this element. If None, the potential type must be specified explicitly.
+    """Default potential type to use for this species. If None, the potential type must be specified explicitly.
     In general, it looks like marinescu_1993 is better for alkali atoms, and fei_2009 is better for alkaline earth atoms
     """
 
@@ -83,19 +83,19 @@ class SpeciesObject(ABC):
     """
 
     _nist_energy_levels_file: Path | None = None
-    """Path to the NIST energy levels file for this element.
+    """Path to the NIST energy levels file for this species.
     The file should be directly downloaded from https://physics.nist.gov/PhysRefData/ASD/levels_form.html
     in the 'Tab-delimited' format and in units of Hartree.
     """
 
     def __init__(self, use_nist_data: bool = True, *, nist_n_max: int = 15) -> None:
-        """Initialize an element instance.
+        """Initialize an species instance.
 
-        Use this init method to set up additional properties and data for the element,
+        Use this init method to set up additional properties and data for the species,
         like loading NIST energy levels from a file.
 
         Args:
-            use_nist_data: Whether to use NIST data for this element. Default is True.
+            use_nist_data: Whether to use NIST data for this species. Default is True.
             nist_n_max: Maximum principal quantum number for which to load the NIST energy levels. Default is 15.
 
         """
@@ -170,55 +170,55 @@ class SpeciesObject(ABC):
                 self._nist_energy_levels[(n, l, j_tot, s_tot)] = energy
 
         if len(self._nist_energy_levels) == 0:
-            raise ValueError(f"No NIST energy levels found for element {self.species} in file {file}.")
+            raise ValueError(f"No NIST energy levels found for species {self.name} in file {file}.")
 
     @classmethod
     @cache
-    def from_species(cls, species: str, use_nist_data: bool = True) -> SpeciesObject:
-        """Create an instance of the element class from the species string.
+    def from_name(cls, name: str, use_nist_data: bool = True) -> SpeciesObject:
+        """Create an instance of the species class from the species name.
 
-        This method searches through all subclasses of SpeciesObject until it finds one with a matching species attribute.
-        This approach allows for easy extension of the library with new elements.
+        This method searches through all subclasses of SpeciesObject until it finds one with a matching species name.
+        This approach allows for easy extension of the library with new species.
         A user can even subclass SpeciesObject in his code (without modifying the ryd-numerov library),
-        e.g. `class CustomRubidium(SpeciesObject): species = "Custom_Rb" ...`
-        and then use the new element by calling RydbergStateAlkali("Custom_Rb", ...)
+        e.g. `class CustomRubidium(SpeciesObject): name = "Custom_Rb" ...`
+        and then use the new species by calling RydbergStateAlkali("Custom_Rb", ...)
 
         Args:
-            species: The species string (e.g. "Rb").
-            use_nist_data: Whether to use NIST data for this element. Default is True.
+            name: The species name (e.g. "Rb").
+            use_nist_data: Whether to use NIST data for this species. Default is True.
 
         Returns:
-            An instance of the corresponding element class.
+            An instance of the corresponding species class.
 
         """
         concrete_subclasses = cls._get_concrete_subclasses()
         for subclass in concrete_subclasses:
-            if subclass.species == species:
+            if subclass.name == name:
                 return subclass(use_nist_data=use_nist_data)
         raise ValueError(
-            f"Unknown species: {species}. Available species: {[subclass.species for subclass in concrete_subclasses]}"
+            f"Unknown species name: {name}. Available species: {[subclass.name for subclass in concrete_subclasses]}"
         )
 
     @classmethod
     def _get_concrete_subclasses(cls) -> list[type[SpeciesObject]]:
         subclasses = []
         for subclass in cls.__subclasses__():
-            if not inspect.isabstract(subclass) and hasattr(subclass, "species"):
+            if not inspect.isabstract(subclass) and hasattr(subclass, "name"):
                 subclasses.append(subclass)
             subclasses.extend(subclass._get_concrete_subclasses())  # noqa: SLF001
         return subclasses
 
     @classmethod
     def get_available_species(cls) -> list[str]:
-        """Get a list of all available species in the library.
+        """Get a list of all available species names in the library.
 
-        This method returns a list of species strings for all concrete subclasses of SpeciesObject.
+        This method returns a list of species names for all concrete subclasses of SpeciesObject.
 
         Returns:
-            List of species strings.
+            List of species names.
 
         """
-        return sorted([subclass.species for subclass in cls._get_concrete_subclasses()])
+        return sorted([subclass.name for subclass in cls._get_concrete_subclasses()])
 
     def is_allowed_shell(self, n: int, l: int, s_tot: float) -> bool:
         """Check if the quantum numbers describe an allowed shell.
@@ -236,7 +236,7 @@ class SpeciesObject(ABC):
         """
         assert (self.number_valence_electrons == 1 and s_tot == 1 / 2) or (
             self.number_valence_electrons == 2 and s_tot in (0, 1)
-        ), f"Invalid spin {s_tot=} for {self.species}."
+        ), f"Invalid spin {s_tot=} for {self.name}."
 
         if self.number_valence_electrons == 2 and s_tot == 1 and (n, l) == self.ground_state_shell:
             return False  # For alkaline earth atoms, the triplet state of the ground state shell is not allowed
@@ -360,10 +360,10 @@ class SpeciesObject(ABC):
         """
         if s_tot is None:
             if self.number_valence_electrons != 1:
-                raise ValueError("s_tot must be specified for elements with more than one valence electron.")
+                raise ValueError("s_tot must be specified for species with more than one valence electron.")
             s_tot = 0.5
         if (s_tot % 1) != ((self.number_valence_electrons / 2) % 1):
-            raise ValueError(f"Invalid spin {s_tot=} for {self.species}.")
+            raise ValueError(f"Invalid spin {s_tot=} for {self.name}.")
         if j_tot % 1 != (l + s_tot) % 1:
             raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
 
@@ -380,7 +380,7 @@ class SpeciesObject(ABC):
 
         if energy_au is None:
             if self._quantum_defects is None:
-                raise ValueError(f"No quantum defect data available for element {self.species}.")
+                raise ValueError(f"No quantum defect data available for species {self.name}.")
             d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
             delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
             n_star = n - delta_nlj

@@ -172,7 +172,7 @@ class WavefunctionNumerov(Wavefunction):
         # and not like in the rest of this class, i.e. y = w(z) and x = z
         grid = self.grid
 
-        element = SpeciesObject.from_species(self.radial_state.species)
+        element = SpeciesObject.from_name(self.radial_state.species)
         energy_au = element.calc_energy_from_nu(self.radial_state.nu)
         v_eff = self.model.calc_total_effective_potential(grid.x_list)
         glist = 8 * element.reduced_mass_factor * grid.z_list * grid.z_list * (energy_au - v_eff)

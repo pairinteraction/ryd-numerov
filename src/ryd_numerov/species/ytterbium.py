@@ -24,7 +24,7 @@ class _YtterbiumAbstract(SpeciesObject):
 
 
 class Ytterbium171(_YtterbiumAbstract):
-    species = "Yb171"
+    name = "Yb171"
     i_c = 1 / 2
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
@@ -37,7 +37,7 @@ class Ytterbium171(_YtterbiumAbstract):
 
 
 class Ytterbium173(_YtterbiumAbstract):
-    species = "Yb173"
+    name = "Yb173"
     i_c = 5 / 2
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm
@@ -50,7 +50,7 @@ class Ytterbium173(_YtterbiumAbstract):
 
 
 class Ytterbium174(_YtterbiumAbstract):
-    species = "Yb174"
+    name = "Yb174"
     i_c = 0
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable1.htm

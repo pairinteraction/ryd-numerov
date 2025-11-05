@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 @pytest.mark.parametrize("species", SpeciesObject.get_available_species())
 def test_magnetic(species: str) -> None:
     """Test magnetic units."""
-    element = SpeciesObject.from_species(species)
+    element = SpeciesObject.from_name(species)
 
     state: RydbergStateBase
     if element.number_valence_electrons == 1:

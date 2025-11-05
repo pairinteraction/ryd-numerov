@@ -5,7 +5,7 @@ from ryd_numerov.units import rydberg_constant
 
 
 class Hydrogen(SpeciesObject):
-    species = "H"
+    name = "H"
     Z = 1
     number_valence_electrons = 1
     ground_state_shell = (1, 0)
@@ -23,7 +23,7 @@ class Hydrogen(SpeciesObject):
 class HydrogenTextBook(SpeciesObject):
     """Hydrogen from QM textbook with infinite nucleus mass and no spin orbit coupling."""
 
-    species = "H_textbook"
+    name = "H_textbook"
     Z = 1
     number_valence_electrons = 1
     ground_state_shell = (1, 0)

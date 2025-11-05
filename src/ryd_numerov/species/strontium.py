@@ -36,7 +36,7 @@ class _StrontiumAbstract(SpeciesObject):
 
 
 class Strontium88(_StrontiumAbstract):
-    species = "Sr88"
+    name = "Sr88"
     i_c = 0
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/strontiumtable1.htm
@@ -73,7 +73,7 @@ class Strontium88(_StrontiumAbstract):
 
 
 class Strontium87(_StrontiumAbstract):
-    species = "Sr87"
+    name = "Sr87"
     i_c = 9 / 2
 
     # https://physics.nist.gov/PhysRefData/Handbook/Tables/strontiumtable1.htm
