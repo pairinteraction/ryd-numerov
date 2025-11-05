@@ -2,49 +2,53 @@ import math
 import re
 
 
-def calc_nu_from_energy(reduced_mass_factor: float, energy_au: float) -> float:
+def calc_nu_from_energy(reduced_mass_au: float, energy_au: float) -> float:
     r"""Calculate the effective principal quantum number nu from a given energy.
 
     The effective principal quantum number is given by
 
     .. math::
-        \nu = \sqrt{\frac{1}{2} \frac{\mu}{-E}}
+        \nu
+        = \sqrt{\frac{1}{2} \frac{R_M/R_\infty}{-E/E_H}}
+        = \sqrt{\frac{1}{2} \frac{\mu/m_e}{-E/E_H}}
 
-    where :math:`\mu` is the reduced mass factor and :math:`E` the energy in atomic units.
+    where :math:`\mu/m_e` is the reduced mass in atomic units and :math:`E/E_H` the energy in atomic units.
 
     Args:
-        reduced_mass_factor: The reduced mass factor :math:`\mu = \frac{m_{Core}}{m_{Core} + m_e}`.
-        energy_au: The energy :math:`E` in atomic units (hartree).
+        reduced_mass_au: The reduced mass in atomic units (electron mass).
+        energy_au: The energy in atomic units (hartree).
 
     Returns:
-        The effective principal quantum number :math:`\nu`.
+        The effective principal quantum number nu.
 
     """
-    nu = math.sqrt(0.5 * reduced_mass_factor / -energy_au)
+    nu = math.sqrt(0.5 * reduced_mass_au / -energy_au)
     if abs(nu - round(nu)) < 1e-10:
         nu = round(nu)
     return nu
 
 
-def calc_energy_from_nu(reduced_mass_factor: float, nu: float) -> float:
+def calc_energy_from_nu(reduced_mass_au: float, nu: float) -> float:
     r"""Calculate the energy from a given effective principal quantum number nu.
 
     The energy is given by
 
     .. math::
-        E = -\frac{1}{2} \frac{\mu}{\nu^2}
+        E/E_H
+        = -\frac{1}{2} \frac{R_M/R_\infty}{\nu^2}
+        = -\frac{1}{2} \frac{\mu/m_e}{\nu^2}
 
-    where :math:`\mu` is the reduced mass factor and :math:`\nu` the effective principal quantum number.
+    where :math:`\mu/m_e` is the reduced mass in atomic units and :math:`\nu` the effective principal quantum number.
 
     Args:
-        reduced_mass_factor: The reduced mass factor :math:`\mu = \frac{m_{Core}}{m_{Core} + m_e}`.
+        reduced_mass_au: The reduced mass in atomic units :math:`\mu/m_e = \frac{m_{Core}}{m_{Core} + m_e}`.
         nu: The effective principal quantum number :math:`\nu`.
 
     Returns:
-        The energy :math:`E` in atomic units (hartree).
+        The energy E in atomic units (hartree).
 
     """
-    return -0.5 * reduced_mass_factor / nu**2
+    return -0.5 * reduced_mass_au / nu**2
 
 
 def convert_electron_configuration(config: str) -> list[tuple[int, int, int]]:

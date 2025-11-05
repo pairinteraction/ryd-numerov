@@ -162,7 +162,7 @@ class Model:
 
         """
         x2 = x * x
-        return (1 / self.species.reduced_mass_factor) * self.l * (self.l + 1) / (2 * x2)
+        return (1 / self.species.reduced_mass_au) * self.l * (self.l + 1) / (2 * x2)
 
     def calc_effective_potential_sqrt(self, x: XType) -> XType:
         r"""Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.
@@ -183,7 +183,7 @@ class Model:
 
         """
         x2 = x * x
-        return (1 / self.species.reduced_mass_factor) * (3 / 32) / x2
+        return (1 / self.species.reduced_mass_au) * (3 / 32) / x2
 
     def calc_total_effective_potential(self, x: XType) -> XType:
         r"""Calculate the total effective potential V_eff(x) in atomic units.

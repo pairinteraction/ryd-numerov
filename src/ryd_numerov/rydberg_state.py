@@ -67,7 +67,7 @@ class RydbergStateBase(ABC):
         where `\mu = R_M/R_\infty` is the reduced mass and `\nu` the effective principal quantum number.
         """
         nu = self.get_nu()
-        energy_au = calc_energy_from_nu(self.species.reduced_mass_factor, nu)
+        energy_au = calc_energy_from_nu(self.species.reduced_mass_au, nu)
         if unit == "a.u.":
             return energy_au
         energy: PintFloat = energy_au * BaseQuantities["ENERGY"]
