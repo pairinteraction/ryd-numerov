@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 
 
-class _RubidiumAbstract(BaseElement):
+class _RubidiumAbstract(SpeciesObject):
     Z = 37
     number_valence_electrons = 1
     ground_state_shell = (5, 0)

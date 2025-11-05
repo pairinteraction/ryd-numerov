@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 
 
-class Lithium(BaseElement):
+class Lithium(SpeciesObject):
     species = "Li"
     Z = 3
     number_valence_electrons = 1

@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 
 
-class Sodium(BaseElement):
+class Sodium(SpeciesObject):
     species = "Na"
     Z = 11
     number_valence_electrons = 1

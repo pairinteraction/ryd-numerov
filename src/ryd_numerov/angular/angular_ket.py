@@ -21,7 +21,7 @@ from ryd_numerov.angular.utils import (
     minus_one_pow,
     try_trivial_spin_addition,
 )
-from ryd_numerov.species import BaseElement
+from ryd_numerov.species import SpeciesObject
 
 if TYPE_CHECKING:
     from ryd_numerov.angular.angular_state import AngularState
@@ -95,7 +95,7 @@ class AngularKetBase(ABC):
         Not used for calculation, only for convenience to infer the core electron spin and nuclear spin quantum numbers.
         """
         if species is not None:
-            element = BaseElement.from_species(species)
+            element = SpeciesObject.from_species(species)
             if i_c is not None and i_c != element.i_c:
                 raise ValueError(f"Nuclear spin i_c={i_c} does not match the element {species} with i_c={element.i_c}.")
             i_c = element.i_c

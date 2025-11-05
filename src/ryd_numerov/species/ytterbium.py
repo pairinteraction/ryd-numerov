@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import ClassVar
 
-from ryd_numerov.species.species_object import BaseElement
+from ryd_numerov.species.species_object import SpeciesObject
 from ryd_numerov.units import electron_mass, rydberg_constant
 
 
-class _YtterbiumAbstract(BaseElement):
+class _YtterbiumAbstract(SpeciesObject):
     Z = 70
     number_valence_electrons = 2
     ground_state_shell = (6, 0)
