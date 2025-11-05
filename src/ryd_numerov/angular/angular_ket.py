@@ -17,7 +17,7 @@ from ryd_numerov.angular.utils import (
     check_spin_addition_rule,
     clebsch_gordan_6j,
     clebsch_gordan_9j,
-    get_possible_quantum_number_list,
+    get_possible_quantum_number_values,
     minus_one_pow,
     try_trivial_spin_addition,
 )
@@ -222,11 +222,11 @@ class AngularKetBase(ABC):
         kets: list[AngularKetLS] = []
         coefficients: list[float] = []
 
-        s_tot_list = get_possible_quantum_number_list(self.s_c, self.s_r, getattr(self, "s_tot", None))
-        l_tot_list = get_possible_quantum_number_list(self.l_c, self.l_r, getattr(self, "l_tot", None))
+        s_tot_list = get_possible_quantum_number_values(self.s_c, self.s_r, getattr(self, "s_tot", None))
+        l_tot_list = get_possible_quantum_number_values(self.l_c, self.l_r, getattr(self, "l_tot", None))
         for s_tot in s_tot_list:
             for l_tot in l_tot_list:
-                j_tot_list = get_possible_quantum_number_list(s_tot, l_tot, getattr(self, "j_tot", None))
+                j_tot_list = get_possible_quantum_number_values(s_tot, l_tot, getattr(self, "j_tot", None))
                 for j_tot in j_tot_list:
                     try:
                         ls_ket = AngularKetLS(
@@ -257,11 +257,11 @@ class AngularKetBase(ABC):
         kets: list[AngularKetJJ] = []
         coefficients: list[float] = []
 
-        j_c_list = get_possible_quantum_number_list(self.s_c, self.l_c, getattr(self, "j_c", None))
-        j_r_list = get_possible_quantum_number_list(self.s_r, self.l_r, getattr(self, "j_r", None))
+        j_c_list = get_possible_quantum_number_values(self.s_c, self.l_c, getattr(self, "j_c", None))
+        j_r_list = get_possible_quantum_number_values(self.s_r, self.l_r, getattr(self, "j_r", None))
         for j_c in j_c_list:
             for j_r in j_r_list:
-                j_tot_list = get_possible_quantum_number_list(j_c, j_r, getattr(self, "j_tot", None))
+                j_tot_list = get_possible_quantum_number_values(j_c, j_r, getattr(self, "j_tot", None))
                 for j_tot in j_tot_list:
                     try:
                         jj_ket = AngularKetJJ(
@@ -292,10 +292,10 @@ class AngularKetBase(ABC):
         kets: list[AngularKetFJ] = []
         coefficients: list[float] = []
 
-        j_c_list = get_possible_quantum_number_list(self.s_c, self.l_c, getattr(self, "j_c", None))
-        j_r_list = get_possible_quantum_number_list(self.s_r, self.l_r, getattr(self, "j_r", None))
+        j_c_list = get_possible_quantum_number_values(self.s_c, self.l_c, getattr(self, "j_c", None))
+        j_r_list = get_possible_quantum_number_values(self.s_r, self.l_r, getattr(self, "j_r", None))
         for j_c in j_c_list:
-            f_c_list = get_possible_quantum_number_list(j_c, self.i_c, getattr(self, "f_c", None))
+            f_c_list = get_possible_quantum_number_values(j_c, self.i_c, getattr(self, "f_c", None))
             for f_c in f_c_list:
                 for j_r in j_r_list:
                     try:
