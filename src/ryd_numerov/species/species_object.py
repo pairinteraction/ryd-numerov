@@ -281,7 +281,7 @@ class SpeciesObject(ABC):
         The corrected Rydberg constant is defined as
 
         .. math::
-            R_M = R_\infty * \frac{m_{Core}}{m_{Core} + m_e}
+            R_M = R_\infty \frac{m_{Core}}{m_{Core} + m_e}
 
         where :math:`R_\infty` is the Rydberg constant for infinite nuclear mass,
         :math:`m_{Core}` is the mass of the core,
@@ -305,18 +305,18 @@ class SpeciesObject(ABC):
         return corrected_rydberg_constant.to(unit, "spectroscopy").magnitude
 
     @cached_property  # don't remove this caching without benchmarking it!!!
-    def reduced_mass_factor(self) -> float:
-        r"""The reduced mass factor \mu.
+    def reduced_mass_au(self) -> float:
+        r"""The reduced mass mu in atomic units.
 
-        The reduced mass factor
-
-        .. math::
-            \mu = \frac{m_{Core}}{m_{Core} + m_e}
-
-        calculated via the corrected Rydberg constant
+        The reduced mass in atomic units :math:`\mu / m_e` is given by
 
         .. math::
-            \mu = \frac{R_M}{R_\infty}
+            \frac{\mu}{m_e} = \frac{m_{Core}}{m_{Core} + m_e}
+
+        We calculate the reduced mass via the corrected Rydberg constant
+
+        .. math::
+            \frac{\mu}{m_e} = \frac{R_M}{R_\infty}
 
         """
         return self.get_corrected_rydberg_constant("hartree") / rydberg_constant.to("hartree").m
@@ -334,23 +334,17 @@ class SpeciesObject(ABC):
         r"""Calculate the effective principal quantum number nu of a Rydberg state with the given n, l, j_tot and s_tot.
 
         I.e. either look up the energy for low lying states in the nist data (if use_nist_data is True),
-        and calculate nu from the energy.
-        Or calculate nu via the quantum defect theory.
+        and calculate nu from the energy via (see also `calc_nu_from_energy`):
 
-        The effective principal quantum number nu in quantum defect theory
-        is defined as series expansion :math:`\nu = n^* = n - \delta_{lj}(n)`
-        where
+        .. math::
+            \nu = \sqrt{\frac{1}{2} \frac{\mu/m_e}{-E/E_H}}
+
+        Or calculate nu via the quantum defect theory,
+        where nu is defined as series expansion :math:`\nu = n^* = n - \delta_{lj}(n)`
+        with the quantum defect
 
         .. math::
             \delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...
-
-
-        is the quantum defect. The energy of the Rydberg state is then given by
-
-        .. math::
-            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}
-
-        where :math:`E_H` is the Hartree energy (the atomic unit of energy).
 
         References:
             - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
@@ -365,7 +359,6 @@ class SpeciesObject(ABC):
                 Default is True.
             nist_n_max: Maximum principal quantum number for which to use the NIST energy data.
                 Default is 15.
-            unit: Desired unit for the energy. Default is atomic units "hartree".
 
         """
         if s_tot is None:
@@ -381,7 +374,7 @@ class SpeciesObject(ABC):
             if (n, l, j_tot, s_tot) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]
                 energy_au -= self.get_ionization_energy("hartree")
-                return calc_nu_from_energy(self.reduced_mass_factor, energy_au)
+                return calc_nu_from_energy(self.reduced_mass_au, energy_au)
             logger.debug(
                 "NIST energy levels for (n=%d, l=%d, j_tot=%s, s_tot=%s) not found, using quantum defect theory.",
                 *(n, l, j_tot, s_tot),

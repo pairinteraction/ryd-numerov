@@ -134,7 +134,7 @@ class RadialState:
             if self.l_r <= 10:
                 z_min = 0.0
             else:
-                energy_au = calc_energy_from_nu(self.species.reduced_mass_factor, self.nu)
+                energy_au = calc_energy_from_nu(self.species.reduced_mass_au, self.nu)
                 z_min = self.model.calc_turning_point_z(energy_au)
                 z_min = math.sqrt(0.5) * z_min - 3  # see also compare_z_min_cutoff.ipynb
         else:

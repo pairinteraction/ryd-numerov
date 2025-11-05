@@ -173,9 +173,9 @@ class WavefunctionNumerov(Wavefunction):
         grid = self.grid
 
         species = self.radial_state.species
-        energy_au = calc_energy_from_nu(species.reduced_mass_factor, self.radial_state.nu)
+        energy_au = calc_energy_from_nu(species.reduced_mass_au, self.radial_state.nu)
         v_eff = self.model.calc_total_effective_potential(grid.x_list)
-        glist = 8 * species.reduced_mass_factor * grid.z_list * grid.z_list * (energy_au - v_eff)
+        glist = 8 * species.reduced_mass_au * grid.z_list * grid.z_list * (energy_au - v_eff)
 
         if run_backward:
             # During the Numerov integration we define the wavefunction such that it should always stop
