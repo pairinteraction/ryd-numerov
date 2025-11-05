@@ -88,21 +88,15 @@ class SpeciesObject(ABC):
     in the 'Tab-delimited' format and in units of Hartree.
     """
 
-    def __init__(self, use_nist_data: bool = True, *, nist_n_max: int = 15) -> None:
+    def __init__(self) -> None:
         """Initialize an species instance.
 
         Use this init method to set up additional properties and data for the species,
         like loading NIST energy levels from a file.
 
-        Args:
-            use_nist_data: Whether to use NIST data for this species. Default is True.
-            nist_n_max: Maximum principal quantum number for which to load the NIST energy levels. Default is 15.
-
         """
         self._nist_energy_levels: dict[tuple[int, int, float, float], float] = {}
-        self._nist_n_max = nist_n_max
-        self.use_nist_data = use_nist_data
-        if use_nist_data and self._nist_energy_levels_file is not None:
+        if self._nist_energy_levels_file is not None:
             self._setup_nist_energy_levels(self._nist_energy_levels_file)
 
     def _setup_nist_energy_levels(self, file: Path) -> None:  # noqa: C901, PLR0912
@@ -177,7 +171,7 @@ class SpeciesObject(ABC):
 
     @classmethod
     @cache
-    def from_name(cls, name: str, use_nist_data: bool = True) -> SpeciesObject:
+    def from_name(cls, name: str) -> SpeciesObject:
         """Create an instance of the species class from the species name.
 
         This method searches through all subclasses of SpeciesObject until it finds one with a matching species name.
@@ -188,7 +182,6 @@ class SpeciesObject(ABC):
 
         Args:
             name: The species name (e.g. "Rb").
-            use_nist_data: Whether to use NIST data for this species. Default is True.
 
         Returns:
             An instance of the corresponding species class.
@@ -197,7 +190,7 @@ class SpeciesObject(ABC):
         concrete_subclasses = cls._get_concrete_subclasses()
         for subclass in concrete_subclasses:
             if subclass.name == name:
-                return subclass(use_nist_data=use_nist_data)
+                return subclass()
         raise ValueError(
             f"Unknown species name: {name}. Available species: {[subclass.name for subclass in concrete_subclasses]}"
         )
@@ -327,14 +320,40 @@ class SpeciesObject(ABC):
 
     @overload
     def calc_energy(
-        self, n: int, l: int, j_tot: float, s_tot: float | None = None, *, unit: None = None
+        self,
+        n: int,
+        l: int,
+        j_tot: float,
+        s_tot: float | None = None,
+        *,
+        use_nist_data: bool = True,
+        nist_n_max: int = 15,
+        unit: None = None,
     ) -> PintFloat: ...
 
     @overload
-    def calc_energy(self, n: int, l: int, j_tot: float, s_tot: float | None = None, *, unit: str) -> float: ...
+    def calc_energy(
+        self,
+        n: int,
+        l: int,
+        j_tot: float,
+        s_tot: float | None = None,
+        *,
+        use_nist_data: bool = True,
+        nist_n_max: int = 15,
+        unit: str,
+    ) -> float: ...
 
     def calc_energy(  # noqa: C901
-        self, n: int, l: int, j_tot: float, s_tot: float | None = None, *, unit: str | None = "hartree"
+        self,
+        n: int,
+        l: int,
+        j_tot: float,
+        s_tot: float | None = None,
+        *,
+        use_nist_data: bool = True,
+        nist_n_max: int = 15,
+        unit: str | None = "hartree",
     ) -> PintFloat | float:
         r"""Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.
 
@@ -360,6 +379,17 @@ class SpeciesObject(ABC):
             - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract
             - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)
 
+        Args:
+            n: The principal quantum number of the Rydberg state.
+            l: The orbital angular momentum quantum number of the Rydberg state.
+            j_tot: The total angular momentum quantum number of the Rydberg state.
+            s_tot: The total spin quantum number of the Rydberg state.
+            use_nist_data: Whether to use NIST energy data.
+                Default is True.
+            nist_n_max: Maximum principal quantum number for which to use the NIST energy data.
+                Default is 15.
+            unit: Desired unit for the energy. Default is atomic units "hartree".
+
         """
         if s_tot is None:
             if self.number_valence_electrons != 1:
@@ -371,7 +401,7 @@ class SpeciesObject(ABC):
             raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
 
         energy_au: float | None = None
-        if n <= self._nist_n_max and self.use_nist_data:
+        if n <= nist_n_max and use_nist_data:
             if (n, l, j_tot, s_tot) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]
                 energy_au -= self.get_ionization_energy("hartree")
