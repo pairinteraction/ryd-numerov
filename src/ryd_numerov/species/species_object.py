@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, overload
 
 import numpy as np
 
-from ryd_numerov.species.utils import calc_energy_from_nu, convert_electron_configuration
+from ryd_numerov.species.utils import calc_nu_from_energy, convert_electron_configuration
 from ryd_numerov.units import rydberg_constant, ureg
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class SpeciesObject(ABC):
     _ionization_energy: tuple[float, float | None, str]
     """Ionization energy with uncertainty and unit: (value, uncertainty, unit)."""
 
-    # Parameters for the extended Rydberg Ritz formula, see calc_energy
+    # Parameters for the extended Rydberg Ritz formula, see calc_nu
     _quantum_defects: ClassVar[dict[tuple[int, float, float], tuple[float, float, float, float, float]] | None] = None
     """Dictionary containing the quantum defects for each (l, j_tot, s_tot) combination, i.e.
     _quantum_defects[(l,j_tot,s_tot)] = (d0, d2, d4, d6, d8)
@@ -321,8 +321,7 @@ class SpeciesObject(ABC):
         """
         return self.get_corrected_rydberg_constant("hartree") / rydberg_constant.to("hartree").m
 
-    @overload
-    def calc_energy(
+    def calc_nu(
         self,
         n: int,
         l: int,
@@ -331,40 +330,15 @@ class SpeciesObject(ABC):
         *,
         use_nist_data: bool = True,
         nist_n_max: int = 15,
-        unit: None = None,
-    ) -> PintFloat: ...
+    ) -> float:
+        r"""Calculate the effective principal quantum number nu of a Rydberg state with the given n, l, j_tot and s_tot.
 
-    @overload
-    def calc_energy(
-        self,
-        n: int,
-        l: int,
-        j_tot: float,
-        s_tot: float | None = None,
-        *,
-        use_nist_data: bool = True,
-        nist_n_max: int = 15,
-        unit: str,
-    ) -> float: ...
+        I.e. either look up the energy for low lying states in the nist data (if use_nist_data is True),
+        and calculate nu from the energy.
+        Or calculate nu via the quantum defect theory.
 
-    def calc_energy(  # noqa: C901
-        self,
-        n: int,
-        l: int,
-        j_tot: float,
-        s_tot: float | None = None,
-        *,
-        use_nist_data: bool = True,
-        nist_n_max: int = 15,
-        unit: str | None = "hartree",
-    ) -> PintFloat | float:
-        r"""Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.
-
-        I.e. either look up the energy for low lying states in the nist data,
-        or calculate it via the quantum defect theory.
-
-        The effective principal quantum number in quantum defect theory
-        is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`
+        The effective principal quantum number nu in quantum defect theory
+        is defined as series expansion :math:`\nu = n^* = n - \delta_{lj}(n)`
         where
 
         .. math::
@@ -403,28 +377,18 @@ class SpeciesObject(ABC):
         if j_tot % 1 != (l + s_tot) % 1:
             raise ValueError(f"Invalid quantum numbers: ({l=}, {j_tot=}, {s_tot=})")
 
-        energy_au: float | None = None
-        if n <= nist_n_max and use_nist_data:
+        if n <= nist_n_max and use_nist_data:  # try to use NIST data
             if (n, l, j_tot, s_tot) in self._nist_energy_levels:
                 energy_au = self._nist_energy_levels[(n, l, j_tot, s_tot)]
                 energy_au -= self.get_ionization_energy("hartree")
-            else:
-                logger.debug(
-                    "NIST energy levels for (n=%d, l=%d, j_tot=%s, s_tot=%s) not found, using quantum defect theory.",
-                    *(n, l, j_tot, s_tot),
-                )
+                return calc_nu_from_energy(self.reduced_mass_factor, energy_au)
+            logger.debug(
+                "NIST energy levels for (n=%d, l=%d, j_tot=%s, s_tot=%s) not found, using quantum defect theory.",
+                *(n, l, j_tot, s_tot),
+            )
 
-        if energy_au is None:
-            if self._quantum_defects is None:
-                raise ValueError(f"No quantum defect data available for species {self.name}.")
-            d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
-            delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
-            n_star = n - delta_nlj
-            energy_au = calc_energy_from_nu(self.reduced_mass_factor, n_star)
-
-        energy: PintFloat = ureg.Quantity(energy_au, "hartree")
-        if unit is None:
-            return energy
-        if unit == "a.u.":
-            return energy.magnitude
-        return energy.to(unit, "spectroscopy").magnitude
+        if self._quantum_defects is None:
+            raise ValueError(f"No quantum defect data available for species {self.name}.")
+        d0, d2, d4, d6, d8 = self._quantum_defects.get((l, j_tot, s_tot), (0, 0, 0, 0, 0))
+        delta_nlj = d0 + d2 / (n - d0) ** 2 + d4 / (n - d0) ** 4 + d6 / (n - d0) ** 6 + d8 / (n - d0) ** 8
+        return n - delta_nlj
