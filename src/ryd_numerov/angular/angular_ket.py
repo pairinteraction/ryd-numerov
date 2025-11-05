@@ -387,7 +387,7 @@ class AngularKetBase(ABC):
             return self.to_state().calc_reduced_matrix_element(other.to_state(), operator, kappa)
 
         qn_name: AngularMomentumQuantumNumbers
-        if operator == "SPHERICAL":
+        if operator == "spherical":
             qn_name = "l_r"
             complete_reduced_matrix_element = calc_reduced_spherical_matrix_element(self.l_r, other.l_r, kappa)
         elif operator in self.quantum_number_names:
@@ -434,9 +434,9 @@ class AngularKetBase(ABC):
         Args:
             other: The other AngularKet :math:`|other>`.
             operator: The operator type :math:`\hat{O}_{kq}` for which to calculate the matrix element.
-                Can be one of "MAGNETIC", "ELECTRIC", "SPHERICAL".
-            kappa: The quantum number :math:`\kappa` of the angular momentum operator.
-            q: The quantum number :math:`q` of the angular momentum operator.
+                E.g. 'spherical', 's_tot', 'l_r', etc.
+            kappa: The rank :math:`\kappa` of the angular momentum operator.
+            q: The component :math:`q` of the angular momentum operator.
 
         Returns:
             The dimensionless angular matrix element.
