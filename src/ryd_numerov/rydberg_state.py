@@ -260,6 +260,8 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
         """
         if isinstance(species, str):
             species = SpeciesObject.from_name(species)
+        if species.i_c is None:
+            raise ValueError(f"The species {species.name} does not have a defined nuclear spin i_c.")
         self.species = species
         self.n = n
         self.l = l
