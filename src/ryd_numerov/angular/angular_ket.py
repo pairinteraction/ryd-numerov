@@ -364,7 +364,7 @@ class AngularKetBase(ABC):
             ov: float = 0
             for coeff, jj_ket in fj.to_state("JJ"):
                 ov += coeff * ls.calc_reduced_overlap(jj_ket)
-            return ov
+            return float(ov)
 
         raise NotImplementedError(f"This method is not yet implemented for {self!r} and {other!r}.")
 

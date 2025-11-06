@@ -283,6 +283,11 @@ class WavefunctionNumerov(Wavefunction):
         elif n <= 16:
             tol = 2e-3
 
+        species = self.radial_state.species
+        if species.number_valence_electrons == 2:
+            # For divalent atoms the inner boundary is less well behaved ...
+            tol = 2e-2
+
         if inner_weight_scaled_to_whole_grid > tol:
             warning_msgs.append(
                 f"The wavefunction is not close to zero at the inner boundary"
