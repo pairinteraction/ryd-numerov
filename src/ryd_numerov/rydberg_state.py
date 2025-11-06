@@ -302,8 +302,8 @@ class RydbergStateAlkalineLS(RydbergStateBase):
         species: str | SpeciesObject,
         n: int,
         l: int,
-        s_tot: float,
-        j_tot: float | None = None,
+        s_tot: int,
+        j_tot: int | None = None,
         m: float | None = None,
     ) -> None:
         r"""Initialize the Rydberg state.

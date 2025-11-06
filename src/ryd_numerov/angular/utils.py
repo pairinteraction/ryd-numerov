@@ -229,7 +229,7 @@ def try_trivial_spin_addition(s_1: float, s_2: float, s_tot: float | None, name:
     """
     if s_tot is None:
         if s_1 != 0 and s_2 != 0:
-            msg = f"{name} must be set if both parts ({s_1=} and {s_2=}) are non-zero."
+            msg = f"{name} must be set if both parts ({s_1} and {s_2}) are non-zero."
             raise ValueError(msg)
         s_tot = s_1 + s_2
     return float(s_tot)
