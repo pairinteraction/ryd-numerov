@@ -188,61 +188,6 @@ class RydbergStateAlkali(RydbergStateBase):
         n: int,
         l: int,
         j: float | None = None,
-        m: float | None = None,
-    ) -> None:
-        r"""Initialize the Rydberg state.
-
-        Args:
-            species: Atomic species.
-            n: Principal quantum number of the rydberg electron.
-            l: Orbital angular momentum quantum number of the rydberg electron.
-            j: Angular momentum quantum number of the rydberg electron.
-            m: Total magnetic quantum number.
-              Optional, only needed for concrete angular matrix elements.
-
-        """
-        if isinstance(species, str):
-            species = SpeciesObject.from_name(species)
-        self.species = species
-        self.n = n
-        self.l = l
-        self.j = try_trivial_spin_addition(l, 0.5, j, "j")
-        self.m = m
-
-        if species.number_valence_electrons != 1:
-            raise ValueError(f"The species {species.name} is not an alkali atom.")
-        if not species.is_allowed_shell(n, l):
-            raise ValueError(f"The shell ({n=}, {l=}) is not allowed for the species {self.species}.")
-
-    @cached_property
-    def angular(self) -> AngularKetLS:
-        """The angular/spin state of the Rydberg electron."""
-        return AngularKetLS(l_r=self.l, j_tot=self.j, m=self.m, species=self.species)
-
-    @cached_property
-    def radial(self) -> RadialState:
-        """The radial state of the Rydberg electron."""
-        radial_state = RadialState(self.species, nu=self.get_nu(), l_r=self.l)
-        radial_state.set_n_for_sanity_check(self.n)
-        return radial_state
-
-    def __repr__(self) -> str:
-        species, n, l, j, m = self.species, self.n, self.l, self.j, self.m
-        return f"{self.__class__.__name__}({species.name}, {n=}, {l=}, {j=}, {m=})"
-
-    def get_nu(self) -> float:
-        return self.species.calc_nu(self.n, self.l, self.j, s_tot=1 / 2)
-
-
-class RydbergStateAlkaliHyperfine(RydbergStateBase):
-    """Create an Alkali Rydberg state, including the radial and angular states."""
-
-    def __init__(
-        self,
-        species: str | SpeciesObject,
-        n: int,
-        l: int,
-        j: float | None = None,
         f: float | None = None,
         m: float | None = None,
     ) -> None:
@@ -254,19 +199,19 @@ class RydbergStateAlkaliHyperfine(RydbergStateBase):
             l: Orbital angular momentum quantum number of the rydberg electron.
             j: Angular momentum quantum number of the rydberg electron.
             f: Total angular momentum quantum number of the atom (rydberg electron + core)
+              Optional, only needed if the species supports hyperfine structure (i.e. species.i_c is not None or 0).
             m: Total magnetic quantum number.
               Optional, only needed for concrete angular matrix elements.
 
         """
         if isinstance(species, str):
             species = SpeciesObject.from_name(species)
-        if species.i_c is None:
-            raise ValueError(f"The species {species.name} does not have a defined nuclear spin i_c.")
         self.species = species
+        i_c = species.i_c if species.i_c is not None else 0
         self.n = n
         self.l = l
         self.j = try_trivial_spin_addition(l, 0.5, j, "j")
-        self.f = try_trivial_spin_addition(self.j, species.i_c, f, "f")
+        self.f = try_trivial_spin_addition(self.j, i_c, f, "f")
         self.m = m
 
         if species.number_valence_electrons != 1:
@@ -304,6 +249,7 @@ class RydbergStateAlkalineLS(RydbergStateBase):
         l: int,
         s_tot: int,
         j_tot: int | None = None,
+        f_tot: float | None = None,
         m: float | None = None,
     ) -> None:
         r"""Initialize the Rydberg state.
@@ -314,6 +260,8 @@ class RydbergStateAlkalineLS(RydbergStateBase):
             l: Orbital angular momentum quantum number of the rydberg electron.
             s_tot: Total spin quantum number of all electrons.
             j_tot: Total angular momentum quantum number of all electrons.
+            f_tot: Total angular momentum quantum number of the atom (rydberg electron + core)
+              Optional, only needed if the species supports hyperfine structure (i.e. species.i_c is not None or 0).
             m: Total magnetic quantum number.
               Optional, only needed for concrete angular matrix elements.
 
@@ -321,10 +269,12 @@ class RydbergStateAlkalineLS(RydbergStateBase):
         if isinstance(species, str):
             species = SpeciesObject.from_name(species)
         self.species = species
+        i_c = species.i_c if species.i_c is not None else 0
         self.n = n
         self.l = l
         self.s_tot = s_tot
         self.j_tot = try_trivial_spin_addition(l, s_tot, j_tot, "j_tot")
+        self.f_tot = try_trivial_spin_addition(self.j_tot, i_c, f_tot, "f_tot")
         self.m = m
 
         if species.number_valence_electrons != 2:
@@ -335,7 +285,9 @@ class RydbergStateAlkalineLS(RydbergStateBase):
     @cached_property
     def angular(self) -> AngularKetLS:
         """The angular/spin state of the Rydberg electron."""
-        return AngularKetLS(l_r=self.l, s_tot=self.s_tot, j_tot=self.j_tot, m=self.m, species=self.species)
+        return AngularKetLS(
+            l_r=self.l, s_tot=self.s_tot, j_tot=self.j_tot, f_tot=self.f_tot, m=self.m, species=self.species
+        )
 
     @cached_property
     def radial(self) -> RadialState:
