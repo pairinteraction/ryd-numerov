@@ -34,8 +34,8 @@ class SpeciesObject(ABC):
     """The name of the atomic species."""
     Z: ClassVar[int]
     """Atomic number of the species."""
-    i_c: ClassVar[float] = 0
-    """Nuclear spin, (default 0 to ignore hyperfine structure)."""
+    i_c: ClassVar[float | None] = None
+    """Nuclear spin, (default None to ignore hyperfine structure, will be treated like i_c = 0)."""
     number_valence_electrons: ClassVar[int]
     """Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms)."""
     ground_state_shell: ClassVar[tuple[int, int]]
