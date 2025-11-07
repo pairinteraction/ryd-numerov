@@ -4,8 +4,6 @@ import logging
 import math
 from typing import TYPE_CHECKING, Literal, overload
 
-import numpy as np
-
 from ryd_numerov.radial.grid import Grid
 from ryd_numerov.radial.model import Model
 from ryd_numerov.radial.radial_matrix_element import calc_radial_matrix_element_from_w_z
@@ -46,12 +44,12 @@ class RadialState:
         self.species = species
 
         self.n: int | None = None
-        self.nu = nu
-        self.l_r = l_r
-
-        # sanity checks
         if not nu > 0:
             raise ValueError(f"nu must be larger than 0, but is {nu=}")
+        self.nu = nu
+        if not ((isinstance(l_r, int) or l_r.is_integer()) and l_r >= 0):
+            raise ValueError(f"l_r must be an integer, and larger or equal 0, but {l_r=}")
+        self.l_r = int(l_r)
 
     def set_n_for_sanity_check(self, n: int) -> None:
         """Provide n for additional sanity checks of the radial wavefunction.
@@ -62,18 +60,16 @@ class RadialState:
             n: Principal quantum number of the rydberg electron.
 
         """
+        if not ((isinstance(n, int) or n.is_integer()) and n >= 1):
+            raise ValueError(f"n must be an integer, and larger or equal 1, but {n=}")
+
+        if n > 10 and n < (self.nu - 1e-5):
+            # if n <= 10, we use NIST energy data for low n, which sometimes results in nu > n
+            # -1e-5: avoid issues due to numerical precision and due to NIST data
+            raise ValueError(f"n must be larger or equal to nu, but {n=}, nu={self.nu} for {self}")
+        if n <= self.l_r:
+            raise ValueError(f"n must be larger than l_r, but {n=}, l_r={self.l_r} for {self}")
         self.n = n
-
-        if self.nu > n and abs(self.nu - n) < 1e-10:
-            self.nu = n  # avoid numerical issues
-
-        if n is not None and not (isinstance(n, (int, np.integer)) and n >= 1 and n >= self.nu):
-            raise ValueError(
-                f"n must be an integer larger than 0 and larger (or equal) than nu, but is {n=}, {self.nu=}"
-            )
-
-        if not (isinstance(self.l_r, (int, np.integer)) and self.l_r >= 0 and (n is None or self.l_r <= n - 1)):
-            raise ValueError(f"l_r must be an integer, and between 0 and n - 1, but is {self.l_r=}, {n=}")
 
     def __repr__(self) -> str:
         species, nu, l_r, n = self.species, self.nu, self.l_r, self.n
