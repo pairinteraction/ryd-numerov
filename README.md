@@ -1,3 +1,6 @@
+> [!CAUTION]
+> This package was renamed to RydState, which includes additional functionality, and is now maintained at https://github.com/pairinteraction/rydstate
+
 # Rydberg Numerov
 
 [![PyPI Package][pypi-svg]][pypi-link]
