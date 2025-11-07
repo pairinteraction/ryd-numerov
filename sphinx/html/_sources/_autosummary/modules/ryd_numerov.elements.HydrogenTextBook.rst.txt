@@ -1,0 +1,44 @@
+HydrogenTextBook
+================
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~HydrogenTextBook.__init__
+      ~HydrogenTextBook.calc_energy
+      ~HydrogenTextBook.from_species
+      ~HydrogenTextBook.get_available_species
+      ~HydrogenTextBook.get_corrected_rydberg_constant
+      ~HydrogenTextBook.get_ionization_energy
+      ~HydrogenTextBook.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~HydrogenTextBook.Z
+   ~HydrogenTextBook.ground_state_shell
+   ~HydrogenTextBook.i_c
+   ~HydrogenTextBook.number_valence_electrons
+   ~HydrogenTextBook.potential_type_default
+   ~HydrogenTextBook.reduced_mass_factor
+   ~HydrogenTextBook.species
+   ~HydrogenTextBook.alpha_c_marinescu_1993
+   ~HydrogenTextBook.r_c_dict_marinescu_1993
+   ~HydrogenTextBook.model_potential_parameter_marinescu_1993
+   ~HydrogenTextBook.model_potential_parameter_fei_2009
+
+
+
+.. autoclass:: ryd_numerov.elements.HydrogenTextBook
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

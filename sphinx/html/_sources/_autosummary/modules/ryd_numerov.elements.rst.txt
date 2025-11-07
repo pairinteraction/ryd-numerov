@@ -1,0 +1,85 @@
+elements
+========
+Full module path: ryd\_numerov.elements
+
+.. workaround to ignore generic classes like AtomSQDT[int]
+
+
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+   
+      
+   
+
+
+.. currentmodule:: ryd_numerov.elements
+
+
+
+
+
+
+.. rubric:: Classes
+
+.. .. inheritance-diagram:: ryd_numerov.elements
+..     :parts: 1
+
+.. autosummary::
+   :toctree: .
+   
+      BaseElement
+      Cesium
+      Hydrogen
+      HydrogenTextBook
+      Lithium
+      Potassium
+      Rubidium
+      Sodium
+      Strontium87
+      Strontium88
+      Ytterbium171
+      Ytterbium173
+      Ytterbium174
+
+
+
+
+
+
+.. rubric:: Module description
+
+.. automodule:: ryd_numerov.elements

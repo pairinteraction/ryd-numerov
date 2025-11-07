@@ -1,0 +1,6 @@
+check\_triangular
+=================
+
+.. currentmodule:: ryd_numerov.angular
+
+.. autofunction:: check_triangular

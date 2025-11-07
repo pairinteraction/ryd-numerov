@@ -1,0 +1,6 @@
+calc\_angular\_matrix\_element
+==============================
+
+.. currentmodule:: ryd_numerov.angular
+
+.. autofunction:: calc_angular_matrix_element

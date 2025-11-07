@@ -1,0 +1,56 @@
+﻿ryd\_numerov
+============
+Full module path: ryd\_numerov
+
+.. workaround to ignore generic classes like AtomSQDT[int]
+
+
+   
+      
+   
+   
+      
+   
+   
+      
+   
+
+
+.. currentmodule:: ryd_numerov
+
+
+
+
+
+
+.. rubric:: Classes
+
+.. .. inheritance-diagram:: ryd_numerov
+..     :parts: 1
+
+.. autosummary::
+   :toctree: .
+   
+      RydbergState
+      RydbergStateMQDT
+      RydbergStateSQDT
+
+
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree: .
+   :recursive:
+   
+      angular
+      elements
+      model
+      radial
+
+
+.. rubric:: Module description
+
+.. automodule:: ryd_numerov

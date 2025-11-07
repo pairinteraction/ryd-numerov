@@ -1,0 +1,613 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RydbergStateSQDT &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="angular" href="ryd_numerov.angular.html" />
+    <link rel="prev" title="RydbergStateMQDT" href="ryd_numerov.RydbergStateMQDT.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ryd_numerov.html">ryd_numerov</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergState.html">RydbergState</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateMQDT.html">RydbergStateMQDT</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">RydbergStateSQDT</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT"><code class="docutils literal notranslate"><span class="pre">RydbergStateSQDT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.angular.html">angular</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.elements.html">elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.radial.html">radial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.html">ryd_numerov</a></li>
+      <li class="breadcrumb-item active">RydbergStateSQDT</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/_autosummary/modules/ryd_numerov.RydbergStateSQDT.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rydbergstatesqdt">
+<h1>RydbergStateSQDT<a class="headerlink" href="#rydbergstatesqdt" title="Link to this heading"></a></h1>
+<p class="rubric">Class Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code>(species, n, l[, j_tot, s_tot, m])</p></td>
+<td><p>Initialize the Rydberg state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.calc_angular_matrix_element" title="ryd_numerov.RydbergStateSQDT.calc_angular_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_angular_matrix_element</span></code></a>(other, operator, ...)</p></td>
+<td><p>Calculate the dimensionless angular matrix element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.calc_matrix_element" title="ryd_numerov.RydbergStateSQDT.calc_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_matrix_element</span></code></a>(other, operator, ...[, unit])</p></td>
+<td><p>Calculate the matrix element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.calc_radial_matrix_element" title="ryd_numerov.RydbergStateSQDT.calc_radial_matrix_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_radial_matrix_element</span></code></a>(other, k_radial)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.copy" title="ryd_numerov.RydbergStateSQDT.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a>()</p></td>
+<td><p>Create a copy of the Rydberg state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.create_element" title="ryd_numerov.RydbergStateSQDT.create_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_element</span></code></a>(*[, use_nist_data])</p></td>
+<td><p>Create the element for the Rydberg state.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.create_grid" title="ryd_numerov.RydbergStateSQDT.create_grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_grid</span></code></a>([x_min, x_max, dz])</p></td>
+<td><p>Create the grid object for the integration of the radial Schrödinger equation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.create_model" title="ryd_numerov.RydbergStateSQDT.create_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_model</span></code></a>([potential_type])</p></td>
+<td><p>Create the model for the Rydberg state.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.create_wavefunction" title="ryd_numerov.RydbergStateSQDT.create_wavefunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_wavefunction</span></code></a>([method, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.get_black_body_transition_rates" title="ryd_numerov.RydbergStateSQDT.get_black_body_transition_rates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_black_body_transition_rates</span></code></a>(temperature)</p></td>
+<td><p>Calculate the black body transition rates for the Rydberg state.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.get_energy" title="ryd_numerov.RydbergStateSQDT.get_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_energy</span></code></a>([unit])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.get_label" title="ryd_numerov.RydbergStateSQDT.get_label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_label</span></code></a>(fmt)</p></td>
+<td><p>Label representing the ket.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.get_lifetime" title="ryd_numerov.RydbergStateSQDT.get_lifetime"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lifetime</span></code></a>([temperature, ...])</p></td>
+<td><p>Calculate the lifetime of the Rydberg state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.get_n_star" title="ryd_numerov.RydbergStateSQDT.get_n_star"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_n_star</span></code></a>()</p></td>
+<td><p>Calculate the effective quantum number n* for the Rydberg state.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.get_spontaneous_transition_rates" title="ryd_numerov.RydbergStateSQDT.get_spontaneous_transition_rates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_spontaneous_transition_rates</span></code></a>([unit, method])</p></td>
+<td><p>Calculate the spontaneous transition rates for the Rydberg state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.sanity_check" title="ryd_numerov.RydbergStateSQDT.sanity_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sanity_check</span></code></a>()</p></td>
+<td><p>Check that the quantum numbers are valid.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Class Attributes and Properties</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.element" title="ryd_numerov.RydbergStateSQDT.element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element</span></code></a></p></td>
+<td><p>The element of the Rydberg state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.grid" title="ryd_numerov.RydbergStateSQDT.grid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">grid</span></code></a></p></td>
+<td><p>The grid object for the integration of the radial Schrödinger equation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.model" title="ryd_numerov.RydbergStateSQDT.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.w_list" title="ryd_numerov.RydbergStateSQDT.w_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">w_list</span></code></a></p></td>
+<td><p>The list of w values for the wavefunction.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.wavefunction" title="ryd_numerov.RydbergStateSQDT.wavefunction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wavefunction</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.z_list" title="ryd_numerov.RydbergStateSQDT.z_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">z_list</span></code></a></p></td>
+<td><p>The list of z values for the grid.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.n" title="ryd_numerov.RydbergStateSQDT.n"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.species" title="ryd_numerov.RydbergStateSQDT.species"><code class="xref py py-obj docutils literal notranslate"><span class="pre">species</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.RydbergStateSQDT.l" title="ryd_numerov.RydbergStateSQDT.l"><code class="xref py py-obj docutils literal notranslate"><span class="pre">l</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ryd_numerov.</span></span><span class="sig-name descname"><span class="pre">RydbergStateSQDT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j_tot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_tot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT" title="Link to this definition"></a></dt>
+<dd><p>Initialize the Rydberg state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Atomic species.</p></li>
+<li><p><strong>n</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Principal quantum number of the rydberg electron.</p></li>
+<li><p><strong>l</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Orbital angular momentum quantum number of the rydberg electron.</p></li>
+<li><p><strong>j_tot</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Angular momentum quantum number of the rydberg electron.</p></li>
+<li><p><strong>s_tot</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Total spin quantum number
+Optional, only needed for alkaline earth atoms, where it can be 0 (singlet) or 1 (triplet).</p></li>
+<li><p><strong>m</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Total magnetic quantum number.
+Optional, only needed for concrete angular matrix elements.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.species">
+<span class="sig-name descname"><span class="pre">species</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.species" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.n" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.l">
+<span class="sig-name descname"><span class="pre">l</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.l" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.s_tot">
+<span class="sig-name descname"><span class="pre">s_tot</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.s_tot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.j_tot">
+<span class="sig-name descname"><span class="pre">j_tot</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.j_tot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.copy">
+<span class="sig-name descname"><span class="pre">copy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.copy" title="Link to this definition"></a></dt>
+<dd><p>Create a copy of the Rydberg state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Self</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.get_label">
+<span class="sig-name descname"><span class="pre">get_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fmt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.get_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.get_label" title="Link to this definition"></a></dt>
+<dd><p>Label representing the ket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fmt</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'raw'</span></code>, <code class="docutils literal notranslate"><span class="pre">'ket'</span></code>, <code class="docutils literal notranslate"><span class="pre">'bra'</span></code>]</span>) – The format of the label, i.e. whether to return the raw label, or the label in ket or bra notation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The label of the ket in the given format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.sanity_check">
+<span class="sig-name descname"><span class="pre">sanity_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.sanity_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.sanity_check" title="Link to this definition"></a></dt>
+<dd><p>Check that the quantum numbers are valid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.calc_radial_matrix_element">
+<span class="sig-name descname"><span class="pre">calc_radial_matrix_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_radial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.calc_radial_matrix_element" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>other</strong> (<em>RydbergStateBase</em>)</p></li>
+<li><p><strong>k_radial</strong> (<em>int</em>)</p></li>
+<li><p><strong>unit</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.create_element">
+<span class="sig-name descname"><span class="pre">create_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_nist_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.create_element" title="Link to this definition"></a></dt>
+<dd><p>Create the element for the Rydberg state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>use_nist_data</strong> (<em>bool</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.create_grid">
+<span class="sig-name descname"><span class="pre">create_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.create_grid" title="Link to this definition"></a></dt>
+<dd><p>Create the grid object for the integration of the radial Schrödinger equation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_min</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The minimum value of the radial coordinate in dimensionless units (x = r/a_0).
+Default: Automatically calculate sensible value.</p></li>
+<li><p><strong>x_max</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The maximum value of the radial coordinate in dimensionless units (x = r/a_0).
+Default: Automatically calculate sensible value.</p></li>
+<li><p><strong>dz</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – The step size of the integration (z = r/a_0). Default: 1e-2.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.create_model">
+<span class="sig-name descname"><span class="pre">create_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">potential_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.create_model" title="Link to this definition"></a></dt>
+<dd><p>Create the model for the Rydberg state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>potential_type</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'coulomb'</span></code>, <code class="docutils literal notranslate"><span class="pre">'model_potential_marinescu_1993'</span></code>, <code class="docutils literal notranslate"><span class="pre">'model_potential_fei_2009'</span></code>]]</span>) – Which potential to use for the model.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.create_wavefunction">
+<span class="sig-name descname"><span class="pre">create_wavefunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'numerov'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sign_convention</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_backward</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_use_njit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.create_wavefunction" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>method</strong> (<em>Literal</em><em>[</em><em>'numerov'</em><em>, </em><em>'whittaker'</em><em>]</em>)</p></li>
+<li><p><strong>sign_convention</strong> (<em>Literal</em><em>[</em><em>'positive_at_outer_bound'</em><em>, </em><em>'n_l_1'</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>run_backward</strong> (<em>bool</em>)</p></li>
+<li><p><strong>w0</strong> (<em>float</em>)</p></li>
+<li><p><strong>_use_njit</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.element">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">element</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement" title="ryd_numerov.elements.base_element.BaseElement"><span class="pre">BaseElement</span></a></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.element" title="Link to this definition"></a></dt>
+<dd><p>The element of the Rydberg state.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.get_n_star">
+<span class="sig-name descname"><span class="pre">get_n_star</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.get_n_star" title="Link to this definition"></a></dt>
+<dd><p>Calculate the effective quantum number n* for the Rydberg state.</p>
+<p>We define n* as
+:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+<div class="math notranslate nohighlight">
+\[n^* = \sqrt{-\frac{1}{2} \frac{\mu}{E} }\]</div>
+<p>where <cite>mu = R_M/R_infty</cite> is the reduced mass and <cite>E</cite> the energy of the state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.grid">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="ryd_numerov.radial.Grid.html#ryd_numerov.radial.Grid" title="ryd_numerov.radial.grid.Grid"><span class="pre">Grid</span></a></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.grid" title="Link to this definition"></a></dt>
+<dd><p>The grid object for the integration of the radial Schrödinger equation.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.model">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="ryd_numerov.model.Model.html#ryd_numerov.model.Model" title="ryd_numerov.model.model.Model"><span class="pre">Model</span></a></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.w_list">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">w_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.w_list" title="Link to this definition"></a></dt>
+<dd><p>The list of w values for the wavefunction.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.wavefunction">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">wavefunction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="ryd_numerov.radial.Wavefunction.html#ryd_numerov.radial.Wavefunction" title="ryd_numerov.radial.wavefunction.Wavefunction"><span class="pre">Wavefunction</span></a></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.wavefunction" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.z_list">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">z_list</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dtype</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.z_list" title="Link to this definition"></a></dt>
+<dd><p>The list of z values for the grid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.get_energy">
+<span class="sig-name descname"><span class="pre">get_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.get_energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.get_energy" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>unit</strong> (<em>str</em><em> | </em><em>None</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.calc_angular_matrix_element">
+<span class="sig-name descname"><span class="pre">calc_angular_matrix_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_angular</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.calc_angular_matrix_element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.calc_angular_matrix_element" title="Link to this definition"></a></dt>
+<dd><p>Calculate the dimensionless angular matrix element.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>other</strong> (<em>Self</em>)</p></li>
+<li><p><strong>operator</strong> (<em>Literal</em><em>[</em><em>'MAGNETIC'</em><em>, </em><em>'ELECTRIC'</em><em>, </em><em>'SPHERICAL'</em><em>, </em><em>'MAGNETIC_S'</em><em>, </em><em>'MAGNETIC_L'</em><em>]</em>)</p></li>
+<li><p><strong>k_angular</strong> (<em>int</em>)</p></li>
+<li><p><strong>q</strong> (<em>int</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.calc_matrix_element">
+<span class="sig-name descname"><span class="pre">calc_matrix_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_radial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_angular</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.calc_matrix_element"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.calc_matrix_element" title="Link to this definition"></a></dt>
+<dd><p>Calculate the matrix element.</p>
+<p>Calculate the matrix element between two Rydberg states
+ket{self}=ket{n’,l’,j_tot’,s_tot’,m’} and ket{other}= ket{n,l,j_tot,s_tot,m}.</p>
+<div class="math notranslate nohighlight">
+\[\langle n,l,j_tot,s_tot,m | r^k_radial \hat{O}_{k_angular,q} | n',l',j_tot',s_tot',m' \rangle\]</div>
+<p>where hat{O}_{k_angular,q} is the operators of rank k_angular and component q,
+for which to calculate the matrix element.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>other</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Self</span></code></span>) – The other Rydberg state ket{n,l,j_tot,s_tot,m} to which to calculate the matrix element.</p></li>
+<li><p><strong>operator</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'MAGNETIC'</span></code>, <code class="docutils literal notranslate"><span class="pre">'ELECTRIC'</span></code>, <code class="docutils literal notranslate"><span class="pre">'SPHERICAL'</span></code>, <code class="docutils literal notranslate"><span class="pre">'MAGNETIC_S'</span></code>, <code class="docutils literal notranslate"><span class="pre">'MAGNETIC_L'</span></code>]</span>) – The operator type for which to calculate the matrix element.
+Can be one of “MAGNETIC”, “ELECTRIC”, “SPHERICAL”.</p></li>
+<li><p><strong>k_radial</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The radial matrix element power k.</p></li>
+<li><p><strong>k_angular</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The rank of the angular operator.</p></li>
+<li><p><strong>q</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – The component of the angular operator.</p></li>
+<li><p><strong>unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The unit to which to convert the radial matrix element.
+Can be “a.u.” for atomic units (so no conversion is done), or a specific unit.
+Default None will return a pint quantity.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The matrix element for the given operator.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.get_spontaneous_transition_rates">
+<span class="sig-name descname"><span class="pre">get_spontaneous_transition_rates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exact'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.get_spontaneous_transition_rates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.get_spontaneous_transition_rates" title="Link to this definition"></a></dt>
+<dd><p>Calculate the spontaneous transition rates for the Rydberg state.</p>
+<p>The spontaneous transition rates are given by the Einstein A coefficients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The unit to which to convert the result to.
+Can be “a.u.” for atomic units (so no conversion is done), or a specific unit.
+Default None will return a pint quantity.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'exact'</span></code>, <code class="docutils literal notranslate"><span class="pre">'approximation'</span></code>]</span>) – How to calculate the transition rates.
+Can be “exact” or “approximation”.
+Defaults to “exact”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Self</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]], <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The relevant states and the transition rates.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.get_black_body_transition_rates">
+<span class="sig-name descname"><span class="pre">get_black_body_transition_rates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exact'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.get_black_body_transition_rates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.get_black_body_transition_rates" title="Link to this definition"></a></dt>
+<dd><p>Calculate the black body transition rates for the Rydberg state.</p>
+<p>The black body transitions rates are given by the Einstein B coefficients,
+with a weight factor given by Planck’s law.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</span>) – The temperature, for which to calculate the black body transition rates.</p></li>
+<li><p><strong>temperature_unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The unit of the temperature.
+Default None will assume the temperature is given as pint quantity.</p></li>
+<li><p><strong>unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The unit to which to convert the result.
+Can be “a.u.” for atomic units (so no conversion is done), or a specific unit.
+Default None will return a pint quantity.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'exact'</span></code>, <code class="docutils literal notranslate"><span class="pre">'approximation'</span></code>]</span>) – How to calculate the transition rates.
+Can be “exact” or “approximation”.
+Defaults to “exact”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Self</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]], <code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]]]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The relevant states and the transition rates.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.RydbergStateSQDT.get_lifetime">
+<span class="sig-name descname"><span class="pre">get_lifetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'exact'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/rydberg.html#RydbergStateSQDT.get_lifetime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.RydbergStateSQDT.get_lifetime" title="Link to this definition"></a></dt>
+<dd><p>Calculate the lifetime of the Rydberg state.</p>
+<p>The lifetime is given by the inverse of the sum of the transition rates:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tau = \frac{1}{\\sum_i A_i}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(A_i\)</span> are the transition rates
+(see <cite>get_spontaneous_transition_rates</cite> and <cite>get_black_body_transition_rates</cite>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperature</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</span>) – The temperature, for which to calculate the lifetime.
+Default None will only consider the spontaneous transition rates for the lifetime.</p></li>
+<li><p><strong>temperature_unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The unit of the temperature.
+Default None will assume the temperature is given as pint quantity.</p></li>
+<li><p><strong>unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – The unit to which to convert the result to.
+Can be “a.u.” for atomic units (so no conversion is done), or a specific unit.
+Default None will return a pint quantity.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[<code class="docutils literal notranslate"><span class="pre">'exact'</span></code>, <code class="docutils literal notranslate"><span class="pre">'approximation'</span></code>]</span>) – How to calculate the transition rates.
+Can be “exact” or “approximation”.
+Defaults to “exact”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The lifetime of the Rydberg state in the given unit.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ryd_numerov.RydbergStateMQDT.html" class="btn btn-neutral float-left" title="RydbergStateMQDT" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ryd_numerov.angular.html" class="btn btn-neutral float-right" title="angular" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

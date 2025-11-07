@@ -1,0 +1,6 @@
+calc\_radial\_matrix\_element
+=============================
+
+.. currentmodule:: ryd_numerov.radial
+
+.. autofunction:: calc_radial_matrix_element

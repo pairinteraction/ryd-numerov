@@ -1,0 +1,287 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ryd_numerov.rydberg_mqdt &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">API Reference</a></li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ryd_numerov.rydberg_mqdt</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ryd_numerov.rydberg_mqdt</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.rydberg</span><span class="w"> </span><span class="kn">import</span> <span class="n">RydbergStateBase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseQuantities</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">PintFloat</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RydbergStateMQDT">
+<a class="viewcode-back" href="../../_autosummary/modules/ryd_numerov.RydbergStateMQDT.html#ryd_numerov.RydbergStateMQDT">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RydbergStateMQDT</span><span class="p">(</span><span class="n">RydbergStateBase</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">species</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">l</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">energy_au</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Initialize the Rydberg state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            species: Atomic species.</span>
+<span class="sd">            nu: Effective principal quantum number of the rydberg electron,</span>
+<span class="sd">                which is used to calculate the energy of the state.</span>
+<span class="sd">            n: Principal quantum number of the rydberg electron.</span>
+<span class="sd">            l: Orbital angular momentum quantum number of the rydberg electron.</span>
+<span class="sd">            energy_au: The energy of the Rydberg state in atomic units (&quot;hartree&quot;).</span>
+<span class="sd">                Either `nu` or `energy_au` must be provided.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">species</span> <span class="o">=</span> <span class="n">species</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="n">n</span>
+        <span class="k">assert</span> <span class="n">l</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;l must be set&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">=</span> <span class="n">l</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_energy_au</span><span class="p">:</span> <span class="nb">float</span>
+        <span class="k">if</span> <span class="n">nu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">energy_au</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Only one of nu or energy_au can be given.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nu</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">energy_au</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Either nu or energy_au must be provided.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_energy_au</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">reduced_mass_factor</span> <span class="o">/</span> <span class="n">nu</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">energy_au</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_energy_au</span> <span class="o">=</span> <span class="n">energy_au</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sanity_check</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">species</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">species</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">nu</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">n</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">l</span><span class="si">=}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_label</span><span class="p">(</span><span class="s2">&quot;ket&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RydbergStateMQDT.copy">
+<a class="viewcode-back" href="../../_autosummary/modules/ryd_numerov.RydbergStateMQDT.html#ryd_numerov.RydbergStateMQDT.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a copy of the Rydberg state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RydbergStateMQDT.get_label">
+<a class="viewcode-back" href="../../_autosummary/modules/ryd_numerov.RydbergStateMQDT.html#ryd_numerov.RydbergStateMQDT.get_label">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;ket&quot;</span><span class="p">,</span> <span class="s2">&quot;bra&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Label representing the ket.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fmt: The format of the label, i.e. whether to return the raw label, or the label in ket or bra notation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The label of the ket in the given format.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">l_dict</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s2">&quot;G&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s2">&quot;H&quot;</span><span class="p">}</span>
+
+        <span class="n">raw</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">l_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">raw</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;(n=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;raw&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">raw</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;ket&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;|</span><span class="si">{</span><span class="n">raw</span><span class="si">}</span><span class="s2">⟩&quot;</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">&quot;bra&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;⟨</span><span class="si">{</span><span class="n">raw</span><span class="si">}</span><span class="s2">|&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown fmt </span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the effective quantum number nu = n*.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_n_star</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RydbergStateMQDT.sanity_check">
+<a class="viewcode-back" href="../../_autosummary/modules/ryd_numerov.RydbergStateMQDT.html#ryd_numerov.RydbergStateMQDT.sanity_check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sanity_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check that the quantum numbers are valid.&quot;&quot;&quot;</span>
+        <span class="n">msgs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">nu</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nu</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;nu must be larger than 0, but is </span><span class="si">{</span><span class="n">nu</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
+                <span class="n">msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n must be an integer, but </span><span class="si">{</span><span class="n">n</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n must be larger than 0, but is </span><span class="si">{</span><span class="n">n</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">nu</span> <span class="o">&lt;=</span> <span class="n">n</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;n should be larger (or equal) than nu, but n=</span><span class="si">%d</span><span class="s2">, nu=</span><span class="si">%f</span><span class="s2"> for </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)):</span>
+            <span class="n">msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;l must be an integer, but </span><span class="si">{</span><span class="n">l</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">l</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;l must be between 0 and n - 1, but </span><span class="si">{</span><span class="n">l</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">n</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># TODO check is_allowed_shell like in RydbergStateSQDT (we dont know s_tot here ...)</span>
+
+        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">msgs</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">msgs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid Rydberg state </span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="RydbergStateMQDT.get_energy">
+<a class="viewcode-back" href="../../_autosummary/modules/ryd_numerov.RydbergStateMQDT.html#ryd_numerov.RydbergStateMQDT.get_energy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;a.u.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_energy_au</span>
+        <span class="n">energy</span><span class="p">:</span> <span class="n">PintFloat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_energy_au</span> <span class="o">*</span> <span class="n">BaseQuantities</span><span class="p">[</span><span class="s2">&quot;ENERGY&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">energy</span>
+        <span class="k">return</span> <span class="n">energy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;spectroscopy&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">magnitude</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

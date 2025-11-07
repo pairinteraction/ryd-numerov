@@ -1,0 +1,44 @@
+Strontium88
+===========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Strontium88.__init__
+      ~Strontium88.calc_energy
+      ~Strontium88.from_species
+      ~Strontium88.get_available_species
+      ~Strontium88.get_corrected_rydberg_constant
+      ~Strontium88.get_ionization_energy
+      ~Strontium88.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Strontium88.Z
+   ~Strontium88.alpha_c_marinescu_1993
+   ~Strontium88.ground_state_shell
+   ~Strontium88.i_c
+   ~Strontium88.model_potential_parameter_fei_2009
+   ~Strontium88.model_potential_parameter_marinescu_1993
+   ~Strontium88.number_valence_electrons
+   ~Strontium88.potential_type_default
+   ~Strontium88.r_c_dict_marinescu_1993
+   ~Strontium88.reduced_mass_factor
+   ~Strontium88.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Strontium88
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

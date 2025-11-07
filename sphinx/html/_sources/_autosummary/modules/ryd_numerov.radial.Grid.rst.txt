@@ -1,0 +1,36 @@
+Grid
+====
+
+.. currentmodule:: ryd_numerov.radial
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Grid.__init__
+      ~Grid.set_grid_range
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Grid.dz
+   ~Grid.steps
+   ~Grid.x_list
+   ~Grid.x_max
+   ~Grid.x_min
+   ~Grid.z_list
+   ~Grid.z_max
+   ~Grid.z_min
+
+
+
+.. autoclass:: ryd_numerov.radial.Grid
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

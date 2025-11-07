@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lithium &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Potassium" href="ryd_numerov.elements.Potassium.html" />
+    <link rel="prev" title="HydrogenTextBook" href="ryd_numerov.elements.HydrogenTextBook.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="ryd_numerov.html">ryd_numerov</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergState.html">RydbergState</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateMQDT.html">RydbergStateMQDT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.RydbergStateSQDT.html">RydbergStateSQDT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.angular.html">angular</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="ryd_numerov.elements.html">elements</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.BaseElement.html">BaseElement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Cesium.html">Cesium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Hydrogen.html">Hydrogen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.HydrogenTextBook.html">HydrogenTextBook</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Lithium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Potassium.html">Potassium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Rubidium.html">Rubidium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Sodium.html">Sodium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Strontium87.html">Strontium87</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Strontium88.html">Strontium88</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Ytterbium171.html">Ytterbium171</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Ytterbium173.html">Ytterbium173</a></li>
+<li class="toctree-l4"><a class="reference internal" href="ryd_numerov.elements.Ytterbium174.html">Ytterbium174</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ryd_numerov.radial.html">radial</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.html">ryd_numerov</a></li>
+          <li class="breadcrumb-item"><a href="ryd_numerov.elements.html">elements</a></li>
+      <li class="breadcrumb-item active">Lithium</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/_autosummary/modules/ryd_numerov.elements.Lithium.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lithium">
+<h1>Lithium<a class="headerlink" href="#lithium" title="Link to this heading"></a></h1>
+<p class="rubric">Class Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code>([use_nist_data, nist_n_max])</p></td>
+<td><p>Initialize an element instance.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.calc_energy" title="ryd_numerov.elements.Lithium.calc_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_energy</span></code></a>(n, l, j_tot, s_tot[, unit])</p></td>
+<td><p>Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.from_species" title="ryd_numerov.elements.Lithium.from_species"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_species</span></code></a>(cls, species[, use_nist_data])</p></td>
+<td><p>Create an instance of the element class from the species string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.get_available_species" title="ryd_numerov.elements.Lithium.get_available_species"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_available_species</span></code></a>()</p></td>
+<td><p>Get a list of all available species in the library.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.get_corrected_rydberg_constant" title="ryd_numerov.elements.Lithium.get_corrected_rydberg_constant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_corrected_rydberg_constant</span></code></a>([unit])</p></td>
+<td><p>Return the corrected Rydberg constant in the desired unit.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.get_ionization_energy" title="ryd_numerov.elements.Lithium.get_ionization_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ionization_energy</span></code></a>([unit])</p></td>
+<td><p>Return the ionization energy in the desired unit.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.is_allowed_shell" title="ryd_numerov.elements.Lithium.is_allowed_shell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_allowed_shell</span></code></a>(n, l, s_tot)</p></td>
+<td><p>Check if the quantum numbers describe an allowed shell.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Class Attributes and Properties</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.Z" title="ryd_numerov.elements.Lithium.Z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Z</span></code></a></p></td>
+<td><p>Atomic number of the element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.alpha_c_marinescu_1993" title="ryd_numerov.elements.Lithium.alpha_c_marinescu_1993"><code class="xref py py-obj docutils literal notranslate"><span class="pre">alpha_c_marinescu_1993</span></code></a></p></td>
+<td><p>Static dipole polarizability in atomic units (a.u.), used for the parametric model potential.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.ground_state_shell" title="ryd_numerov.elements.Lithium.ground_state_shell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ground_state_shell</span></code></a></p></td>
+<td><p>Shell (n, l) describing the electronic ground state configuration.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.i_c" title="ryd_numerov.elements.Lithium.i_c"><code class="xref py py-obj docutils literal notranslate"><span class="pre">i_c</span></code></a></p></td>
+<td><p>Nuclear spin, (default 0 to ignore hyperfine structure).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.model_potential_parameter_fei_2009" title="ryd_numerov.elements.Lithium.model_potential_parameter_fei_2009"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_potential_parameter_fei_2009</span></code></a></p></td>
+<td><p>Parameters (delta, alpha, beta, gamma) for the new four-parameter potential, used in the model potential defined in: Y.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.model_potential_parameter_marinescu_1993" title="ryd_numerov.elements.Lithium.model_potential_parameter_marinescu_1993"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_potential_parameter_marinescu_1993</span></code></a></p></td>
+<td><p>(a_1, a_2, a_3, a_4)} for the parametric model potential.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.number_valence_electrons" title="ryd_numerov.elements.Lithium.number_valence_electrons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">number_valence_electrons</span></code></a></p></td>
+<td><p>Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.potential_type_default" title="ryd_numerov.elements.Lithium.potential_type_default"><code class="xref py py-obj docutils literal notranslate"><span class="pre">potential_type_default</span></code></a></p></td>
+<td><p>Default potential type to use for this element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.r_c_dict_marinescu_1993" title="ryd_numerov.elements.Lithium.r_c_dict_marinescu_1993"><code class="xref py py-obj docutils literal notranslate"><span class="pre">r_c_dict_marinescu_1993</span></code></a></p></td>
+<td><p>r_c} to truncate the unphysical short-range contribution of the polarization potential.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.reduced_mass_factor" title="ryd_numerov.elements.Lithium.reduced_mass_factor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reduced_mass_factor</span></code></a></p></td>
+<td><p>The reduced mass factor mu.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#ryd_numerov.elements.Lithium.species" title="ryd_numerov.elements.Lithium.species"><code class="xref py py-obj docutils literal notranslate"><span class="pre">species</span></code></a></p></td>
+<td><p>Atomic species.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py class">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ryd_numerov.elements.</span></span><span class="sig-name descname"><span class="pre">Lithium</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">use_nist_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nist_n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ryd_numerov/elements/lithium.html#Lithium"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ryd_numerov.elements.Lithium" title="Link to this definition"></a></dt>
+<dd><p>Initialize an element instance.</p>
+<p>Use this init method to set up additional properties and data for the element,
+like loading NIST energy levels from a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>use_nist_data</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to use NIST data for this element. Default is True.</p></li>
+<li><p><strong>nist_n_max</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Maximum principal quantum number for which to load the NIST energy levels. Default is 15.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.species">
+<span class="sig-name descname"><span class="pre">species</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[str]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Li'</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.species" title="Link to this definition"></a></dt>
+<dd><p>Atomic species.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.Z">
+<span class="sig-name descname"><span class="pre">Z</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[int]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.Z" title="Link to this definition"></a></dt>
+<dd><p>Atomic number of the element.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.number_valence_electrons">
+<span class="sig-name descname"><span class="pre">number_valence_electrons</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[int]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.number_valence_electrons" title="Link to this definition"></a></dt>
+<dd><p>Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.ground_state_shell">
+<span class="sig-name descname"><span class="pre">ground_state_shell</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[tuple[int,</span> <span class="pre">int]]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(2,</span> <span class="pre">0)</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.ground_state_shell" title="Link to this definition"></a></dt>
+<dd><p>Shell (n, l) describing the electronic ground state configuration.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.potential_type_default">
+<span class="sig-name descname"><span class="pre">potential_type_default</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">PotentialType</span> <span class="pre">|</span> <span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'model_potential_marinescu_1993'</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.potential_type_default" title="Link to this definition"></a></dt>
+<dd><p>Default potential type to use for this element. If None, the potential type must be specified explicitly.
+In general, it looks like marinescu_1993 is better for alkali atoms, and fei_2009 is better for alkaline earth atoms</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.alpha_c_marinescu_1993">
+<span class="sig-name descname"><span class="pre">alpha_c_marinescu_1993</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[float]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1923</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.alpha_c_marinescu_1993" title="Link to this definition"></a></dt>
+<dd><p>Static dipole polarizability in atomic units (a.u.), used for the parametric model potential.
+See also: Phys. Rev. A 49, 982 (1994)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.r_c_dict_marinescu_1993">
+<span class="sig-name descname"><span class="pre">r_c_dict_marinescu_1993</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{0:</span> <span class="pre">0.61340824,</span> <span class="pre">1:</span> <span class="pre">0.61566441,</span> <span class="pre">2:</span> <span class="pre">2.34126273}</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.r_c_dict_marinescu_1993" title="Link to this definition"></a></dt>
+<dd><p>r_c} to truncate the unphysical short-range contribution of the polarization potential.
+See also: Phys. Rev. A 49, 982 (1994)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Cutoff radius {l</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.model_potential_parameter_marinescu_1993">
+<span class="sig-name descname"><span class="pre">model_potential_parameter_marinescu_1993</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{0:</span> <span class="pre">(2.47718079,</span> <span class="pre">1.84150932,</span> <span class="pre">-0.02169712,</span> <span class="pre">-0.11988362),</span> <span class="pre">1:</span> <span class="pre">(3.45414648,</span> <span class="pre">2.5515108,</span> <span class="pre">-0.21646561,</span> <span class="pre">-0.06990078),</span> <span class="pre">2:</span> <span class="pre">(2.51909839,</span> <span class="pre">2.4371245,</span> <span class="pre">0.32505524,</span> <span class="pre">0.1060243)}</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.model_potential_parameter_marinescu_1993" title="Link to this definition"></a></dt>
+<dd><p>(a_1, a_2, a_3, a_4)} for the parametric model potential.
+See also: M. Marinescu, Phys. Rev. A 49, 982 (1994), <a class="reference external" href="https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982">https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Parameters {l</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.model_potential_parameter_fei_2009">
+<span class="sig-name descname"><span class="pre">model_potential_parameter_fei_2009</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple[float,</span> <span class="pre">float,</span> <span class="pre">float,</span> <span class="pre">float]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(1.0255,</span> <span class="pre">1.7402,</span> <span class="pre">1.0543,</span> <span class="pre">0.7165)</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.model_potential_parameter_fei_2009" title="Link to this definition"></a></dt>
+<dd><p>Parameters (delta, alpha, beta, gamma) for the new four-parameter potential, used in the model potential
+defined in: Y. Fei et al., Chin. Phys. B 18, 4349 (2009), <a class="reference external" href="https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025">https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025</a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.calc_energy">
+<span class="sig-name descname"><span class="pre">calc_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j_tot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_tot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hartree'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.elements.Lithium.calc_energy" title="Link to this definition"></a></dt>
+<dd><p>Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.</p>
+<p>I.e. either look up the energy for low lying states in the nist data,
+or calculate it via the quantum defect theory.</p>
+<p>The effective principal quantum number in quantum defect theory
+is defined as series expansion <span class="math notranslate nohighlight">\(n^* = n - \delta_{lj}(n)\)</span>
+where
+:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+<div class="math notranslate nohighlight">
+\[\delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...\]</div>
+<p>is the quantum defect. The energy of the Rydberg state is then given by</p>
+<div class="math notranslate nohighlight">
+\[E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}\]</div>
+<p>where <span class="math notranslate nohighlight">\(E_H\)</span> is the Hartree energy (the atomic unit of energy).</p>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract">https://ui.adsabs.harvard.edu/abs/1908ApJ….28..237R/abstract</a></p></li>
+<li><p>Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>)</p></li>
+<li><p><strong>l</strong> (<em>int</em>)</p></li>
+<li><p><strong>j_tot</strong> (<em>float</em>)</p></li>
+<li><p><strong>s_tot</strong> (<em>float</em>)</p></li>
+<li><p><strong>unit</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>PlainQuantity</em>[float] | float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.from_species">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_species</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">species</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_nist_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.elements.Lithium.from_species" title="Link to this definition"></a></dt>
+<dd><p>Create an instance of the element class from the species string.</p>
+<p>This method searches through all subclasses of BaseElement until it finds one with a matching species attribute.
+This approach allows for easy extension of the library with new elements.
+A user can even subclass BaseElement in his code (without modifying the ryd-numerov library),
+e.g. <cite>class CustomRubidium(BaseElement): species = “Custom_Rb” …</cite>
+and then use the new element by calling RydbergState(“Custom_Rb”, …)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>species</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – The species string (e.g. “Rb”).</p></li>
+<li><p><strong>use_nist_data</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>) – Whether to use NIST data for this element. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement" title="ryd_numerov.elements.base_element.BaseElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseElement</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of the corresponding element class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.get_available_species">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_available_species</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.elements.Lithium.get_available_species" title="Link to this definition"></a></dt>
+<dd><p>Get a list of all available species in the library.</p>
+<p>This method returns a list of species strings for all concrete subclasses of BaseElement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of species strings.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.get_corrected_rydberg_constant">
+<span class="sig-name descname"><span class="pre">get_corrected_rydberg_constant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hartree'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.elements.Lithium.get_corrected_rydberg_constant" title="Link to this definition"></a></dt>
+<dd><p>Return the corrected Rydberg constant in the desired unit.</p>
+<p>The corrected Rydberg constant is defined as</p>
+<div class="math notranslate nohighlight">
+\[R_M = R_\infty * \frac{m_{Core}}{m_{Core} + m_e}\]</div>
+<p>where <span class="math notranslate nohighlight">\(R_\infty\)</span> is the Rydberg constant for infinite nuclear mass,
+<span class="math notranslate nohighlight">\(m_{Core}\)</span> is the mass of the core,
+and <span class="math notranslate nohighlight">\(m_e\)</span> is the mass of the electron.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Desired unit for the corrected Rydberg constant. Default is atomic units “hartree”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Corrected Rydberg constant in the desired unit.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.get_ionization_energy">
+<span class="sig-name descname"><span class="pre">get_ionization_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hartree'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.elements.Lithium.get_ionization_energy" title="Link to this definition"></a></dt>
+<dd><p>Return the ionization energy in the desired unit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>unit</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>) – Desired unit for the ionization energy. Default is atomic units “hartree”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">PlainQuantity</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Ionization energy in the desired unit.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.i_c">
+<span class="sig-name descname"><span class="pre">i_c</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[float]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.i_c" title="Link to this definition"></a></dt>
+<dd><p>Nuclear spin, (default 0 to ignore hyperfine structure).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.is_allowed_shell">
+<span class="sig-name descname"><span class="pre">is_allowed_shell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_tot</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ryd_numerov.elements.Lithium.is_allowed_shell" title="Link to this definition"></a></dt>
+<dd><p>Check if the quantum numbers describe an allowed shell.</p>
+<p>I.e. whether the shell is above the ground state shell.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Principal quantum number</p></li>
+<li><p><strong>l</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span>) – Orbital angular momentum quantum number</p></li>
+<li><p><strong>s_tot</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – Total spin quantum number</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the quantum numbers specify a shell equal to or above the ground state shell, False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="ryd_numerov.elements.Lithium.reduced_mass_factor">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reduced_mass_factor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#ryd_numerov.elements.Lithium.reduced_mass_factor" title="Link to this definition"></a></dt>
+<dd><p>The reduced mass factor mu.</p>
+<p>The reduced mass factor</p>
+<div class="math notranslate nohighlight">
+\[\mu = \frac{m_{Core}}{m_{Core} + m_e}\]</div>
+<p>calculated via the corrected Rydberg constant</p>
+<div class="math notranslate nohighlight">
+\[\mu = \frac{R_M}{R_\infty}\]</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ryd_numerov.elements.HydrogenTextBook.html" class="btn btn-neutral float-left" title="HydrogenTextBook" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="ryd_numerov.elements.Potassium.html" class="btn btn-neutral float-right" title="Potassium" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

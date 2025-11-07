@@ -1,0 +1,44 @@
+Ytterbium173
+============
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Ytterbium173.__init__
+      ~Ytterbium173.calc_energy
+      ~Ytterbium173.from_species
+      ~Ytterbium173.get_available_species
+      ~Ytterbium173.get_corrected_rydberg_constant
+      ~Ytterbium173.get_ionization_energy
+      ~Ytterbium173.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Ytterbium173.Z
+   ~Ytterbium173.ground_state_shell
+   ~Ytterbium173.i_c
+   ~Ytterbium173.model_potential_parameter_fei_2009
+   ~Ytterbium173.number_valence_electrons
+   ~Ytterbium173.potential_type_default
+   ~Ytterbium173.reduced_mass_factor
+   ~Ytterbium173.species
+   ~Ytterbium173.alpha_c_marinescu_1993
+   ~Ytterbium173.r_c_dict_marinescu_1993
+   ~Ytterbium173.model_potential_parameter_marinescu_1993
+
+
+
+.. autoclass:: ryd_numerov.elements.Ytterbium173
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

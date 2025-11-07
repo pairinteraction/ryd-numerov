@@ -1,0 +1,33 @@
+WavefunctionWhittaker
+=====================
+
+.. currentmodule:: ryd_numerov.radial
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~WavefunctionWhittaker.__init__
+      ~WavefunctionWhittaker.apply_sign_convention
+      ~WavefunctionWhittaker.integrate
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~WavefunctionWhittaker.nodes
+   ~WavefunctionWhittaker.r_list
+   ~WavefunctionWhittaker.u_list
+   ~WavefunctionWhittaker.w_list
+
+
+
+.. autoclass:: ryd_numerov.radial.WavefunctionWhittaker
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rydberg Numerov &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Reference</a></li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Rydberg Numerov</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rydberg-numerov">
+<h1>Rydberg Numerov<a class="headerlink" href="#rydberg-numerov" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://pypi.org/project/ryd-numerov/"><img alt="PyPI Package" src="https://img.shields.io/pypi/v/ryd-numerov.svg?style=flat" /></a>
+<a class="reference external" href="https://www.gnu.org/licenses/lgpl-3.0.html"><img alt="License: LGPL v3" src="https://img.shields.io/badge/License-LGPL_v3-blue.svg?style=flat" /></a>
+<a class="reference external" href="https://github.com/pairinteraction/ryd-numerov/actions/workflows/python_wheel.yml"><img alt="CI Workflow" src="https://github.com/pairinteraction/ryd-numerov/actions/workflows/python_wheel.yml/badge.svg" /></a>
+<a class="reference external" href="https://www.pairinteraction.org/ryd-numerov/sphinx/html/"><img alt="Documentation" src="https://img.shields.io/badge/Documentation-rydnumerov-blue.svg?style=flat" /></a></p>
+<p>The <em>Rydberg Numerov</em> software calculates properties of Rydberg states.
+We especially focus on the calculation of the radial wavefunction of Rydberg states via the Numerov method.
+The software can be installed via pip (requires Python &gt;= 3.9):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>ryd-numerov
+</pre></div>
+</div>
+<p>To install the latest development version from github, use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/pairinteraction/ryd-numerov
+</pre></div>
+</div>
+<section id="how-to-cite">
+<h2>How to Cite<a class="headerlink" href="#how-to-cite" title="Link to this heading"></a></h2>
+<p>This package relies on quantum defects provided by the community. Consider citing relevant publications for your atomic species.</p>
+<p><details>
+<summary><b>Click to expand for quantum defect references</b></summary>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Element</p></th>
+<th class="head"><p>Model</p></th>
+<th class="head"><p>Identifier</p></th>
+<th class="head"><p>References</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>H</p></td>
+<td><p>SQDT</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">H</span></code></p></td>
+<td><p>Schrödinger equation for hydrogen</p></td>
+</tr>
+<tr class="row-odd"><td><p>Li</p></td>
+<td><p>SQDT</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Li</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1017/CBO9780511524530">10.1017/CBO9780511524530</a> (1994)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.34.2889">10.1103/PhysRevA.34.2889</a> (1986)</p></td>
+</tr>
+<tr class="row-even"><td><p>Na</p></td>
+<td><p>SQDT</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Na</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1088/0953-4075/30/10/009">10.1088/0953-4075/30/10/009</a> (1997)<br><a class="reference external" href="https://doi.org/10.1070/QE1995v025n09ABEH000501">10.1070/QE1995v025n09ABEH000501</a> (1995)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.45.4720">10.1103/PhysRevA.45.4720</a> (1992)</p></td>
+</tr>
+<tr class="row-odd"><td><p>K</p></td>
+<td><p>SQDT</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">K</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1088/0031-8949/27/4/012">10.1088/0031-8949/27/4/012</a> (1983)<br><a class="reference external" href="https://doi.org/10.1016/0030-4018(81)90225-X">10.1016/0030-4018(81)90225-X</a> (1981)</p></td>
+</tr>
+<tr class="row-even"><td><p>Rb</p></td>
+<td><p>SQDT</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Rb</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1103/PhysRevA.83.052515">10.1103/PhysRevA.83.052515</a> (2011)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.74.054502">10.1103/PhysRevA.74.054502</a> (2006)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.74.062712">10.1103/PhysRevA.74.062712</a> (2006)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.67.052502">10.1103/PhysRevA.67.052502</a> (2003)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cs</p></td>
+<td><p>SQDT</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Cs</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1103/PhysRevA.93.013424">10.1103/PhysRevA.93.013424</a> (2016)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.35.4650">10.1103/PhysRevA.35.4650</a> (1987)<br><a class="reference external" href="https://doi.org/10.1103/PhysRevA.26.2733">10.1103/PhysRevA.26.2733</a> (1982)</p></td>
+</tr>
+<tr class="row-even"><td><p>Sr88</p></td>
+<td><p>SQDT, singlet sector</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Sr88</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1103/PhysRevA.108.022815">10.1103/PhysRevA.108.022815</a> (2023)<br><a class="reference external" href="https://doi.org/10.17169/refubium-34581">10.17169/refubium-34581</a> (2022)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sr88</p></td>
+<td><p>SQDT, triplet sector</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Sr88</span></code></p></td>
+<td><p><a class="reference external" href="https://doi.org/10.1016/j.cpc.2020.107814">10.1016/j.cpc.2020.107814</a> (2021)</p></td>
+</tr>
+</tbody>
+</table>
+</details></p>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading"></a></h2>
+<p><strong>User Guide</strong></p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.pairinteraction.org/ryd-numerov/sphinx/html/examples.html">Tutorials</a> - Examples of how to use the Rydberg Numerov library.</p></li>
+<li><p><a class="reference external" href="https://www.pairinteraction.org/ryd-numerov/sphinx/html/modules.html">API Reference</a> - Documentation of classes and functions of the Rydberg Numerov Python library.</p></li>
+</ul>
+</section>
+<section id="using-custom-quantum-defects">
+<h2>Using custom quantum defects<a class="headerlink" href="#using-custom-quantum-defects" title="Link to this heading"></a></h2>
+<p>To use custom quantum defects (or quantum defects for a new element), you can simply create a subclass of <code class="docutils literal notranslate"><span class="pre">ryd_numerov.elements.base_element.BaseElement</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">CustomRubidium(BaseElement):</span></code>) with a custom species name (e.g. <code class="docutils literal notranslate"><span class="pre">species</span> <span class="pre">=</span> <span class="pre">&quot;Custom_Rb&quot;</span></code>).
+Then, similarly to <code class="docutils literal notranslate"><span class="pre">ryd_numerov.elements.rubidium.py</span></code> you can define the quantum defects (and model potential parameters, …) for your element.
+Finally, you can use the custom element by simply calling <code class="docutils literal notranslate"><span class="pre">ryd_numerov.RydbergState(&quot;Custom_Rb&quot;,</span> <span class="pre">n=50,</span> <span class="pre">l=0,</span> <span class="pre">j_tot=1/2,</span> <span class="pre">m=1/2)</span></code> (the code will look for all subclasses of <code class="docutils literal notranslate"><span class="pre">BaseElement</span></code> until it finds one with the species name “Custom_Rb”).</p>
+</section>
+<section id="license">
+<h2>License<a class="headerlink" href="#license" title="Link to this heading"></a></h2>
+<p>The ryd-numerov software is licensed under <a class="reference external" href="https://www.gnu.org/licenses/lgpl-3.0.html">LGPL v3</a>. For more information, see <a class="reference external" href="https://github.com/pairinteraction/ryd-numerov/blob/master/LICENSE.txt">LICENSE.txt</a>.</p>
+</section>
+</section>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

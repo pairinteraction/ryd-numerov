@@ -1,0 +1,47 @@
+RydbergStateMQDT
+================
+
+.. currentmodule:: ryd_numerov
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~RydbergStateMQDT.__init__
+      ~RydbergStateMQDT.calc_radial_matrix_element
+      ~RydbergStateMQDT.copy
+      ~RydbergStateMQDT.create_element
+      ~RydbergStateMQDT.create_grid
+      ~RydbergStateMQDT.create_model
+      ~RydbergStateMQDT.create_wavefunction
+      ~RydbergStateMQDT.get_energy
+      ~RydbergStateMQDT.get_label
+      ~RydbergStateMQDT.get_n_star
+      ~RydbergStateMQDT.sanity_check
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~RydbergStateMQDT.element
+   ~RydbergStateMQDT.grid
+   ~RydbergStateMQDT.model
+   ~RydbergStateMQDT.nu
+   ~RydbergStateMQDT.w_list
+   ~RydbergStateMQDT.wavefunction
+   ~RydbergStateMQDT.z_list
+   ~RydbergStateMQDT.species
+   ~RydbergStateMQDT.n
+   ~RydbergStateMQDT.l
+
+
+
+.. autoclass:: ryd_numerov.RydbergStateMQDT
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

@@ -1,0 +1,459 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ryd_numerov.model.model &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">API Reference</a></li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ryd_numerov.model.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ryd_numerov.model.model</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">get_args</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.elements</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseElement</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">PotentialType</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;coulomb&quot;</span><span class="p">,</span> <span class="s2">&quot;model_potential_marinescu_1993&quot;</span><span class="p">,</span> <span class="s2">&quot;model_potential_fei_2009&quot;</span><span class="p">]</span>
+
+<span class="n">XType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;XType&quot;</span><span class="p">,</span> <span class="s2">&quot;NDArray&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Model">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Model</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model to describe the potentials for an atomic state.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">element</span><span class="p">:</span> <span class="n">BaseElement</span><span class="p">,</span>
+        <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">potential_type</span><span class="p">:</span> <span class="n">PotentialType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Initialize the model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            element: BaseElement object representing the atomic species.</span>
+<span class="sd">            l: Orbital angular momentum quantum number</span>
+<span class="sd">            potential_type: Which potential to use for the model.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element</span> <span class="o">=</span> <span class="n">element</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">=</span> <span class="n">l</span>
+
+        <span class="k">if</span> <span class="n">potential_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">potential_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">potential_type_default</span>
+            <span class="k">if</span> <span class="n">potential_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">potential_type</span> <span class="o">=</span> <span class="s2">&quot;coulomb&quot;</span>
+        <span class="k">if</span> <span class="n">potential_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">PotentialType</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid potential type </span><span class="si">{</span><span class="n">potential_type</span><span class="si">}</span><span class="s2">. Must be one of </span><span class="si">{</span><span class="n">get_args</span><span class="p">(</span><span class="n">PotentialType</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">potential_type</span> <span class="o">=</span> <span class="n">potential_type</span>
+
+<div class="viewcode-block" id="Model.calc_potential_coulomb">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_potential_coulomb">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_potential_coulomb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">XType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XType</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the Coulomb potential V_Col(x) in atomic units.</span>
+
+<span class="sd">        The Coulomb potential is given as</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            V_{Col}(x) = -1 / x</span>
+
+<span class="sd">        where x = r / a_0.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The dimensionless radial coordinate x = r / a_0, for which to calculate the potential.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V_Col: The Coulomb potential V_Col(x) in atomic units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_model_potential_marinescu_1993">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_model_potential_marinescu_1993">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_model_potential_marinescu_1993</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">XType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XType</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the model potential by Marinescu et al. (1994) in atomic units.</span>
+
+<span class="sd">        The model potential from</span>
+<span class="sd">        M. Marinescu, Phys. Rev. A 49, 982 (1994), https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982</span>
+<span class="sd">        is given by</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            V_{mp,marinescu}(x) = - \frac{Z_{l}}{x} - \frac{\alpha_c}{2x^4} (1 - e^{-x^6/x_c**6})</span>
+
+<span class="sd">        where Z_{l} is the effective nuclear charge, :math:`\alpha_c` is the static core dipole polarizability,</span>
+<span class="sd">        and x_c is the effective core size.</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            Z_{l} = 1 + (Z - 1) \exp(-a_1 x) - x (a_3 + a_4 x) \exp(-a_2 x)</span>
+
+<span class="sd">        with the nuclear charge Z.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V_{mp,marinescu}: The four parameter potential V_{mp,marinescu}(x) in atomic units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parameter_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">model_potential_parameter_marinescu_1993</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parameter_dict</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No parametric model potential parameters defined for this element.&quot;</span><span class="p">)</span>
+        <span class="c1"># default to parameters for the maximum l</span>
+        <span class="n">a1</span><span class="p">,</span> <span class="n">a2</span><span class="p">,</span> <span class="n">a3</span><span class="p">,</span> <span class="n">a4</span> <span class="o">=</span> <span class="n">parameter_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">parameter_dict</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">parameter_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span>
+        <span class="n">exp_a1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">a1</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">exp_a2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">a2</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">z_nl</span><span class="p">:</span> <span class="n">XType</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">Z</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp_a1</span> <span class="o">-</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">a3</span> <span class="o">+</span> <span class="n">a4</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp_a2</span>
+        <span class="n">v_c</span> <span class="o">=</span> <span class="o">-</span><span class="n">z_nl</span> <span class="o">/</span> <span class="n">x</span>
+
+        <span class="n">alpha_c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">alpha_c_marinescu_1993</span>
+        <span class="k">if</span> <span class="n">alpha_c</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">v_p</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r_c_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">r_c_dict_marinescu_1993</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_c_dict</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No parametric model potential parameters defined for this element.&quot;</span><span class="p">)</span>
+            <span class="c1"># default to x_c for the maximum l</span>
+            <span class="n">x_c</span> <span class="o">=</span> <span class="n">r_c_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">r_c_dict</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">r_c_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span>
+            <span class="n">x2</span><span class="p">:</span> <span class="n">XType</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+            <span class="n">x4</span><span class="p">:</span> <span class="n">XType</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">*</span> <span class="n">x2</span>
+            <span class="n">x6</span><span class="p">:</span> <span class="n">XType</span> <span class="o">=</span> <span class="n">x4</span> <span class="o">*</span> <span class="n">x2</span>
+            <span class="n">exp_x6</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x6</span> <span class="o">/</span> <span class="n">x_c</span><span class="o">**</span><span class="mi">6</span><span class="p">))</span>
+            <span class="n">v_p</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha_c</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x4</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">exp_x6</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">v_c</span> <span class="o">+</span> <span class="n">v_p</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_model_potential_fei_2009">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_model_potential_fei_2009">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_model_potential_fei_2009</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">XType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XType</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the model potential by Fei et al. (2009) in atomic units.</span>
+
+<span class="sd">        The four parameter potential from Y. Fei et al., Chin. Phys. B 18, 4349 (2009), https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025</span>
+<span class="sd">        is given by</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            V_{mp,fei}(x) = - \frac{1}{x}</span>
+<span class="sd">                - \frac{Z-1}{x} \cdot [1 - \alpha + \alpha e^{\beta x^\delta + \gamma x^{2\delta}}]^{-1}</span>
+
+<span class="sd">        where Z is the nuclear charge.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V_{mp,fei}: The four parameter potential V_{mp,fei}(x) in atomic units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">delta</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">model_potential_parameter_fei_2009</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
+            <span class="n">denom</span><span class="p">:</span> <span class="n">XType</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">beta</span> <span class="o">*</span> <span class="n">x</span><span class="o">**</span><span class="n">delta</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">delta</span><span class="p">))</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">/</span> <span class="n">x</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">Z</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">denom</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_effective_potential_centrifugal">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_effective_potential_centrifugal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_effective_potential_centrifugal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">XType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XType</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the effective centrifugal potential V_l(x) in atomic units.</span>
+
+<span class="sd">        The effective centrifugal potential is given as</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            V_l(x) = \frac{l(l+1)}{2x^2}</span>
+
+<span class="sd">        where x = r / a_0 and l is the orbital angular momentum quantum number.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The dimensionless radial coordinate x = r / a_0, for which to calculate the potential.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V_l: The effective centrifugal potential V_l(x) in atomic units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">reduced_mass_factor</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_effective_potential_sqrt">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_effective_potential_sqrt">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_effective_potential_sqrt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">XType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XType</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the effective potential V_sqrt(x) from the sqrt transformation in atomic units.</span>
+
+<span class="sd">        The sqrt transformation potential arises from the transformation from the wavefunction u(x) to w(z),</span>
+<span class="sd">        where x = r / a_0 and w(z) = z^{-1/2} u(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r).</span>
+<span class="sd">        Due to the transformation, an additional term is added to the radial Schrödinger equation,</span>
+<span class="sd">        which can be written as effective potential V_{sqrt}(x) and is given by</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            V_{sqrt}(x) = \frac{3}{32x^2}</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The dimensionless radial coordinate x = r / a_0, for which to calculate the potential.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V_sqrt: The sqrt transformation potential V_sqrt(x) in atomic units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">reduced_mass_factor</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">32</span><span class="p">)</span> <span class="o">/</span> <span class="n">x2</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_total_effective_potential">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_total_effective_potential">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_total_effective_potential</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">XType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">XType</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the total effective potential V_eff(x) in atomic units.</span>
+
+<span class="sd">        The total effective potential includes all physical and effective potentials:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            V_{eff}(x) = V(x) + V_l(x) + V_{sqrt}(x)</span>
+
+<span class="sd">        where V(x) is the physical potential (either Coulomb or a model potential),</span>
+<span class="sd">        V_l(x) is the effective centrifugal potential,</span>
+<span class="sd">        and V_{sqrt}(x) is the effective potential from the sqrt transformation.</span>
+
+<span class="sd">        Note that we on purpose do not include the spin-orbit potential for several reasons:</span>
+
+<span class="sd">        i) The fine structure corrections are important for the energies of the states.</span>
+<span class="sd">           This includes a) spin-orbit coupling, b) Darwin term, and c) relativistic corrections to the kinetic energy.</span>
+<span class="sd">           Since we (obviously) can not include the latter two in the model,</span>
+<span class="sd">           it is only consistent to not include the spin-orbit term either.</span>
+
+<span class="sd">        ii) The model potentials are generated without the spin-orbit term,</span>
+<span class="sd">            since their accuracy is not sufficient to resolve the fine structure corrections at small distances.</span>
+<span class="sd">            (This can also be seen by running Numerov for low lying states with an energy changed by e.g. 1%,</span>
+<span class="sd">            which will lead to almost no change in the wavefunction.)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x: The dimensionless radial coordinate x = r / a_0, for which to calculate potential.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            V_eff: The total potential V_eff(x) in atomic units.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Note: we do not include the spin-orbit potential, see docstring for details.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">potential_type</span> <span class="o">==</span> <span class="s2">&quot;coulomb&quot;</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_potential_coulomb</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">potential_type</span> <span class="o">==</span> <span class="s2">&quot;model_potential_marinescu_1993&quot;</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_model_potential_marinescu_1993</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">potential_type</span> <span class="o">==</span> <span class="s2">&quot;model_potential_fei_2009&quot;</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_model_potential_fei_2009</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid potential type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">potential_type</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">v</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_effective_potential_centrifugal</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_effective_potential_sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_hydrogen_turning_point_z">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_hydrogen_turning_point_z">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_hydrogen_turning_point_z</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the classical turning point z_i of the state if it would be a hydrogen atom.</span>
+
+<span class="sd">        The hydrogen turning point is defined as the point,</span>
+<span class="sd">        where for the idealized hydrogen atom the potential equals the energy,</span>
+<span class="sd">        i.e. V_Col(r_i) + V_l(r_i) = E.</span>
+<span class="sd">        This is exactly the case at</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            r_i = n^2 - n \sqrt{n^2 - l(l + 1)}</span>
+
+<span class="sd">        and z_i = sqrt{r_i / a_0}.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n: Principal quantum number of the state.</span>
+<span class="sd">            l: Orbital angular momentum quantum number of the state.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            z_i: The inner hydrogen turning point z_i in the scaled dimensionless coordinate z_i = sqrt{r_i / a_0}.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">n</span> <span class="o">-</span> <span class="n">n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">n</span> <span class="o">-</span> <span class="n">l</span> <span class="o">*</span> <span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>  <span class="c1"># type: ignore [no-any-return]</span></div>
+
+
+<div class="viewcode-block" id="Model.calc_turning_point_z">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.model.Model.html#ryd_numerov.model.Model.calc_turning_point_z">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_turning_point_z</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">energy_au</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">dz</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the classical inner turning point z_i for the given state.</span>
+
+<span class="sd">        The classical turning point is defined as the point,</span>
+<span class="sd">        where the total effective potential of the Rydberg model equals the energy,</span>
+<span class="sd">        i.e. V_eff(r_i) = E.</span>
+
+<span class="sd">        Note: Because we use the total effective potential, even for l=0 the turning point is not at r=0.</span>
+<span class="sd">        The advantage of this is, that this definition of the turning point should correspond to</span>
+<span class="sd">        where w(z) should have its last change of sign in the second derivative.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            energy_au: The energy, for which to calculate the classical turning point in atomic units.</span>
+<span class="sd">            dz: The precision of the turning point calculation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            z_i: The inner turning point z_i in the scaled dimensionless coordinate z_i = sqrt{r_i / a_0}.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># for a given hydrogen turning point z_hyd, the classical turning point usually lies within z_hyd \pm 5</span>
+        <span class="c1"># for a given l, the hydrogen turning point is bound by</span>
+        <span class="c1"># z_lower = z_hyd(n=inf, l)  = \sqrt{l * (l+1) / 2} &lt;= z_hyd(n, l) &lt;= z_hyd(n=l+1, l) = z_upper</span>
+        <span class="n">z_lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">z_upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_hydrogen_turning_point_z</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">l</span><span class="p">)</span>
+
+        <span class="n">z_min_orig</span><span class="p">,</span> <span class="n">z_max_orig</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">z_lower</span> <span class="o">-</span> <span class="mi">5</span><span class="p">,</span> <span class="n">dz</span><span class="p">),</span> <span class="n">z_upper</span> <span class="o">+</span> <span class="mi">5</span>
+        <span class="n">z_min</span><span class="p">,</span> <span class="n">z_max</span> <span class="o">=</span> <span class="n">z_min_orig</span><span class="p">,</span> <span class="n">z_max_orig</span>
+
+        <span class="k">while</span> <span class="n">z_max</span> <span class="o">-</span> <span class="n">z_min</span> <span class="o">&gt;</span> <span class="n">dz</span><span class="p">:</span>
+            <span class="n">z_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">z_min</span><span class="p">,</span> <span class="n">z_max</span><span class="p">,</span> <span class="mi">1_000</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">v_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_total_effective_potential</span><span class="p">(</span><span class="n">z_list</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">energy_au</span>
+
+            <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">v_list</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Effective potential is always above or below the energy, this should not happen!&quot;</span><span class="p">)</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">inds</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># take the last index, where a sign change from positive to negative occurs</span>
+            <span class="c1"># because for some potentials, the potential for small distances gets negative again,</span>
+            <span class="c1"># but the classical forbidden region was already reached for a larger distance</span>
+
+            <span class="n">z_min</span> <span class="o">=</span> <span class="n">z_list</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+            <span class="n">z_max</span> <span class="o">=</span> <span class="n">z_list</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">z_min</span> <span class="o">==</span> <span class="n">z_min_orig</span> <span class="ow">or</span> <span class="n">z_max</span> <span class="o">==</span> <span class="n">z_max_orig</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;The turning point calculation did converge to the original z_min or z_max. &quot;</span>
+                <span class="s2">&quot;This should not happen and is probably a bug!&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">z_min</span> <span class="o">+</span> <span class="p">(</span><span class="n">z_max</span> <span class="o">-</span> <span class="n">z_min</span><span class="p">)</span> <span class="o">*</span> <span class="n">v_list</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">v_list</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">-</span> <span class="n">v_list</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># type: ignore [no-any-return]</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

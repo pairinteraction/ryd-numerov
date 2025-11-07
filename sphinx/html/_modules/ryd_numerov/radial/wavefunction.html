@@ -1,0 +1,491 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ryd_numerov.radial.wavefunction &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">API Reference</a></li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ryd_numerov.radial.wavefunction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ryd_numerov.radial.wavefunction</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mpmath</span><span class="w"> </span><span class="kn">import</span> <span class="n">whitw</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">gamma</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.radial.numerov</span><span class="w"> </span><span class="kn">import</span> <span class="n">_run_numerov_integration_python</span><span class="p">,</span> <span class="n">run_numerov_integration</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.radial.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.rydberg</span><span class="w"> </span><span class="kn">import</span> <span class="n">RydbergStateBase</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">WavefunctionSignConvention</span> <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;positive_at_outer_bound&quot;</span><span class="p">,</span> <span class="s2">&quot;n_l_1&quot;</span><span class="p">]]</span>
+
+
+<div class="viewcode-block" id="Wavefunction">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.Wavefunction.html#ryd_numerov.radial.Wavefunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Wavefunction</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;An object containing all the relevant information about the radial wavefunction.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">RydbergStateBase</span><span class="p">,</span>
+        <span class="n">grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Wavefunction object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state: The RydbergState object.</span>
+<span class="sd">            grid: The grid object.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span><span class="p">:</span> <span class="n">NDArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">w_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The dimensionless scaled wavefunction w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} sqrt(a_0) r R(r).&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">integrate</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">u_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The dimensionless wavefunction \tilde{u}(x) = sqrt(a_0) r R(r).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">r_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The radial wavefunction \tilde{R}(r) in atomic units \tilde{R}(r) = a_0^{-3/2} R(r).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_list</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">x_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The number of nodes (i.e. zero-crossings) of the wavefunction.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_list</span><span class="p">))))</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Wavefunction.integrate">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.Wavefunction.html#ryd_numerov.radial.Wavefunction.integrate">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">integrate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Integrate the radial Schrödinger equation and store the wavefunction in the w_list attribute.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Wavefunction.apply_sign_convention">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.Wavefunction.html#ryd_numerov.radial.Wavefunction.apply_sign_convention">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_sign_convention</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sign_convention</span><span class="p">:</span> <span class="n">WavefunctionSignConvention</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the sign of the wavefunction according to the sign convention.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sign_convention: The sign convention for the wavefunction.</span>
+<span class="sd">                - None: Leave the wavefunction as it is.</span>
+<span class="sd">                - &quot;n_l_1&quot;: The wavefunction is defined to have the sign of (-1)^{(n - l - 1)} at the outer boundary.</span>
+<span class="sd">                - &quot;positive_at_outer_bound&quot;: The wavefunction is defined to be positive at the outer boundary.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The wavefunction has not been integrated yet.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sign_convention</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">current_outer_sign</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">w</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+                <span class="n">current_outer_sign</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">sign_convention</span> <span class="o">==</span> <span class="s2">&quot;n_l_1&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;n must be given to apply the n_l_1 sign convention.&quot;</span>
+            <span class="k">if</span> <span class="n">current_outer_sign</span> <span class="o">!=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">l</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span>
+        <span class="k">elif</span> <span class="n">sign_convention</span> <span class="o">==</span> <span class="s2">&quot;positive_at_outer_bound&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">current_outer_sign</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown sign convention: </span><span class="si">{</span><span class="n">sign_convention</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WavefunctionNumerov">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.WavefunctionNumerov.html#ryd_numerov.radial.WavefunctionNumerov">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WavefunctionNumerov</span><span class="p">(</span><span class="n">Wavefunction</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">RydbergStateBase</span><span class="p">,</span>
+        <span class="n">grid</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Model</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Wavefunction object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state: The RydbergState object.</span>
+<span class="sd">            grid: The grid object.</span>
+<span class="sd">            model: The model object.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+
+<div class="viewcode-block" id="WavefunctionNumerov.integrate">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.WavefunctionNumerov.html#ryd_numerov.radial.WavefunctionNumerov.integrate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">integrate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_backward</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">w0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">_use_njit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Run the Numerov integration of the radial Schrödinger equation.</span>
+
+<span class="sd">        The resulting radial wavefunctions are then stored as attributes, where</span>
+<span class="sd">        - w_list is the dimensionless and scaled wavefunction w(z)</span>
+<span class="sd">        - u_list is the dimensionless wavefunction \tilde{u}(x)</span>
+<span class="sd">        - r_list is the radial wavefunction R(r) in atomic units</span>
+
+<span class="sd">        The radial wavefunction are related as follows:</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \tilde{u}(x) = \sqrt(a_0) r R(r)</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            w(z) = z^{-1/2} \tilde{u}(x=z^2) = (r/a_0)^{-1/4} \sqrt(a_0) r R(r)</span>
+
+
+<span class="sd">        where z = sqrt(r/a_0) is the dimensionless scaled coordinate.</span>
+
+<span class="sd">        The resulting radial wavefunction is normalized such that</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \int_{0}^{\infty} r^2 |R(x)|^2 dr</span>
+<span class="sd">            = \int_{0}^{\infty} |\tilde{u}(x)|^2 dx</span>
+<span class="sd">            = \int_{0}^{\infty} 2 z^2 |w(z)|^2 dz</span>
+<span class="sd">            = 1</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            run_backward (default: True): Wheter to integrate the radial Schrödinger equation &quot;backward&quot; of &quot;forward&quot;.</span>
+<span class="sd">            w0 (default: 1e-10): The initial magnitude of the radial wavefunction at the outer boundary.</span>
+<span class="sd">                For forward integration we set w[0] = 0 and w[1] = w0,</span>
+<span class="sd">                for backward integration we set w[-1] = 0 and w[-2] = (-1)^{(n - l - 1) % 2} * w0.</span>
+<span class="sd">            _use_njit (default: True): Whether to use the fast njit version of the Numerov integration.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The wavefunction was already integrated, you should not integrate it again.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Note: Inside this method we use y and x like it is used in the numerov function</span>
+        <span class="c1"># and not like in the rest of this class, i.e. y = w(z) and x = z</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
+
+        <span class="n">glist</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">8</span>
+            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">element</span><span class="o">.</span><span class="n">reduced_mass_factor</span>
+            <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span>
+            <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span>
+            <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_energy</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s2">&quot;a.u.&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">calc_total_effective_potential</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">x_list</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">run_backward</span><span class="p">:</span>
+            <span class="c1"># During the Numerov integration we define the wavefunction such that it should always stop</span>
+            <span class="c1"># at the inner boundary with positive weight</span>
+            <span class="c1"># Note: n - l - 1 is the number of nodes of the radial wavefunction</span>
+            <span class="c1"># Thus, the sign of the wavefunction at the outer boundary is (-1)^{(n - l - 1) % 2}</span>
+            <span class="c1"># You can choose a different sign convention by calling the method apply_sign_convention() afterwards.</span>
+            <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">w0</span>
+            <span class="n">x_start</span><span class="p">,</span> <span class="n">x_stop</span><span class="p">,</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_max</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_min</span><span class="p">,</span> <span class="o">-</span><span class="n">grid</span><span class="o">.</span><span class="n">dz</span>
+            <span class="n">g_list_directed</span> <span class="o">=</span> <span class="n">glist</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># We set x_min to the classical turning point</span>
+            <span class="c1"># after x_min is reached in the integration, the integration stops, as soon as it crosses the x-axis again</span>
+            <span class="c1"># or it reaches a local minimum (thus going away from the x-axis)</span>
+            <span class="c1"># the reason for this is that the second derivative of the wavefunction d^2/dz^2 w(z) (= concavity)</span>
+            <span class="c1"># can only vanish at either</span>
+            <span class="c1"># i) where w(z) = 0 or ii) where the potential is equal to the energy (-&gt; classical turning point)</span>
+            <span class="c1"># If we further assume, that the wavefunction converges to zero at the inner boundary,</span>
+            <span class="c1"># we know that after the inner classical turning point</span>
+            <span class="c1"># the wavefunction should never increase the distance from the x-axis again.</span>
+            <span class="n">x_min</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">calc_turning_point_z</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_energy</span><span class="p">(</span><span class="s2">&quot;a.u.&quot;</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># forward</span>
+            <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">w0</span>
+            <span class="n">x_start</span><span class="p">,</span> <span class="n">x_stop</span><span class="p">,</span> <span class="n">dx</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_min</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_max</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span>
+            <span class="n">g_list_directed</span> <span class="o">=</span> <span class="n">glist</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_n_star</span><span class="p">()</span>
+            <span class="n">x_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">15</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">_use_njit</span><span class="p">:</span>
+            <span class="n">w_list_list</span> <span class="o">=</span> <span class="n">run_numerov_integration</span><span class="p">(</span><span class="n">x_start</span><span class="p">,</span> <span class="n">x_stop</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">g_list_directed</span><span class="p">,</span> <span class="n">x_min</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Using python implementation of Numerov integration, this is much slower!&quot;</span><span class="p">)</span>
+            <span class="n">w_list_list</span> <span class="o">=</span> <span class="n">_run_numerov_integration_python</span><span class="p">(</span><span class="n">x_start</span><span class="p">,</span> <span class="n">x_stop</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">g_list_directed</span><span class="p">,</span> <span class="n">x_min</span><span class="p">)</span>
+
+        <span class="n">w_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">w_list_list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_backward</span><span class="p">:</span>
+            <span class="n">w_list</span> <span class="o">=</span> <span class="n">w_list</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">grid</span><span class="o">.</span><span class="n">set_grid_range</span><span class="p">(</span><span class="n">step_start</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">steps</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">w_list</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">grid</span><span class="o">.</span><span class="n">set_grid_range</span><span class="p">(</span><span class="n">step_stop</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">w_list</span><span class="p">))</span>
+
+        <span class="c1"># normalize the wavefunction, see docstring</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w_list</span> <span class="o">*</span> <span class="n">w_list</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">)</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span><span class="p">)</span>
+        <span class="n">w_list</span> <span class="o">/=</span> <span class="n">norm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="o">=</span> <span class="n">w_list</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sanity_check</span><span class="p">(</span><span class="n">x_stop</span><span class="p">,</span> <span class="n">run_backward</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WavefunctionNumerov.sanity_check">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.WavefunctionNumerov.html#ryd_numerov.radial.WavefunctionNumerov.sanity_check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sanity_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z_stop</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">run_backward</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>  <span class="c1"># noqa: C901, PLR0915, PLR0912</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Do some sanity checks on the wavefunction.</span>
+
+<span class="sd">        Check if the wavefuntion fulfills the following conditions:</span>
+<span class="sd">        - The wavefunction is positive (or zero) at the inner boundary.</span>
+<span class="sd">        - The wavefunction is close to zero at the inner boundary.</span>
+<span class="sd">        - The wavefunction is close to zero at the outer boundary.</span>
+<span class="sd">        - The wavefunction has exactly (n - l - 1) nodes.</span>
+<span class="sd">        - The integration stopped before z_stop (for l&gt;0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">warning_msgs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+
+        <span class="c1"># Check and Correct if divergence of the wavefunction</span>
+        <span class="n">w_list_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_list</span><span class="p">)</span>
+        <span class="n">idmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">w_list_abs</span><span class="p">)</span>
+        <span class="n">w_abs_max</span> <span class="o">=</span> <span class="n">w_list_abs</span><span class="p">[</span><span class="n">idmax</span><span class="p">]</span>
+        <span class="n">outer_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">w_list_abs</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span> <span class="p">:])</span>
+        <span class="k">if</span> <span class="n">idmax</span> <span class="o">&lt;=</span> <span class="mi">5</span> <span class="ow">and</span> <span class="n">w_abs_max</span> <span class="o">/</span> <span class="n">outer_max</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Wavefunction diverges at the inner boundary, w_abs_max / outer_max=</span><span class="si">{</span><span class="n">w_abs_max</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">outer_max</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Trying to correct the wavefunction.&quot;</span><span class="p">)</span>
+            <span class="n">first_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">w_list_abs</span> <span class="o">&lt;</span> <span class="n">outer_max</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span><span class="p">[</span><span class="n">first_ind</span><span class="p">:]</span>  <span class="c1"># type: ignore [index]</span>
+            <span class="n">grid</span><span class="o">.</span><span class="n">set_grid_range</span><span class="p">(</span><span class="n">step_start</span><span class="o">=</span><span class="n">first_ind</span><span class="p">)</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_list</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_list</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">)</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="o">/=</span> <span class="n">norm</span>
+
+        <span class="c1"># Check the maximum of the wavefunction</span>
+        <span class="n">idmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w_list</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">idmax</span> <span class="o">&lt;</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The maximum of the wavefunction is close to the inner boundary (idmax=</span><span class="si">{</span><span class="n">idmax</span><span class="si">}</span><span class="s2">) &quot;</span>
+                <span class="s2">&quot;probably due to inner divergence of the wavefunction. &quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Check the weight of the wavefunction at the inner boundary</span>
+        <span class="n">inner_ind</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">inner_weight</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">2</span>
+            <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">w_list</span><span class="p">[:</span><span class="n">inner_ind</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_list</span><span class="p">[:</span><span class="n">inner_ind</span><span class="p">]</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[:</span><span class="n">inner_ind</span><span class="p">]</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[:</span><span class="n">inner_ind</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span>
+        <span class="p">)</span>
+        <span class="n">inner_weight_scaled_to_whole_grid</span> <span class="o">=</span> <span class="n">inner_weight</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">steps</span> <span class="o">/</span> <span class="n">inner_ind</span>
+
+        <span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-4</span>
+        <span class="c1"># for low n the wavefunction converges not as good and still has more weight at the inner boundary</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">get_n_star</span><span class="p">()</span> <span class="o">+</span> <span class="mi">5</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="n">tol</span> <span class="o">=</span> <span class="mf">8e-3</span>
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mi">16</span><span class="p">:</span>
+            <span class="n">tol</span> <span class="o">=</span> <span class="mf">2e-3</span>
+
+        <span class="k">if</span> <span class="n">inner_weight_scaled_to_whole_grid</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">:</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The wavefunction is not close to zero at the inner boundary&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; (inner_weight_scaled_to_whole_grid=</span><span class="si">{</span><span class="n">inner_weight_scaled_to_whole_grid</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Check the wavefunction at the outer boundary</span>
+        <span class="n">outer_ind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.95</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">outer_wf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_list</span><span class="p">[</span><span class="n">outer_ind</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">outer_wf</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-7</span><span class="p">:</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The wavefunction is not close to zero at the outer boundary, mean=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">outer_wf</span><span class="p">)</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">outer_weight</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">outer_wf</span> <span class="o">*</span> <span class="n">outer_wf</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="n">outer_ind</span><span class="p">:]</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="n">outer_ind</span><span class="p">:])</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span>
+        <span class="n">outer_weight_scaled_to_whole_grid</span> <span class="o">=</span> <span class="n">outer_weight</span> <span class="o">*</span> <span class="n">grid</span><span class="o">.</span><span class="n">steps</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">outer_wf</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">outer_weight_scaled_to_whole_grid</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The wavefunction is not close to zero at the outer boundary,&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; (outer_weight_scaled_to_whole_grid=</span><span class="si">{</span><span class="n">outer_weight_scaled_to_whole_grid</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Check the number of nodes</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nodes</span> <span class="o">!=</span> <span class="n">state</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">l</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The wavefunction has </span><span class="si">{</span><span class="n">nodes</span><span class="si">}</span><span class="s2"> nodes, but should have </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">n</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">state</span><span class="o">.</span><span class="n">l</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> nodes.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check that numerov stopped and did not run until x_stop</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">l</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">run_backward</span> <span class="ow">and</span> <span class="n">z_stop</span> <span class="o">&gt;</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span> <span class="o">/</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">inner_weight_scaled_to_whole_grid</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The integration did not stop before z_stop, z=</span><span class="si">{</span><span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, z_stop=</span><span class="si">{</span><span class="n">z_stop</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">run_backward</span> <span class="ow">and</span> <span class="n">z_stop</span> <span class="o">&lt;</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">grid</span><span class="o">.</span><span class="n">dz</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The integration did not stop before z_stop, z=</span><span class="si">{</span><span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">state</span><span class="o">.</span><span class="n">l</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">run_backward</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.035</span><span class="p">:</span>  <span class="c1"># z_list[0] should run almost to zero for l=0</span>
+                <span class="n">warning_msgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The integration for l=0 did stop at </span><span class="si">{</span><span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> (should be close to zero).&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">warning_msgs</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;The wavefunction for the state </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2"> has some issues:&quot;</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">      &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">warning_msgs</span><span class="p">])</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WavefunctionWhittaker">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.WavefunctionWhittaker.html#ryd_numerov.radial.WavefunctionWhittaker">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WavefunctionWhittaker</span><span class="p">(</span><span class="n">Wavefunction</span><span class="p">):</span>
+<div class="viewcode-block" id="WavefunctionWhittaker.integrate">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.radial.WavefunctionWhittaker.html#ryd_numerov.radial.WavefunctionWhittaker.integrate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">integrate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Using Whittaker to get the wavefunction is not recommended! Use this only for comparison.&quot;</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">l</span>
+        <span class="n">nu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_n_star</span><span class="p">()</span>
+
+        <span class="n">whitw_vectorized</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">whitw</span><span class="p">,</span> <span class="n">otypes</span><span class="o">=</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span>
+        <span class="n">whitw_list</span> <span class="o">=</span> <span class="n">whitw_vectorized</span><span class="p">(</span><span class="n">nu</span><span class="p">,</span> <span class="n">l</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">x_list</span> <span class="o">/</span> <span class="n">nu</span><span class="p">)</span>
+
+        <span class="n">u_list</span><span class="p">:</span> <span class="n">NDArray</span> <span class="o">=</span> <span class="n">whitw_list</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nu</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">(</span><span class="n">nu</span> <span class="o">+</span> <span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">(</span><span class="n">nu</span> <span class="o">-</span> <span class="n">l</span><span class="p">))</span>
+        <span class="n">w_list</span><span class="p">:</span> <span class="n">NDArray</span> <span class="o">=</span> <span class="n">u_list</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">z_list</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_w_list</span> <span class="o">=</span> <span class="n">w_list</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

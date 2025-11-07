@@ -1,0 +1,44 @@
+Potassium
+=========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Potassium.__init__
+      ~Potassium.calc_energy
+      ~Potassium.from_species
+      ~Potassium.get_available_species
+      ~Potassium.get_corrected_rydberg_constant
+      ~Potassium.get_ionization_energy
+      ~Potassium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Potassium.Z
+   ~Potassium.alpha_c_marinescu_1993
+   ~Potassium.ground_state_shell
+   ~Potassium.i_c
+   ~Potassium.model_potential_parameter_fei_2009
+   ~Potassium.model_potential_parameter_marinescu_1993
+   ~Potassium.number_valence_electrons
+   ~Potassium.potential_type_default
+   ~Potassium.r_c_dict_marinescu_1993
+   ~Potassium.reduced_mass_factor
+   ~Potassium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Potassium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

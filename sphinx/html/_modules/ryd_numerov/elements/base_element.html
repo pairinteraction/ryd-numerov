@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ryd_numerov.elements.base_element &mdash; ryd-numerov 0.8.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ec16d22d"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            ryd-numerov
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">API Reference</a></li>
+</ul>
+
+<style>
+a.gitbutton {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #fff;
+  padding-top: 10px;
+  padding-left: 85px;
+  padding-right: 0px;
+  margin: 22px;
+  width: 240px;
+  height: 60px;
+  background: transparent url("../../../_static/buttons/github.svg") 0 0 no-repeat;
+}
+a.gitbutton small {
+  display: block;
+  font-size: 11px;
+}
+button.toctree-expand {
+  display: none;
+}
+</style>
+<a href="https://github.com/pairinteraction/ryd-numerov" class="gitbutton">Explore<small>the GitHub repository</small></a>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">ryd-numerov</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">ryd_numerov.elements.base_element</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for ryd_numerov.elements.base_element</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fractions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache</span><span class="p">,</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">rydberg_constant</span><span class="p">,</span> <span class="n">ureg</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.model.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">PotentialType</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">ryd_numerov.units</span><span class="w"> </span><span class="kn">import</span> <span class="n">PintFloat</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BaseElement">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseElement</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all elements.</span>
+
+<span class="sd">    For the electronic ground state configurations and sorted shells,</span>
+<span class="sd">    see e.g. https://www.webelements.com/atoms.html</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">species</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Atomic species.&quot;&quot;&quot;</span>
+    <span class="n">Z</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Atomic number of the element.&quot;&quot;&quot;</span>
+    <span class="n">i_c</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Nuclear spin, (default 0 to ignore hyperfine structure).&quot;&quot;&quot;</span>
+    <span class="n">number_valence_electrons</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of valence electrons (i.e. 1 for alkali atoms and 2 for alkaline earth atoms).&quot;&quot;&quot;</span>
+    <span class="n">ground_state_shell</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shell (n, l) describing the electronic ground state configuration.&quot;&quot;&quot;</span>
+    <span class="n">_additional_allowed_shells</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional allowed shells (n, l), which (n, l) is smaller than the ground state shell.&quot;&quot;&quot;</span>
+
+    <span class="n">_core_electron_configuration</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Electron configuration of the core electrons, e.g. 4p6 for Rb or 5s for Sr.&quot;&quot;&quot;</span>
+    <span class="n">_ionization_energy</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ionization energy with uncertainty and unit: (value, uncertainty, unit).&quot;&quot;&quot;</span>
+
+    <span class="c1"># Parameters for the extended Rydberg Ritz formula, see calc_n_star</span>
+    <span class="n">_quantum_defects</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dictionary containing the quantum defects for each (l, j_tot, s_tot) combination, i.e.</span>
+<span class="sd">    _quantum_defects[(l,j_tot,s_tot)] = (d0, d2, d4, d6, d8)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_corrected_rydberg_constant</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Corrected Rydberg constant stored as (value, uncertainty, unit)&quot;&quot;&quot;</span>
+
+    <span class="n">potential_type_default</span><span class="p">:</span> <span class="n">PotentialType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default potential type to use for this element. If None, the potential type must be specified explicitly.</span>
+<span class="sd">    In general, it looks like marinescu_1993 is better for alkali atoms, and fei_2009 is better for alkaline earth atoms</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Model Potential Parameters for marinescu_1993</span>
+    <span class="n">alpha_c_marinescu_1993</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Static dipole polarizability in atomic units (a.u.), used for the parametric model potential.</span>
+<span class="sd">    See also: Phys. Rev. A 49, 982 (1994)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r_c_dict_marinescu_1993</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cutoff radius {l: r_c} to truncate the unphysical short-range contribution of the polarization potential.</span>
+<span class="sd">    See also: Phys. Rev. A 49, 982 (1994)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_potential_parameter_marinescu_1993</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters {l: (a_1, a_2, a_3, a_4)} for the parametric model potential.</span>
+<span class="sd">    See also: M. Marinescu, Phys. Rev. A 49, 982 (1994), https://journals.aps.org/pra/abstract/10.1103/PhysRevA.49.982</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Model Potential Parameters for fei_2009</span>
+    <span class="n">model_potential_parameter_fei_2009</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters (delta, alpha, beta, gamma) for the new four-parameter potential, used in the model potential</span>
+<span class="sd">    defined in: Y. Fei et al., Chin. Phys. B 18, 4349 (2009), https://iopscience.iop.org/article/10.1088/1674-1056/18/10/025</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_nist_energy_levels_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to the NIST energy levels file for this element.</span>
+<span class="sd">    The file should be directly downloaded from https://physics.nist.gov/PhysRefData/ASD/levels_form.html</span>
+<span class="sd">    in the &#39;Tab-delimited&#39; format and in units of Hartree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_nist_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">nist_n_max</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an element instance.</span>
+
+<span class="sd">        Use this init method to set up additional properties and data for the element,</span>
+<span class="sd">        like loading NIST energy levels from a file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_nist_data: Whether to use NIST data for this element. Default is True.</span>
+<span class="sd">            nist_n_max: Maximum principal quantum number for which to load the NIST energy levels. Default is 15.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nist_n_max</span> <span class="o">=</span> <span class="n">nist_n_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_nist_data</span> <span class="o">=</span> <span class="n">use_nist_data</span>
+        <span class="k">if</span> <span class="n">use_nist_data</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup_nist_energy_levels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels_file</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_setup_nist_energy_levels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: C901, PLR0912</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set up NIST energy levels from a file.</span>
+
+<span class="sd">        This method should be called in the constructor to load the NIST energy levels</span>
+<span class="sd">        from the specified file. It reads the file and prepares the data for further use.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file: Path to the NIST energy levels file.</span>
+<span class="sd">            n_max: Maximum principal quantum number for which to load the NIST energy levels.</span>
+<span class="sd">                For large quantum numbers, the NIST data is not accurate enough</span>
+<span class="sd">                (it does not even show fine structure splitting),</span>
+<span class="sd">                so we limit the maximum principal quantum number to 15 by default.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NIST energy data file </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2"> does not exist.&quot;</span><span class="p">)</span>
+
+        <span class="n">header</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;Level (Hartree)&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">header</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;NIST energy data file </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2"> not given in Hartree, please download the data in units of Hartree.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">quotechar</span><span class="o">=</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># data[i] := (Configuration, Term, J, Prefix, Energy, Suffix, Uncertainty, Reference)</span>
+        <span class="n">core_config_parts</span> <span class="o">=</span> <span class="n">convert_electron_configuration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_core_electron_configuration</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^([A-Z])&quot;</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="c1"># Skip rows, where the first column starts with an element symbol</span>
+                <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">config_parts</span> <span class="o">=</span> <span class="n">convert_electron_configuration</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="c1"># Skip rows with invalid electron configuration format</span>
+                <span class="c1"># (they usually correspond to core configurations, that are not the ground state configuration)</span>
+                <span class="c1"># e.g. strontium &quot;4d.(2D&lt;3/2&gt;).4f&quot;</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">part</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">config_parts</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">part</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">core_config_parts</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># Skip configurations, where the number of electrons does not match the core configuration + 1</span>
+                <span class="k">continue</span>
+
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">core_config_parts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">config_parts</span><span class="p">:</span>
+                    <span class="n">config_parts</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="n">part</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">part</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">part</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">in</span> <span class="n">config_parts</span><span class="p">:</span>
+                    <span class="n">config_parts</span><span class="o">.</span><span class="n">remove</span><span class="p">((</span><span class="n">part</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">part</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">part</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="n">config_parts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">part</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">part</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">part</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">config_parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># Skip configurations, where the inner electrons are not in the ground state configuration</span>
+                <span class="k">continue</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">l</span> <span class="o">=</span> <span class="n">config_parts</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span>
+
+            <span class="n">multiplicity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">s_tot</span> <span class="o">=</span> <span class="p">(</span><span class="n">multiplicity</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+            <span class="n">j_tot_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">Fraction</span><span class="p">(</span><span class="n">j_str</span><span class="p">))</span> <span class="k">for</span> <span class="n">j_str</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">j_tot</span> <span class="ow">in</span> <span class="n">j_tot_list</span><span class="p">:</span>
+                <span class="n">energy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels</span><span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">)]</span> <span class="o">=</span> <span class="n">energy</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No NIST energy levels found for element </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="si">}</span><span class="s2"> in file </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseElement.from_species">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement.from_species">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="nd">@cache</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_species</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">species</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">use_nist_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseElement</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an instance of the element class from the species string.</span>
+
+<span class="sd">        This method searches through all subclasses of BaseElement until it finds one with a matching species attribute.</span>
+<span class="sd">        This approach allows for easy extension of the library with new elements.</span>
+<span class="sd">        A user can even subclass BaseElement in his code (without modifying the ryd-numerov library),</span>
+<span class="sd">        e.g. `class CustomRubidium(BaseElement): species = &quot;Custom_Rb&quot; ...`</span>
+<span class="sd">        and then use the new element by calling RydbergState(&quot;Custom_Rb&quot;, ...)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            species: The species string (e.g. &quot;Rb&quot;).</span>
+<span class="sd">            use_nist_data: Whether to use NIST data for this element. Default is True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An instance of the corresponding element class.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">concrete_subclasses</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_concrete_subclasses</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">subclass</span> <span class="ow">in</span> <span class="n">concrete_subclasses</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">subclass</span><span class="o">.</span><span class="n">species</span> <span class="o">==</span> <span class="n">species</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">subclass</span><span class="p">(</span><span class="n">use_nist_data</span><span class="o">=</span><span class="n">use_nist_data</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unknown species: </span><span class="si">{</span><span class="n">species</span><span class="si">}</span><span class="s2">. Available species: </span><span class="si">{</span><span class="p">[</span><span class="n">subclass</span><span class="o">.</span><span class="n">species</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">subclass</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">concrete_subclasses</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_concrete_subclasses</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseElement</span><span class="p">]]:</span>
+        <span class="n">subclasses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">subclass</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isabstract</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">subclass</span><span class="p">,</span> <span class="s2">&quot;species&quot;</span><span class="p">):</span>
+                <span class="n">subclasses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
+            <span class="n">subclasses</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">subclass</span><span class="o">.</span><span class="n">_get_concrete_subclasses</span><span class="p">())</span>  <span class="c1"># noqa: SLF001</span>
+        <span class="k">return</span> <span class="n">subclasses</span>
+
+<div class="viewcode-block" id="BaseElement.get_available_species">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement.get_available_species">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_available_species</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a list of all available species in the library.</span>
+
+<span class="sd">        This method returns a list of species strings for all concrete subclasses of BaseElement.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of species strings.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">subclass</span><span class="o">.</span><span class="n">species</span> <span class="k">for</span> <span class="n">subclass</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_concrete_subclasses</span><span class="p">()])</span></div>
+
+
+<div class="viewcode-block" id="BaseElement.is_allowed_shell">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement.is_allowed_shell">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allowed_shell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the quantum numbers describe an allowed shell.</span>
+
+<span class="sd">        I.e. whether the shell is above the ground state shell.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n: Principal quantum number</span>
+<span class="sd">            l: Orbital angular momentum quantum number</span>
+<span class="sd">            s_tot: Total spin quantum number</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the quantum numbers specify a shell equal to or above the ground state shell, False otherwise.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_valence_electrons</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">s_tot</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_state_shell</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># For alkaline earth atoms, the triplet state of the ground state shell is not allowed</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">l</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">l</span> <span class="o">&gt;=</span> <span class="n">n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid shell: (n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, l=</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s2">). Must be n &gt;= 1 and 0 &lt;= l &lt; n.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_state_shell</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_additional_allowed_shells</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_ionization_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_ionization_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="BaseElement.get_ionization_energy">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement.get_ionization_energy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_ionization_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;hartree&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the ionization energy in the desired unit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            unit: Desired unit for the ionization energy. Default is atomic units &quot;hartree&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Ionization energy in the desired unit.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ionization_energy</span><span class="p">:</span> <span class="n">PintFloat</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ionization_energy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ionization_energy</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">ionization_energy</span> <span class="o">=</span> <span class="n">ionization_energy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;hartree&quot;</span><span class="p">,</span> <span class="s2">&quot;spectroscopy&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ionization_energy</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;a.u.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ionization_energy</span><span class="o">.</span><span class="n">magnitude</span>
+        <span class="k">return</span> <span class="n">ionization_energy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;spectroscopy&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">magnitude</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_corrected_rydberg_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_corrected_rydberg_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="BaseElement.get_corrected_rydberg_constant">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement.get_corrected_rydberg_constant">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_corrected_rydberg_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;hartree&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Return the corrected Rydberg constant in the desired unit.</span>
+
+<span class="sd">        The corrected Rydberg constant is defined as</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            R_M = R_\infty * \frac{m_{Core}}{m_{Core} + m_e}</span>
+
+<span class="sd">        where :math:`R_\infty` is the Rydberg constant for infinite nuclear mass,</span>
+<span class="sd">        :math:`m_{Core}` is the mass of the core,</span>
+<span class="sd">        and :math:`m_e` is the mass of the electron.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            unit: Desired unit for the corrected Rydberg constant. Default is atomic units &quot;hartree&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corrected Rydberg constant in the desired unit.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">corrected_rydberg_constant</span><span class="p">:</span> <span class="n">PintFloat</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_corrected_rydberg_constant</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_corrected_rydberg_constant</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">corrected_rydberg_constant</span> <span class="o">=</span> <span class="n">corrected_rydberg_constant</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;hartree&quot;</span><span class="p">,</span> <span class="s2">&quot;spectroscopy&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">corrected_rydberg_constant</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;a.u.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">corrected_rydberg_constant</span><span class="o">.</span><span class="n">magnitude</span>
+        <span class="k">return</span> <span class="n">corrected_rydberg_constant</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;spectroscopy&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">magnitude</span></div>
+
+
+    <span class="nd">@cached_property</span>  <span class="c1"># don&#39;t remove this caching without benchmarking it!!!</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reduced_mass_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;The reduced mass factor \mu.</span>
+
+<span class="sd">        The reduced mass factor</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \mu = \frac{m_{Core}}{m_{Core} + m_e}</span>
+
+<span class="sd">        calculated via the corrected Rydberg constant</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \mu = \frac{R_M}{R_\infty}</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>  <span class="c1"># type: ignore [no-any-return]  # pint typing .to(unit)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_corrected_rydberg_constant</span><span class="p">(</span><span class="s2">&quot;hartree&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">rydberg_constant</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;hartree&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">m</span>
+        <span class="p">)</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="BaseElement.calc_energy">
+<a class="viewcode-back" href="../../../_autosummary/modules/ryd_numerov.elements.BaseElement.html#ryd_numerov.elements.BaseElement.calc_energy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_energy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">l</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;hartree&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PintFloat</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Calculate the energy of a Rydberg state with for the given n, l, j_tot and s_tot.</span>
+
+<span class="sd">        I.e. either look up the energy for low lying states in the nist data,</span>
+<span class="sd">        or calculate it via the quantum defect theory.</span>
+
+<span class="sd">        The effective principal quantum number in quantum defect theory</span>
+<span class="sd">        is defined as series expansion :math:`n^* = n - \delta_{lj}(n)`</span>
+<span class="sd">        where</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            \delta_{lj}(n) = d0_{lj} + d2_{lj} / [n - d0_{lj}(n)]^2 + d4_{lj} / [n - \delta_{lj}(n)]^4 + ...</span>
+
+
+<span class="sd">        is the quantum defect. The energy of the Rydberg state is then given by</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            E_{nlj} / E_H = -\frac{1}{2} \frac{Ry}{Ry_\infty} \frac{1}{n^*}</span>
+
+<span class="sd">        where :math:`E_H` is the Hartree energy (the atomic unit of energy).</span>
+
+<span class="sd">        References:</span>
+<span class="sd">            - On a New Law of Series Spectra, Ritz; DOI: 10.1086/141591, https://ui.adsabs.harvard.edu/abs/1908ApJ....28..237R/abstract</span>
+<span class="sd">            - Rydberg atoms, Gallagher; DOI: 10.1088/0034-4885/51/2/001, (Eq. 16.19)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">s_tot</span> <span class="o">%</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">number_valence_electrons</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid spin </span><span class="si">{</span><span class="n">s_tot</span><span class="si">=}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">j_tot</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">!=</span> <span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="n">s_tot</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid quantum numbers: (</span><span class="si">{</span><span class="n">l</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">j_tot</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">s_tot</span><span class="si">=}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+        <span class="n">energy_au</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nist_n_max</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_nist_data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels</span><span class="p">:</span>
+                <span class="n">energy_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nist_energy_levels</span><span class="p">[(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">)]</span>
+                <span class="n">energy_au</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ionization_energy</span><span class="p">(</span><span class="s2">&quot;hartree&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;NIST energy levels for (n=</span><span class="si">%d</span><span class="s2">, l=</span><span class="si">%d</span><span class="s2">, j_tot=</span><span class="si">%s</span><span class="s2">, s_tot=</span><span class="si">%s</span><span class="s2">) not found, using quantum defect theory.&quot;</span><span class="p">,</span>
+                    <span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">),</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">energy_au</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantum_defects</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No quantum defect data available for element </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="n">d0</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="n">d4</span><span class="p">,</span> <span class="n">d6</span><span class="p">,</span> <span class="n">d8</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantum_defects</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">l</span><span class="p">,</span> <span class="n">j_tot</span><span class="p">,</span> <span class="n">s_tot</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">delta_nlj</span> <span class="o">=</span> <span class="n">d0</span> <span class="o">+</span> <span class="n">d2</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">d0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">d4</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">d0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">d6</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">d0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">6</span> <span class="o">+</span> <span class="n">d8</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="n">d0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">8</span>
+            <span class="n">n_star</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">delta_nlj</span>
+            <span class="n">energy_au</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduced_mass_factor</span> <span class="o">/</span> <span class="n">n_star</span><span class="o">**</span><span class="mi">2</span>
+
+        <span class="n">energy</span><span class="p">:</span> <span class="n">PintFloat</span> <span class="o">=</span> <span class="n">ureg</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">energy_au</span><span class="p">,</span> <span class="s2">&quot;hartree&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">energy</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s2">&quot;a.u.&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">energy</span><span class="o">.</span><span class="n">magnitude</span>
+        <span class="k">return</span> <span class="n">energy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="s2">&quot;spectroscopy&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">magnitude</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_electron_configuration</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an electron configuration string to a list of tuples [(n, l, number), ...].</span>
+
+<span class="sd">    This means convert a string representing the outermost electrons</span>
+<span class="sd">    like &quot;4f14.6s&quot; to [(4, 2, 14), (6, 0, 1)].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">l_str2int</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;l&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">}</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">converted_parts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(\d+)([a-z])(\d*)$&quot;</span><span class="p">,</span> <span class="n">part</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid configuration format: </span><span class="si">{</span><span class="n">config</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">l_str2int</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">converted_parts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">number</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">converted_parts</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Rydberg Numerov Developers.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

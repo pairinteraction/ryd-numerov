@@ -1,0 +1,44 @@
+BaseElement
+===========
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~BaseElement.__init__
+      ~BaseElement.calc_energy
+      ~BaseElement.from_species
+      ~BaseElement.get_available_species
+      ~BaseElement.get_corrected_rydberg_constant
+      ~BaseElement.get_ionization_energy
+      ~BaseElement.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~BaseElement.i_c
+   ~BaseElement.potential_type_default
+   ~BaseElement.reduced_mass_factor
+   ~BaseElement.species
+   ~BaseElement.Z
+   ~BaseElement.number_valence_electrons
+   ~BaseElement.ground_state_shell
+   ~BaseElement.alpha_c_marinescu_1993
+   ~BaseElement.r_c_dict_marinescu_1993
+   ~BaseElement.model_potential_parameter_marinescu_1993
+   ~BaseElement.model_potential_parameter_fei_2009
+
+
+
+.. autoclass:: ryd_numerov.elements.BaseElement
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

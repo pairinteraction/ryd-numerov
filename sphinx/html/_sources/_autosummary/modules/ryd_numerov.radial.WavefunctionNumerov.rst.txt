@@ -1,0 +1,34 @@
+WavefunctionNumerov
+===================
+
+.. currentmodule:: ryd_numerov.radial
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~WavefunctionNumerov.__init__
+      ~WavefunctionNumerov.apply_sign_convention
+      ~WavefunctionNumerov.integrate
+      ~WavefunctionNumerov.sanity_check
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~WavefunctionNumerov.nodes
+   ~WavefunctionNumerov.r_list
+   ~WavefunctionNumerov.u_list
+   ~WavefunctionNumerov.w_list
+
+
+
+.. autoclass:: ryd_numerov.radial.WavefunctionNumerov
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init

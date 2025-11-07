@@ -1,0 +1,44 @@
+Sodium
+======
+
+.. currentmodule:: ryd_numerov.elements
+
+
+.. rubric:: Class Methods
+
+.. autosummary::
+   
+      ~Sodium.__init__
+      ~Sodium.calc_energy
+      ~Sodium.from_species
+      ~Sodium.get_available_species
+      ~Sodium.get_corrected_rydberg_constant
+      ~Sodium.get_ionization_energy
+      ~Sodium.is_allowed_shell
+
+
+
+.. rubric:: Class Attributes and Properties
+
+.. autosummary::
+
+   ~Sodium.Z
+   ~Sodium.alpha_c_marinescu_1993
+   ~Sodium.ground_state_shell
+   ~Sodium.i_c
+   ~Sodium.model_potential_parameter_fei_2009
+   ~Sodium.model_potential_parameter_marinescu_1993
+   ~Sodium.number_valence_electrons
+   ~Sodium.potential_type_default
+   ~Sodium.r_c_dict_marinescu_1993
+   ~Sodium.reduced_mass_factor
+   ~Sodium.species
+
+
+
+.. autoclass:: ryd_numerov.elements.Sodium
+   :members:
+   :member-order: bysource
+   :inherited-members:
+   :undoc-members:
+   :class-doc-from: init
